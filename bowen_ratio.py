@@ -7,7 +7,7 @@ import numpy as np
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.basemap import shiftgrid
 import os
-matplotlib.use('Agg') 
+matplotlib.use('Agg')  
 
 
 def plot_bowen(list_of_models, model_type, list_of_months, season_name):
