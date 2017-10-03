@@ -13,7 +13,7 @@ matplotlib.use('Agg')
 def plot_bowen(list_of_models, model_type, list_of_months, season_name):
     """Import the data."""
     root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
-    ensemble = "r1i1p1" 
+    ensemble = "r1i1p1"  
 
     """Find the paths to the directories containing the model data"""
     directory_paths = []
