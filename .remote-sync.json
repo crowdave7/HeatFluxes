@@ -1,0 +1,16 @@
+{
+  "uploadOnSave": true,
+  "useAtomicWrites": false,
+  "deleteLocal": false,
+  "hostname": "linux.ouce.ox.ac.uk",
+  "port": "22",
+  "target": "/ouce-home/students/kebl4396/Paper1/Paper1Code",
+  "ignore": [
+    ".remote-sync.json",
+    ".git/**"
+  ],
+  "username": "kebl4396",
+  "password": "Crowmet30",
+  "watch": [],
+  "transport": "scp"
+}
