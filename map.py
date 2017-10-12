@@ -1,118 +1,182 @@
 """Import necessary modules for this code."""
+import cartopy as cart
+import cartopy.crs as ccrs
+import cartopy.io.shapereader as shapereader
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+import iris
+import iris.analysis
+import iris.coord_categorisation
+import iris.plot as iplt
 import matplotlib
+import matplotlib.ticker as mticker
 import matplotlib.pyplot as plt
-import netCDF4
-from netCDF4 import num2date
 import numpy as np
-from mpl_toolkits.basemap import Basemap
-from mpl_toolkits.basemap import shiftgrid
 import os
-matplotlib.use('Agg')
 
 
-def plot_map(list_of_models, model_type, variable, list_of_months, season_name):
+def map(list_of_models, model_type, variable, season_name):
+    """Take the input variables, and find the paths to the relevant regridded model files."""
+    """Plot these up as a spatial map for the given season."""
+    """Central African domain."""
+
     """Import the data."""
-    root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
-    ensemble = "r1i1p1"
+    root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles"
 
-    """Find the paths to the directories containing the model data"""
-    directory_paths = []
-    for root, directories, files in os.walk(root_directory):
-        for i in directories:
-            path = os.path.join(root, i)
-            for j in list_of_models:
-                if j in path and model_type in path and ensemble in path:
-                    directory_paths = np.append(directory_paths, path)
-
-    """Find the model files and their absolute paths."""
+    """Find the paths to the files containing the model data"""
     model_file_paths = []
-    for i in directory_paths:
-        files = os.listdir(i)
-        for j in files:
-            if variable in j:
-                model_file_path = os.path.join(i, j)
-                model_file_paths = np.append(model_file_paths, model_file_path)
+    for root, directories, files in os.walk(root_directory):
+        for i in files:
+            path = os.path.join(root, i)
+            print path
+            for j in list_of_models:
+                if j in path and model_type in path and variable in path:
+                    model_file_paths = np.append(model_file_paths, path)
     model_file_paths.sort()
 
-    """For each model file, plot the map."""
-    for i in model_file_paths:
+    print model_file_paths
 
-        print i
+    """Define a time range to constrain the years of the data."""
+    time_range = iris.Constraint(time=lambda cell: 1979 <= cell.point.year <= 2008)
 
-        """Extract the data, model ID, variable name and variable units."""
-        data = netCDF4.Dataset(i)
-        model_id = data.model_id
-        variable_name = data.variables[variable].long_name
-        variable_units = data.variables[variable].units
+    """Load the data from the model file paths into a cube. Constrain the input years"""
+    """Print the model ID, length of time dimension, and first and last model dates."""
 
-        """Print a list of the variables."""
-        # print data.variables
+    if variable == 'hfls':
+        name = 'surface_upward_latent_heat_flux'
+        cubes = iris.load(model_file_paths, name)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
 
-        """Find the dimensions and their sizes."""
-        # for i in data.dimensions:
-            # print data.dimensions[str(i)].name
-            # print data.dimensions[str(i)].size
+    if variable == 'hfss':
+        name = 'surface_upward_sensible_heat_flux'
+        cubes = iris.load(model_file_paths, name)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
 
-        """Dimensions sensible heat flux lon (144), bnds (2), lat (90), time (360)"""
+    """For each cube (for each model),"""
+    for regridded_model_data in cubes:
 
-        """Find the variables and their sizes."""
-        # for i in data.variables:
-            # print data.variables[str(i)].name
-            # print data.variables[str(i)].size
+        """Plot up a map for the regridded file."""
 
-        """Print the times."""
-        time_data = num2date(data.variables['time'][:], units = data.variables['time'].units, calendar = data.variables['time'].calendar)
+        """ If the input month is defined as the whole year,"""
+        if season_name == 'Climatology':
 
-        """Find the relevant indices to slice the time data."""
-        indices_list_time = []
-        for index, i in enumerate(time_data):
-                if i.month in (list_of_months):
-                    indices_list_time = np.append(indices_list_time, (index))
-        indices_list_time = [int(i) for i in indices_list_time]
+            """Take the mean over the cube."""
+            model_data = regridded_model_data.collapsed('time', iris.analysis.MEAN)
 
-        if 1 and 12 in list_of_months:
-            indices_list_time = [(i+12) if (1 <= time_data[i].month <= 6) else i for i in indices_list_time]
-            indices_list_time = [i for i in indices_list_time if i < (len(time_data)-1)]
+        """ If the input month is defined as a season,"""
+        if season_name in ['DJF', 'MAM', 'JJA', 'SON']:
 
-        """Compute the seasonal mean sensible heat flux."""
-        mean_field = data.variables[variable][indices_list_time].mean(axis = 0)
+            """Create two coordinates on the cube to represent seasons and the season year."""
+            iris.coord_categorisation.add_season(regridded_model_data, 'time', name='clim_season')
+            iris.coord_categorisation.add_season_year(regridded_model_data, 'time', name='season_year')
 
-        """Begin to plot using Basemap."""
+            """Aggregate the data by season and season year."""
+            seasonal_means = regridded_model_data.aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
+
+            """Constrain the data by the input season. Decapitalise the input variable."""
+            constraint = iris.Constraint(clim_season=season_name.lower())
+            regridded_model_data_season = seasonal_means.extract(constraint)
+
+            """Take the mean over the cube."""
+            model_data = regridded_model_data_season.collapsed('time', iris.analysis.MEAN)
+
+        """Plot the figure."""
         fig = plt.figure()
-        #map = Basemap(llcrnrlon=5, llcrnrlat=-10, urcrnrlon=35, urcrnrlat=5, projection='mill')
-        map = Basemap(llcrnrlon=-22, llcrnrlat=-22, urcrnrlon=62, urcrnrlat=12, projection='mill')
-        """Draw coastlines, country lines, latitude and longitude lines"""
-        map.drawcoastlines(linewidth=1.5)
-        map.drawcountries(linewidth=1)
-        map.drawparallels(np.arange(-50, 60, 10), labels=[1, 0, 0, 0], fontsize=10, linewidth=0.4)
-        map.drawmeridians(np.arange(-40, 80, 20), labels=[0, 0, 0, 1], fontsize=10, linewidth=0.4)
 
-        """Shift the grid to match up model data with basemap grid"""
-        longitude = data.variables['lon'][:]
-        latitude = data.variables['lat'][:]
-        mean_field, longitude = shiftgrid(180., mean_field, longitude, start=False)
-        grid = np.meshgrid(longitude, latitude)
-        x, y = map(* grid)
+        """Import coastlines and lake borders. Set the scale to 10m, 50m or 110m resolution for more detail."""
+        coastline = cart.feature.NaturalEarthFeature(category='physical', name='coastline', scale='110m', facecolor='none')
+        lake_borders = cart.feature.NaturalEarthFeature(category='physical', name='lakes', scale='110m', facecolor='none')
 
-        """Set contour levels, plot the data, and add a colour bar"""
-        contour_levels = np.arange(0, 165, 15)
-        contour_plot = map.contourf(x, y, mean_field, contour_levels, extend='both', cmap = 'coolwarm')
-        colour_bar = map.colorbar(contour_plot, location='bottom', pad='15%')
-        colour_bar.set_ticks([0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150])
-        colour_bar.set_ticklabels([0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150])
+        """Import country borders."""
+        shapefile = shapereader.natural_earth(resolution='110m', category='cultural', name='admin_0_countries')
+        reader = shapereader.Reader(shapefile)
+        country_borders = reader.records()
+
+        """Remove iris warning message."""
+        iris.FUTURE.netcdf_promote = True
+
+        """Define the contour levels for the input variables."""
+        if variable == 'hfls':
+            contour_levels = np.arange(0, 165, 15)
+        if variable == 'hfss':
+            contour_levels = np.arange(0, 110, 10)
+
+        """Define the colour map and the projection."""
+        cmap = matplotlib.cm.get_cmap('coolwarm')
+        crs_latlon = ccrs.PlateCarree()
+
+        """Plot the map using cartopy, and add map features."""
+        ax = plt.subplot(111, projection=crs_latlon)
+        ax.set_extent([-22, 62, -22, 12], crs=crs_latlon)
+        contour_plot = iplt.contourf(model_data, contour_levels, cmap=cmap, extend='both')
+        ax.add_feature(coastline, zorder=5, edgecolor='k', linewidth=2)
+        ax.add_feature(lake_borders, zorder=5, edgecolor='k', linewidth=1)
+        for i in country_borders:
+            ax.add_geometries(i.geometry, ccrs.PlateCarree(), edgecolor="black", facecolor="None")
+
+        """Define gridlines."""
+        gridlines = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, color='black', linewidth=0.4, linestyle='--')
+        gridlines.xlabels_top = False
+        gridlines.xlabels_bottom = True
+        gridlines.ylabels_left = True
+        gridlines.ylabels_right = False
+        gridlines.xlines = True
+        gridlines.ylines = True
+        gridlines.xformatter = LONGITUDE_FORMATTER
+        gridlines.yformatter = LATITUDE_FORMATTER
+        gridlines.xlocator = mticker.FixedLocator(np.arange(-40, 100, 20))
+        gridlines.ylocator = mticker.FixedLocator(np.arange(-50, 70, 10))
+
+        """Add a colour bar, with ticks and labels."""
+        colour_bar = plt.colorbar(contour_plot, orientation='horizontal', pad=0.1, aspect=40)
+
+        if variable == 'hfls':
+            colour_bar.set_ticks(np.arange(0, 165, 15))
+            colour_bar.set_ticklabels(np.arange(0, 165, 15))
+        if variable == 'hfss':
+            colour_bar.set_ticks(np.arange(0, 110, 10))
+            colour_bar.set_ticklabels(np.arange(0, 110, 10))
+
         colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
 
-        #SH 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 0, 110, 10
-        #LH 0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150 0, 165, 15
-
-        """Add title and label to the plot."""
-
-        plt.title(model_id+' (AMIP) 1979-2008 ' ''+season_name+'', fontsize=10)
+        variable_name = str(model_data.long_name)
+        variable_units = str(model_data.units)
         colour_bar.set_label(variable_name+" ("+variable_units+")", fontsize=10)
 
-        """Save the figure, and close the plot"""
+        """Add a title."""
+        model_id = model_data.attributes['model_id']
+        plt.title(model_id+' (AMIP) 1979-2008 ' ''+season_name+'', fontsize=10)
+
+        """Save the figure, close the plot and print an end statement."""
         fig.savefig(variable+"_"+season_name+"_"+model_id+".png")
         plt.close()
         print model_id+" plot done"
 
-plot_map(["GFDL-CM3/"], "amip", "hfls", [1,2,12], "DJF")
+# map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CCSM4/", "CESM1-CAM5/", "CMCC-CM/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "EC-EARTH/", "FGOALS-g2/", "FGOALS-s2/", "GFDL-CM3/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/"], "amip", "hfls", [1,2,12], "DJF")
+
+map(["GFDL-CM3", "HadGEM2-A"], "amip", "hfss", "SON")

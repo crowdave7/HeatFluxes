@@ -33,8 +33,6 @@ def plot_bowen(list_of_models, model_type, season_name):
                     model_file_paths = np.append(model_file_paths, path)
     model_file_paths.sort()
 
-    #print model_file_paths
-
     """Load the sensible and latent heat flux data from each model into a cubelist."""
 
     """Define a time range to constrain the years of the data."""
@@ -43,15 +41,18 @@ def plot_bowen(list_of_models, model_type, season_name):
     """Load the data from the model file paths into a cube. Constrain the input years"""
     """Print the model ID, length of time dimension, and first and last model dates."""
 
+    """Create a blank list to contain all the model data for the evaporative fraction."""
+    cubes_ef = []
+
     """ For each model compute the evaporative fraction in an iris cube and plot."""
     for j in list_of_models:
 
         """Find the relevant model paths, and load into a cubelist."""
         paths_for_this_model = [k for k in model_file_paths if j in k]
         cubes = iris.load(paths_for_this_model)
-        count = 0
 
         """Constrain the years. Print the model ID, length of time dimension, and first and last model dates."""
+        count = 0
         for i in cubes:
             with iris.FUTURE.context(cell_datetime_objects=True):
                 cubes[count] = i.extract(time_range)
@@ -70,7 +71,7 @@ def plot_bowen(list_of_models, model_type, season_name):
         """Print the model id from one of the cubes."""
         model_id = cubes[0].attributes['model_id']
 
-        """For each cube (for the sensible and latent heat flux data for one model)"""
+        """For each cube,"""
         for regridded_model_data in cubes:
 
             """ If the input month is defined as the whole year,"""
@@ -108,12 +109,15 @@ def plot_bowen(list_of_models, model_type, season_name):
                 """Add 1 to the count variable."""
                 cube_id +=1
 
-        """Now compute the evaporative fraction for the one model."""
+        """Now compute the evaporative fraction."""
 
         """Select the numerator (latent heat flux)."""
-        variable_name = str(cubes[0].standard_name)
-        if "latent" in variable_name:
+        variable_name_0 = str(cubes[0].standard_name)
+        variable_name_1 = str(cubes[1].standard_name)
+        if "latent" in variable_name_0:
             numerator = cubes[0]
+        if "latent" in variable_name_1:
+            numerator = cubes[1]
 
         """Calculate the denominator (latent + sensible heat flux)."""
         denominator = iris.analysis.maths.add(cubes[0], cubes[1])
@@ -121,65 +125,69 @@ def plot_bowen(list_of_models, model_type, season_name):
         """Calculate the evaporative fraction (latent/(latent+sensible))."""
         evap_fraction = iris.analysis.maths.divide(numerator, denominator)
 
-        """Plot the evaporative fraction for one model."""
-        fig = plt.figure()
+        cubes_ef = np.append(cubes_ef, evap_fraction)
 
-        """Import coastlines and lake borders. Set the scale to 10m, 50m or 110m resolution for more detail."""
-        coastline = cart.feature.NaturalEarthFeature(category='physical', name='coastline', scale='110m', facecolor='none')
-        lake_borders = cart.feature.NaturalEarthFeature(category='physical', name='lakes', scale='110m', facecolor='none')
+    ensemble_mean = sum(cubes_ef) / float(len(cubes_ef))
 
-        """Import country borders."""
-        shapefile = shapereader.natural_earth(resolution='110m', category='cultural', name='admin_0_countries')
-        reader = shapereader.Reader(shapefile)
-        country_borders = reader.records()
+    """Plot the figure."""
+    fig = plt.figure()
 
-        """Remove iris warning message."""
-        iris.FUTURE.netcdf_promote = True
+    """Import coastlines and lake borders. Set the scale to 10m, 50m or 110m resolution for more detail."""
+    coastline = cart.feature.NaturalEarthFeature(category='physical', name='coastline', scale='110m', facecolor='none')
+    lake_borders = cart.feature.NaturalEarthFeature(category='physical', name='lakes', scale='110m', facecolor='none')
 
-        """Define the contour levels for the input variables."""
-        contour_levels = np.arange(0, 1.1, 0.1)
+    """Import country borders."""
+    shapefile = shapereader.natural_earth(resolution='110m', category='cultural', name='admin_0_countries')
+    reader = shapereader.Reader(shapefile)
+    country_borders = reader.records()
 
-        """Define the colour map and the projection."""
-        cmap = matplotlib.cm.get_cmap('coolwarm_r')
-        crs_latlon = ccrs.PlateCarree()
+    """Remove iris warning message."""
+    iris.FUTURE.netcdf_promote = True
 
-        """Plot the map using cartopy, and add map features."""
-        ax = plt.subplot(111, projection=crs_latlon)
-        ax.set_extent([-22, 62, -22, 12], crs=crs_latlon)
-        contour_plot = iplt.contourf(evap_fraction, contour_levels, cmap=cmap, extend='both')
-        ax.add_feature(coastline, zorder=5, edgecolor='k', linewidth=2)
-        ax.add_feature(lake_borders, zorder=5, edgecolor='k', linewidth=1)
-        for i in country_borders:
-            ax.add_geometries(i.geometry, ccrs.PlateCarree(), edgecolor="black", facecolor="None")
+    """Define the contour levels for the input variables."""
+    contour_levels = np.arange(0, 1.1, 0.1)
 
-        """Define gridlines."""
-        gridlines = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, color='black', linewidth=0.4, linestyle='--')
-        gridlines.xlabels_top = False
-        gridlines.xlabels_bottom = True
-        gridlines.ylabels_left = True
-        gridlines.ylabels_right = False
-        gridlines.xlines = True
-        gridlines.ylines = True
-        gridlines.xformatter = LONGITUDE_FORMATTER
-        gridlines.yformatter = LATITUDE_FORMATTER
-        gridlines.xlocator = mticker.FixedLocator(np.arange(-40, 100, 20))
-        gridlines.ylocator = mticker.FixedLocator(np.arange(-50, 70, 10))
+    """Define the colour map and the projection."""
+    cmap = matplotlib.cm.get_cmap('coolwarm_r')
+    crs_latlon = ccrs.PlateCarree()
 
-        """Add a colour bar, with ticks and labels."""
-        colour_bar = plt.colorbar(contour_plot, orientation='horizontal', pad=0.1, aspect=40)
-        colour_bar.set_ticks(np.arange(0, 1.1, 0.1))
-        colour_bar.set_ticklabels(np.arange(0, 1.1, 0.1))
-        colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
+    """Plot the map using cartopy, and add map features."""
+    ax = plt.subplot(111, projection=crs_latlon)
+    ax.set_extent([-22, 62, -22, 12], crs=crs_latlon)
+    contour_plot = iplt.contourf(ensemble_mean, contour_levels, cmap=cmap, extend='both')
+    ax.add_feature(coastline, zorder=5, edgecolor='k', linewidth=2)
+    ax.add_feature(lake_borders, zorder=5, edgecolor='k', linewidth=1)
+    for i in country_borders:
+        ax.add_geometries(i.geometry, ccrs.PlateCarree(), edgecolor="black", facecolor="None")
 
-        variable_name = "Evaporative Fraction"
-        colour_bar.set_label(("Evaporative Fraction"), fontsize=10)
+    """Define gridlines."""
+    gridlines = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, color='black', linewidth=0.4, linestyle='--')
+    gridlines.xlabels_top = False
+    gridlines.xlabels_bottom = True
+    gridlines.ylabels_left = True
+    gridlines.ylabels_right = False
+    gridlines.xlines = True
+    gridlines.ylines = True
+    gridlines.xformatter = LONGITUDE_FORMATTER
+    gridlines.yformatter = LATITUDE_FORMATTER
+    gridlines.xlocator = mticker.FixedLocator(np.arange(-40, 100, 20))
+    gridlines.ylocator = mticker.FixedLocator(np.arange(-50, 70, 10))
 
-        """Add a title."""
-        plt.title(model_id+' (AMIP) 1979-2008 ' ''+season_name+'', fontsize=10)
+    """Add a colour bar, with ticks and labels."""
+    colour_bar = plt.colorbar(contour_plot, orientation='horizontal', pad=0.1, aspect=40)
+    colour_bar.set_ticks(np.arange(0, 1.1, 0.1))
+    colour_bar.set_ticklabels(np.arange(0, 1.1, 0.1))
+    colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
 
-        """Save the figure, close the plot and print an end statement."""
-        fig.savefig("Evap_Frac_"+season_name+"_"+model_id+".png")
-        plt.close()
-        print model_id+" plot done"
+    variable_name = "Evaporative Fraction"
+    colour_bar.set_label((variable_name), fontsize=10)
+
+    """Add a title."""
+    plt.title('Ensemble Mean (AMIP) 1979-2008 ' ''+season_name+'', fontsize=10)
+
+    """Save the figure, close the plot and print an end statement."""
+    fig.savefig("Evap_Frac_"+season_name+"_EnsembleMean.png")
+    plt.close()
+    print "Ensemble Mean Plot done"
 
 plot_bowen(["GFDL-CM3", "HadGEM2-A"], "amip", "DJF")

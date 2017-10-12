@@ -1,326 +1,258 @@
-import matplotlib
+"""Import necessary modules for this code."""
+import copy
+import iris
+import iris.analysis
+import iris.analysis.cartography
 import matplotlib.pyplot as plt
+import matplotlib
+from mpl_toolkits.basemap import Basemap, maskoceans
 import netCDF4
 from netCDF4 import num2date
 from netCDF4 import date2num
 import numpy as np
-from mpl_toolkits.basemap import Basemap, maskoceans
-from mpl_toolkits.basemap import shiftgrid
 import os
-import iris
-import iris.analysis
-import iris.analysis.cartography
-import copy
 matplotlib.use('Agg')
 
+
 def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, lower_lon, upper_lon):
+    """Take the input variables, and find the paths to the relevant regridded model files."""
+    """Plot these up as a seasonal cycle. Central African domain."""
 
     """Import the data."""
-    root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
-    ensemble = "r1i1p1"
+    root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles"
 
-    """Find the paths to the directories containing the model data"""
-    directory_paths = []
+    """Find the paths to the files containing the model data"""
+    model_file_paths = []
     for root, directories, files in os.walk(root_directory):
-        for i in directories:
+        for i in files:
             path = os.path.join(root, i)
             for j in list_of_models:
-                if j in path and model_type in path and ensemble in path:
-                    directory_paths = np.append(directory_paths, path)
-
-    """Find the paths to the model files themselves. """
-    model_file_paths = []
-    for i in directory_paths:
-        files = os.listdir(i)
-        for j in files:
-            if "hfss" in j or "hfls" in j:
-                model_file_path = os.path.join(i, j)
-                model_file_paths = np.append(model_file_paths, model_file_path)
+                if j in path and model_type in path and variable in path:
+                    model_file_paths = np.append(model_file_paths, path)
     model_file_paths.sort()
+
     print model_file_paths
-    """Set up the figure for plotting to."""
+
+    """Define a time range to constrain the years of the data."""
+    time_range = iris.Constraint(time=lambda cell: 1979 <= cell.point.year <= 2008)
+
+    """Before looping through all the models, set up the figure to plot to."""
+
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
-    #ax2 = ax1.twinx()
     objects = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec')
     x_pos = np.arange(len(objects))
     plt.xticks(x_pos, objects)
     ax1.tick_params(axis='x', direction='in')
     ax1.tick_params(axis='y', direction='in')
-    #ax2.set_ylim(0.0, 1.0)
-    #ax2.tick_params(axis='y', direction='in')
-    #ax1.set_zorder(ax2.get_zorder()+1)
     ax1.patch.set_visible(False)
     plt.title('Land Surface Heat Fluxes, Central Africa, AMIP, 1979-2008', fontsize = 10)
 
+    """Load the data from the model file paths into a cube. Constrain the input years"""
+    """Print the model ID, length of time dimension, and first and last model dates."""
+
     """Define the list of colours for each model."""
     colours_array = ['red', 'darkorange', 'yellow', 'forestgreen', 'mediumblue', 'indigo', 'violet', 'black', 'darkgray']
+
+    """Define a model number to begin with."""
     model_number = 0
 
+    """Set up the array that contains the ensemble mean seasonal cycle."""
+    ensemble_mean_array = np.zeros((len(list_of_models), 12))
+
+    """For each model,"""
     for j in list_of_models:
 
+        """Select the line colour and add one to the line count variable."""
         line_colour = colours_array[model_number]
-        #print line_colour
-        #print model_number
+
+        """Extract the sensible and latent paths."""
+        paths_for_this_model = [k for k in model_file_paths if j in k]
+        latent_path = [k for k in paths_for_this_model if 'hfls' in k]
+        sensible_path = [k for k in paths_for_this_model if 'hfss' in k]
+
+        """Extract the model ID."""
+        data = netCDF4.Dataset(paths_for_this_model[0])
+        model_id = data.model_id
+
+        """Load the cube for each variable, constrain the years and extract the seasonal cycle array."""
+        """Append the seasonal cycle array to the ensemble mean array outside the loop."""
+
+        if variable == 'hfls':
+            data_cube = iris.load_cube(latent_path)
+            data_cube = constrain_year(data_cube, time_range)
+            data_array = extract_seasonal_cycle_data(data_cube, latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
+            ensemble_mean_array[model_number] = data_array
+
+        if variable == 'hfss':
+            data_cube = iris.load_cube(sensible_path)
+            data_cube = constrain_year(data_cube, time_range)
+            data_array = extract_seasonal_cycle_data(data_cube, sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
+            ensemble_mean_array[model_number] = data_array
+
+        if variable == 'evap_fraction':
+            cube_latent = iris.load_cube(latent_path)
+            cube_latent = constrain_year(cube_latent, time_range)
+            cube_sensible = iris.load_cube(sensible_path)
+            cube_sensible = constrain_year(cube_sensible, time_range)
+
+            latent_seasonal_cycle_array = extract_seasonal_cycle_data(cube_latent, latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
+            sensible_seasonal_cycle_array = extract_seasonal_cycle_data(cube_sensible, sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
+            data_array = latent_seasonal_cycle_array / (latent_seasonal_cycle_array + sensible_seasonal_cycle_array)
+            ensemble_mean_array[model_number] = data_array
+
+        """Add the seasonal cycle to the plot."""
+
+        ax1.plot(x_pos, data_array, zorder=1, linestyle=':', color=line_colour, label = str(model_id))
+        handles, labels = ax1.get_legend_handles_labels()
+        handles = [copy.copy(ha) for ha in handles]
+        [ha.set_linestyle("-") for ha in handles]
+        legend = plt.legend(handles, labels, loc="upper left", bbox_to_anchor=(1, 1))
+        if variable == 'hfls':
+            plt.ylabel('Latent Heat flux (W m-2)')
+        if variable == 'hfss':
+            plt.ylabel('Sensible Heat flux (W m-2)')
+        if variable == 'evap_fraction':
+            plt.ylabel('Evaporative Fraction')
+        plt.ylim(0, 160)
+
+        """Add 1 to the model number to loop through the next model."""
         model_number +=1
 
-        paths_for_this_model = [k for k in model_file_paths if j in k]
-        sensible_path = [k for k in paths_for_this_model if 'hfss' in k]
-        latent_path = [k for k in paths_for_this_model if 'hfls' in k]
-        i = [sensible_path, latent_path]
+    """Take the mean seasonal cycle across the models."""
+    ensemble_mean_array = np.mean(ensemble_mean_array, axis = 0)
+    print ensemble_mean_array
 
-        sensible_path = []
-        latent_path = []
+    """Add the ensemble mean seasonal cycle to the plot."""
 
-        if 'hfss' in i[0][0]:
-            sensible_path = np.append(sensible_path, i[0][0])
-        if 'hfls' in i[1][0]:
-            latent_path = np.append(latent_path, i[1][0])
-        #print sensible_path
+    ax1.plot(x_pos, ensemble_mean_array, zorder=1, linestyle=':', color='black', label = "Ensemble")
+    handles, labels = ax1.get_legend_handles_labels()
+    handles = [copy.copy(ha) for ha in handles]
+    [ha.set_linestyle("-") for ha in handles]
+    legend = plt.legend(handles, labels, loc="upper left", bbox_to_anchor=(1, 1))
 
-
-        if variable == 'hfsshfls':
-            hfss_data_array = extract_sensible_data(sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
-            hfls_data_array = extract_latent_data(latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
-            evap_fraction_array = []
-
-        elif variable == 'hfss':
-            hfss_data_array = extract_sensible_data(sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
-            hfls_data_array = []
-            evap_fraction_array = []
-
-        elif variable == 'hfls':
-            hfss_data_array = []
-            hfls_data_array = extract_latent_data(latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
-            evap_fraction_array = []
-
-        elif variable == 'evap_fraction':
-            hfss_data_array = extract_sensible_data(sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
-            hfls_data_array = extract_latent_data(latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
-            evap_fraction_array = hfls_data_array / (hfss_data_array + hfls_data_array)
-            print evap_fraction_array
-
-        #hfss_data_array = [48.3002731696, 52.3829183798, 52.8940286026, 46.2914752934, 43.2891164169, 45.0898602321, 47.417546342, 52.2828679393, 58.0905163153, 57.4097979651, 48.965198703, 42.840372437]
-        #hfls_data_array = [70.2753424932, 71.4380859816, 80.9225648422, 88.4116364297, 84.0622804769, 74.3132192199, 66.5416929179, 65.826906716, 71.1744792892, 78.1451017016, 82.9564678829, 78.5922771205]
-        #evap_fraction_array = [0.59266268, 0.57694643, 0.60472743, 0.65634443, 0.66008134, 0.62237272, 0.58390784, 0.55733665, 0.55060907, 0.57648305, 0.62883126, 0.64720878]
-
-        #print sensible_path
-        model_id = extract_model_id(sensible_path[0])
-
-        legend = plot_data(x_pos, hfss_data_array, hfls_data_array, evap_fraction_array, ax1, line_colour, model_id, variable)
-
-    #fig.savefig("Seasonal_Cycle_"+variable+".png")
+    """Save the figure."""
     fig.savefig("Seasonal_Cycle_"+variable+".png", bbox_extra_artists=(legend,), bbox_inches='tight')
-    print "plot done"
 
-def plot_data(x_pos, hfss_data_array, hfls_data_array, evap_fraction_array, ax1, line_colour, model_id, variable):
 
-    if variable == 'hfsshfls':
-        ax1.plot(x_pos, hfss_data_array, zorder=1, linestyle=':', color=line_colour, label = str(model_id))
-        handles, labels = ax1.get_legend_handles_labels()
-        handles = [copy.copy(ha) for ha in handles]
-        [ha.set_linestyle("-") for ha in handles]
-        legend = plt.legend(handles, labels, loc="upper left", bbox_to_anchor=(1,1))
-        ax1.plot(x_pos, hfls_data_array, zorder=1, linestyle='-.', color=line_colour)
-        plt.ylabel('Heat flux (W m-2)')
-        plt.ylim(0, 160)
-        return legend
+def extract_seasonal_cycle_data(input_cube, path, lower_lat, upper_lat, lower_lon, upper_lon):
+    """Extract seasonal cycle data from an iris cube given the cube, its path, and the chosen lats/lons."""
+    data_array = []
 
-    elif variable == 'hfss':
-        ax1.plot(x_pos, hfss_data_array, zorder=1, linestyle=':', color=line_colour, label = str(model_id))
-        handles, labels = ax1.get_legend_handles_labels()
-        handles = [copy.copy(ha) for ha in handles]
-        [ha.set_linestyle("-") for ha in handles]
-        legend = plt.legend(handles, labels, loc="upper left", bbox_to_anchor=(1,1))
-        plt.ylabel('Sensible Heat flux (W m-2)')
-        plt.ylim(0, 160)
-        return legend
+    print path
 
-    elif variable == 'hfls':
-        ax1.plot(x_pos, hfls_data_array, zorder=1, linestyle='-.', color=line_colour, label = str(model_id))
-        handles, labels = ax1.get_legend_handles_labels()
-        handles = [copy.copy(ha) for ha in handles]
-        [ha.set_linestyle("-") for ha in handles]
-        legend = plt.legend(handles, labels, loc="upper left", bbox_to_anchor=(1,1))
-        plt.ylabel('Latent Heat flux (W m-2)')
-        plt.ylim(0, 160)
-        return legend
-
-    elif variable == 'evap_fraction':
-        ax1.plot(x_pos, evap_fraction_array, zorder=1, linestyle='-', color=line_colour, label = str(model_id))
-        handles, labels = ax1.get_legend_handles_labels()
-        handles = [copy.copy(ha) for ha in handles]
-        [ha.set_linestyle("-") for ha in handles]
-        legend = plt.legend(handles, labels, loc="upper left", bbox_to_anchor=(1,1))
-        plt.ylabel('Evaporative Fraction')
-        plt.ylim(0, 1)
-        return legend
-
-def extract_model_id(file_path):
-
-    data = netCDF4.Dataset(file_path)
-    model_id = data.model_id
-    print model_id
-    return model_id
-
-def extract_sensible_data(file_path, lower_lat, upper_lat, lower_lon, upper_lon):
-
-    hfss_data_array = []
-
+    """For each month,"""
     for i in np.arange(1, 13, 1):
 
-        data = netCDF4.Dataset(file_path)
+        """Load the dataset using the input path, and load the times to constrain the data by month."""
+        times = constrain_month(netCDF4.Dataset(path), [i])
 
-        times = extract_times(data, [i])
+        """Load in the cube."""
+        data = input_cube
 
-        hfss_data = iris.load_cube(file_path, 'surface_upward_sensible_heat_flux')
-        #print hfss_data
+        """Constrain the times in the cube."""
+        data = data.extract(iris.Constraint(time = times))
 
-        hfss_data = hfss_data.extract(iris.Constraint(time = times))
+        """Constrain the latitudes and longitudes of the data."""
+        data = data.intersection(latitude=(lower_lat, upper_lat), longitude=(lower_lon, upper_lon))
 
-        hfss_data = hfss_data.intersection(latitude=(lower_lat, upper_lat), longitude=(lower_lon, upper_lon))
-        #Collapse time dimension
-        hfss_data_unmasked = hfss_data.collapsed('time', iris.analysis.MEAN)
+        """Collapse the time dimension to take the mean over time."""
+        data_unmasked = data.collapsed('time', iris.analysis.MEAN)
 
-        longitude = hfss_data_unmasked.coord('longitude').points
+        """Mask out the oceans from the data."""
 
-        latitude = hfss_data_unmasked.coord('latitude').points
+        """Extract the longitudes and latitudes of the array."""
+        longitude = data_unmasked.coord('longitude').points
+        latitude = data_unmasked.coord('latitude').points
 
-        #print longitude
-        #print latitude
-
-        hfss = hfss_data_unmasked.data
-
-        fig = plt.figure()
-
+        """Set up Basemap to begin to mask out the ocean points from the array."""
         map = Basemap(llcrnrlon=lower_lon, llcrnrlat=lower_lat, urcrnrlon=upper_lon, urcrnrlat=upper_lat, projection='mill')
-
         longitude, latitude = np.meshgrid(longitude, latitude)
         x, y = map(longitude, latitude)
-        hfss_masked_array = maskoceans(longitude, latitude, hfss, resolution = 'f', grid = 1.25)
 
-        mask_bool = np.ma.filled(hfss_masked_array, 1)
-        # 1 is masked data, 0 is the data itself
-        mask_bool[mask_bool !=1] = 0
+        """Mask out ocean points from the array, not including lakes."""
 
-        hfss_data = hfss_data_unmasked
+        """Create an array with the ocean data points masked."""
+        masked_array = maskoceans(longitude, latitude, data_unmasked.data, resolution = 'f', grid = 1.25)
 
-        hfss_data.data = np.ma.array(hfss_data_unmasked.data, mask=mask_bool)
+        """Convert the masked ocean data points to boolean to begin creating a boolean mask."""
+        mask_bool = np.ma.filled(masked_array, 1)
 
-        #map.drawcoastlines(linewidth=1.5)
-        #map.drawcountries(linewidth=1)
-        #contour_levels = np.arange(0, 110, 10)
-        #contour_plot = map.contourf(x, y, hfss_data.data, contour_levels, extend='both', cmap = 'coolwarm')
-        #colour_bar = map.colorbar(contour_plot, location='bottom', pad='15%')
-        #fig.savefig("test1.png")
-        plt.close()
+        """Convert the unmasked data points to boolean to finish creating the boolean mask."""
+        mask_bool[mask_bool != 1] = 0
 
-        #hfss_data.coord('latitude').guess_bounds()
-        #hfss_data.coord('longitude').guess_bounds()
-        grid_areas = iris.analysis.cartography.area_weights(hfss_data)
-        #Take a weighted mean across lat/lon
-        hfss_data = hfss_data.collapsed(['longitude', 'latitude'], iris.analysis.MEAN, weights = grid_areas)
+        """Add the mask to the unmasked array."""
+        data_unmasked.data = np.ma.array(data_unmasked.data, mask=mask_bool)
 
-        hfss_data = hfss_data.data
-        print hfss_data
-        hfss_data_array = np.append(hfss_data_array, hfss_data)
+        """The unmasked data is now masked. Rename the array."""
+        data = data_unmasked
 
-    #print hfss_data_array
-    return hfss_data_array
+        """Leave this code commented out. It enables printing the data on a map to test the mask to see if it has worked."""
 
-def extract_latent_data(file_path, lower_lat, upper_lat, lower_lon, upper_lon):
-
-    hfls_data_array = []
-
-    for i in np.arange(1, 13, 1):
-
-        data = netCDF4.Dataset(file_path)
-
-        times = extract_times(data, [i])
-
-        hfls_data = iris.load_cube(file_path, 'surface_upward_latent_heat_flux')
-
-        hfls_data = hfls_data.extract(iris.Constraint(time = times))
-
-        hfls_data = hfls_data.intersection(latitude=(lower_lat, upper_lat), longitude=(lower_lon, upper_lon))
-
-        hfls_data_unmasked = hfls_data.collapsed('time', iris.analysis.MEAN)
-
-        longitude = hfls_data_unmasked.coord('longitude').points
-
-        latitude = hfls_data_unmasked.coord('latitude').points
-
-        #print longitude
-        #print latitude
-
-        hfls = hfls_data_unmasked.data
-
+        """
         fig = plt.figure()
-
-        map = Basemap(llcrnrlon=lower_lon, llcrnrlat=lower_lat, urcrnrlon=upper_lon, urcrnrlat=upper_lat, projection='mill')
-
-        longitude, latitude = np.meshgrid(longitude, latitude)
-        x, y = map(longitude, latitude)
-        hfls_masked_array = maskoceans(longitude, latitude, hfls, resolution = 'f', grid = 1.25)
-
-        mask_bool = np.ma.filled(hfls_masked_array, 1)
-        # 1 is masked data, 0 is the data itself
-        mask_bool[mask_bool !=1] = 0
-
-        hfls_data = hfls_data_unmasked
-
-        hfls_data.data = np.ma.array(hfls_data_unmasked.data, mask=mask_bool)
-
-        #map.drawcoastlines(linewidth=1.5)
-        #map.drawcountries(linewidth=1)
-        #contour_levels = np.arange(0, 110, 10)
-        #contour_plot = map.contourf(x, y, hfls_data.data, contour_levels, extend='both', cmap = 'coolwarm')
-        #colour_bar = map.colorbar(contour_plot, location='bottom', pad='15%')
-        #fig.savefig("test1.png")
+        map.drawcoastlines(linewidth=1.5)
+        map.drawcountries(linewidth=1)
+        map.drawparallels(np.arange(-50, 60, 10), labels=[1, 0, 0, 0], fontsize=10, linewidth=0.4)
+        map.drawmeridians(np.arange(-40, 80, 20), labels=[0, 0, 0, 1], fontsize=10, linewidth=0.4)
+        contour_levels = np.arange(0, 110, 10)
+        contour_plot = map.contourf(x, y, data_unmasked.data, contour_levels, extend='both', cmap = 'coolwarm')
+        colour_bar = map.colorbar(contour_plot, location='bottom', pad='15%')
+        fig.savefig("test1.png")
+        print " plot done"
         plt.close()
+        """
 
-        #hfls_data.coord('latitude').guess_bounds()
-        #hfls_data.coord('longitude').guess_bounds()
-        grid_areas = iris.analysis.cartography.area_weights(hfls_data)
+        """Area average the data using the iris weights method."""
+        data.coord('latitude').guess_bounds()
+        data.coord('longitude').guess_bounds()
+        grid_areas = iris.analysis.cartography.area_weights(data)
+        data = data.collapsed(['longitude', 'latitude'], iris.analysis.MEAN, weights = grid_areas)
 
-        hfls_data = hfls_data.collapsed(['longitude', 'latitude'], iris.analysis.MEAN, weights = grid_areas)
+        """Print out the data for the month."""
+        data = data.data
+        print i
+        print data
 
-        hfls_data = hfls_data.data
-        print hfls_data
-        hfls_data_array = np.append(hfls_data_array, hfls_data)
+        """Append the data to the array outside the loop to produce the data for the seasonal cycle."""
+        data_array = np.append(data_array, data)
 
-    #print hfls_data_array
-    return hfls_data_array
+    return data_array
 
-def extract_times(data, list_of_months):
 
-    """Print the times."""
+def constrain_year(cube, time_range):
+    """Constrain the years. Print the model ID, length of time dimension, and first and last model dates."""
+    with iris.FUTURE.context(cell_datetime_objects=True):
+        cube = cube.extract(time_range)
+        time_points = cube.coord('time').points
+        times = cube.coord('time').units.num2date(time_points)
+        model_id = cube.attributes['model_id']
+        print model_id
+        print len(times)
+        print times[0]
+        print times[-1]
+        return cube
 
+
+def constrain_month(data, list_of_months):
+    """Array contains the months by which the cube should be sliced."""
     time_data = num2date(data.variables['time'][:], units = data.variables['time'].units)
 
     list_time = np.array(time_data).tolist()
 
-    #print list_time
-
     indices_list_time = []
 
     for index, i in enumerate(list_time):
-
         for elem in list_of_months:
-
-           if i.month == elem:
-
+            if i.month == elem:
                 indices_list_time = np.append(indices_list_time, (index))
 
     indices_list_time = [int(i) for i in indices_list_time]
 
     time_data = time_data[indices_list_time]
-
     time_data = date2num(time_data, data.variables['time'].units)
-
     np.set_printoptions(suppress = True)
-
     return time_data
 
 
-seasonal_cycle(["ACCESS1-3/", "bcc-csm1-1-m/", "CanAM4/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "EC-EARTH/", "FGOALS-s2/", "GFDL-CM3/", "HadGEM2-A/"], "amip", "evap_fraction", -10, 5, 5, 35)
+seasonal_cycle(["GFDL-CM3", "HadGEM2-A"], "amip", "hfss", -10, 5, 5, 35)
