@@ -1,9 +1,7 @@
 """Import necessary modules for this code."""
-import copy
 import iris
 import iris.analysis
 import iris.analysis.cartography
-import matplotlib.pyplot as plt
 import matplotlib
 from mpl_toolkits.basemap import Basemap, maskoceans
 import netCDF4
@@ -11,40 +9,30 @@ from netCDF4 import num2date
 from netCDF4 import date2num
 import numpy as np
 import os
-import seasonal_cycle_ensemble
 matplotlib.use('Agg')
 
 
-def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, lower_lon, upper_lon):
+def seasonal_cycle_ensemble(list_of_models, model_type, variable, lower_lat, upper_lat, lower_lon, upper_lon):
     """Take the input variables, and find the paths to the relevant regridded model files."""
     """Plot these up as a seasonal cycle. Central African domain."""
 
     """Import the data."""
-    root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
-    ensemble = "r1i1p1"
+    root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles"
 
     if variable != "evap_fraction":
 
         """Find the paths to the files containing the model data"""
-        """Find the paths to the directories containing the model data"""
-        directory_paths = []
-        for root, directories, files in os.walk(root_directory):
-            for i in directories:
-                path = os.path.join(root, i)
-                for j in list_of_models:
-                    if j in path and model_type in path and ensemble in path:
-                        directory_paths = np.append(directory_paths, path)
-
-        """Find the model files and their absolute paths."""
         model_file_paths = []
-        for i in directory_paths:
-            files = os.listdir(i)
-            for j in files:
-                if variable in j:
-                    model_file_path = os.path.join(i, j)
-                    model_file_paths = np.append(model_file_paths, model_file_path)
-
-        model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
+        for root, directories, files in os.walk(root_directory):
+            for i in files:
+                path = os.path.join(root, i)
+                print path
+                for j in list_of_models:
+                    for char in '/':
+                        j = j.replace(char,'')
+                    if j in path and model_type in path and variable in path and ('hfss' in path or 'hfls' in path):
+                        model_file_paths = np.append(model_file_paths, path)
+        model_file_paths.sort()
 
     if variable == "evap_fraction":
 
@@ -53,54 +41,37 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
         for root, directories, files in os.walk(root_directory):
             for i in files:
                 path = os.path.join(root, i)
+                print path
                 for j in list_of_models:
-                    if j in path and model_type in path and ensemble in path and ('hfss' in path or 'hfls' in path):
+                    for char in '/':
+                        j = j.replace(char,'')
+                    if j in path and model_type in path and ('hfss' in path or 'hfls' in path):
                         model_file_paths = np.append(model_file_paths, path)
+        model_file_paths.sort()
 
-    model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
+        print model_file_paths
 
     """Define a time range to constrain the years of the data."""
     time_range = iris.Constraint(time=lambda cell: 1979 <= cell.point.year <= 2008)
 
-    """Before looping through all the models, set up the figure to plot to."""
-
-    fig = plt.figure()
-    ax1 = fig.add_subplot(111)
-    objects = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec')
-    x_pos = np.arange(len(objects))
-    plt.xticks(x_pos, objects)
-    ax1.set_xlim([0, 11])
-    ax1.tick_params(axis='x', direction='in', which='both', labelbottom='on', labeltop='off', bottom='on', top='on')
-    ax1.tick_params(axis='y', direction='in', which='both', labelleft='on', labelright='off', left='on', right='on')
-    ax1.patch.set_visible(False)
-    plt.title('Central Africa, AMIP, 1979-2008', fontsize = 10)
-
     """Load the data from the model file paths into a cube. Constrain the input years"""
     """Print the model ID, length of time dimension, and first and last model dates."""
-
-    """Define the list of colours for each model."""
-    cmap = plt.get_cmap('rainbow')
-    colours = [cmap(i) for i in np.linspace(0, 1, len(list_of_models))]
 
     """Define a model number to begin with."""
     model_number = 0
 
+    """Set up the array that contains the ensemble mean seasonal cycle."""
+    ensemble_mean_array = np.zeros((len(list_of_models), 12))
+
     """For each model,"""
     for j in list_of_models:
-
-        """Select the line colour and add one to the line count variable."""
-        line_colour = colours[model_number]
+        for char in '/':
+            j = j.replace(char,'')
 
         """Extract the sensible and latent paths."""
-
         paths_for_this_model = [k for k in model_file_paths if j in k]
-        #print paths_for_this_model
         latent_path = [k for k in paths_for_this_model if 'hfls' in k]
         sensible_path = [k for k in paths_for_this_model if 'hfss' in k]
-
-        """Extract the model ID."""
-        data = netCDF4.Dataset(paths_for_this_model[0])
-        model_id = data.model_id
 
         """Load the cube for each variable, constrain the years and extract the seasonal cycle array."""
         """Append the seasonal cycle array to the ensemble mean array outside the loop."""
@@ -109,11 +80,13 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
             data_cube = iris.load_cube(latent_path, 'surface_upward_latent_heat_flux')
             data_cube = constrain_year(data_cube, time_range)
             data_array = extract_seasonal_cycle_data(data_cube, latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
+            ensemble_mean_array[model_number] = data_array
 
         if variable == 'hfss':
             data_cube = iris.load_cube(sensible_path, 'surface_upward_sensible_heat_flux')
             data_cube = constrain_year(data_cube, time_range)
             data_array = extract_seasonal_cycle_data(data_cube, sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
+            ensemble_mean_array[model_number] = data_array
 
         if variable == 'evap_fraction':
             cube_latent = iris.load_cube(latent_path, 'surface_upward_latent_heat_flux')
@@ -124,43 +97,14 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
             latent_seasonal_cycle_array = extract_seasonal_cycle_data(cube_latent, latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
             sensible_seasonal_cycle_array = extract_seasonal_cycle_data(cube_sensible, sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
             data_array = latent_seasonal_cycle_array / (latent_seasonal_cycle_array + sensible_seasonal_cycle_array)
-
-        """Add the seasonal cycle to the plot."""
-
-        ax1.plot(x_pos, data_array, zorder=1, linestyle='-', color=line_colour, label = str(model_id))
-        handles, labels = ax1.get_legend_handles_labels()
-        handles = [copy.copy(ha) for ha in handles]
-        [ha.set_linestyle("-") for ha in handles]
-        legend = plt.legend(handles, labels, loc="upper left", bbox_to_anchor=(1, 1))
-        if variable == 'hfls':
-            plt.ylabel('Latent Heat Flux (W m-2)')
-            plt.ylim(0, 160)
-        if variable == 'hfss':
-            plt.ylabel('Sensible Heat Flux (W m-2)')
-            plt.ylim(0, 160)
-        if variable == 'evap_fraction':
-            plt.ylabel('Evaporative Fraction')
-            plt.ylim(0, 1)
+            ensemble_mean_array[model_number] = data_array
 
         """Add 1 to the model number to loop through the next model."""
         model_number +=1
 
     """Take the mean seasonal cycle across the models."""
-
-    ensemble_mean_array = seasonal_cycle_ensemble.seasonal_cycle_ensemble(list_of_models, model_type, variable, lower_lat, upper_lat, lower_lon, upper_lon)
-    print ensemble_mean_array
-
-    """Add the ensemble mean seasonal cycle to the plot."""
-
-    ax1.plot(x_pos, ensemble_mean_array, zorder=1, linestyle=':', color='black', label = "Ensemble")
-    handles, labels = ax1.get_legend_handles_labels()
-    handles = [copy.copy(ha) for ha in handles]
-    [ha.set_linestyle("-") for ha in handles]
-    legend = plt.legend(handles, labels, loc="upper left", bbox_to_anchor=(1, 1))
-
-    """Save the figure."""
-    fig.savefig("Seasonal_Cycle_"+variable+"_test.png", bbox_extra_artists=(legend,), bbox_inches='tight')
-
+    ensemble_mean_array = np.mean(ensemble_mean_array, axis = 0)
+    return ensemble_mean_array
 
 def extract_seasonal_cycle_data(input_cube, path, lower_lat, upper_lat, lower_lon, upper_lon):
     """Extract seasonal cycle data from an iris cube given the cube, its path, and the chosen lats/lons."""
@@ -229,6 +173,8 @@ def extract_seasonal_cycle_data(input_cube, path, lower_lat, upper_lat, lower_lo
         """
 
         """Area average the data using the iris weights method."""
+        data.coord('latitude').guess_bounds()
+        data.coord('longitude').guess_bounds()
         grid_areas = iris.analysis.cartography.area_weights(data)
         data = data.collapsed(['longitude', 'latitude'], iris.analysis.MEAN, weights = grid_areas)
 
@@ -278,7 +224,4 @@ def constrain_month(data, list_of_months):
     return time_data
 
 
-#seasonal_cycle(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "evap_fraction", -10, 5, 5, 35)
-
-#seasonal_cycle(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "evap_fraction", -10, 5, 5, 35)
-seasonal_cycle(["ACCESS1-3"], "amip", "evap_fraction", -10, 5, 5, 35)
+#seasonal_cycle_ensemble(["CSIRO-Mk3-6-0", "HadGEM2-A"], "amip", "hfss", -10, 5, 5, 35)

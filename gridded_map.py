@@ -40,18 +40,15 @@ def map(list_of_models, model_type, variable, season_name):
             if variable in j:
                 model_file_path = os.path.join(i, j)
                 model_file_paths = np.append(model_file_paths, model_file_path)
-    model_file_paths.sort()
 
+    model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
     print model_file_paths
-
-    model_file_paths.sort()
 
     """Define a time range to constrain the years of the data."""
     time_range = iris.Constraint(time=lambda cell: 1979 <= cell.point.year <= 2008)
 
     """Load the data from the model file paths into a cube. Constrain the input years"""
     """Print the model ID, length of time dimension, and first and last model dates."""
-
     cubes = []
 
     if variable == 'hfls':
@@ -94,6 +91,22 @@ def map(list_of_models, model_type, variable, season_name):
                 print times[-1]
                 count +=1
 
+    """Define the contour levels for the input variables."""
+    if variable == 'hfls':
+        contour_levels = np.arange(0, 165, 15)
+    if variable == 'hfss':
+        contour_levels = np.arange(0, 110, 10)
+
+    """Define the colour map and the projection."""
+    cmap = matplotlib.cm.get_cmap('coolwarm')
+    crs_latlon = ccrs.PlateCarree()
+
+    """Define a model number to begin with."""
+    model_number = 0
+
+    """Plot the figure."""
+    fig = plt.figure(figsize=(12, 6))
+
     """For each cube (for each model),"""
     for model_data in cubes:
 
@@ -122,8 +135,12 @@ def map(list_of_models, model_type, variable, season_name):
             """Take the mean over the cube."""
             model_data = model_data_season.collapsed('time', iris.analysis.MEAN)
 
-        """Plot the figure."""
-        fig = plt.figure()
+        model_id = model_data.attributes['model_id']
+        print model_id+' cube loaded'
+
+        ax = plt.subplot(4, 5, model_number+1, projection=crs_latlon)
+        ax.set_extent([-22, 62, -22, 12], crs=crs_latlon)
+        contour_plot = iplt.contourf(model_data, contour_levels, cmap=cmap, extend='both')
 
         """Import coastlines and lake borders. Set the scale to 10m, 50m or 110m resolution for more detail."""
         coastline = cart.feature.NaturalEarthFeature(category='physical', name='coastline', scale='110m', facecolor='none')
@@ -137,20 +154,8 @@ def map(list_of_models, model_type, variable, season_name):
         """Remove iris warning message."""
         iris.FUTURE.netcdf_promote = True
 
-        """Define the contour levels for the input variables."""
-        if variable == 'hfls':
-            contour_levels = np.arange(0, 165, 15)
-        if variable == 'hfss':
-            contour_levels = np.arange(0, 110, 10)
-
-        """Define the colour map and the projection."""
-        cmap = matplotlib.cm.get_cmap('coolwarm')
-        crs_latlon = ccrs.PlateCarree()
-
         """Plot the map using cartopy, and add map features."""
-        ax = plt.subplot(111, projection=crs_latlon)
-        ax.set_extent([-22, 62, -22, 12], crs=crs_latlon)
-        contour_plot = iplt.contourf(model_data, contour_levels, cmap=cmap, extend='both')
+
         ax.add_feature(coastline, zorder=5, edgecolor='k', linewidth=2)
         ax.add_feature(lake_borders, zorder=5, edgecolor='k', linewidth=1)
         for i in country_borders:
@@ -162,6 +167,8 @@ def map(list_of_models, model_type, variable, season_name):
         gridlines.xlabels_bottom = True
         gridlines.ylabels_left = True
         gridlines.ylabels_right = False
+        gridlines.xlabel_style = {'size': 6, 'color': 'black'}
+        gridlines.ylabel_style = {'size': 6, 'color': 'black'}
         gridlines.xlines = True
         gridlines.ylines = True
         gridlines.xformatter = LONGITUDE_FORMATTER
@@ -169,31 +176,35 @@ def map(list_of_models, model_type, variable, season_name):
         gridlines.xlocator = mticker.FixedLocator(np.arange(-40, 100, 20))
         gridlines.ylocator = mticker.FixedLocator(np.arange(-50, 70, 10))
 
-        """Add a colour bar, with ticks and labels."""
-        colour_bar = plt.colorbar(contour_plot, orientation='horizontal', pad=0.1, aspect=40)
-
-        if variable == 'hfls':
-            colour_bar.set_ticks(np.arange(0, 165, 15))
-            colour_bar.set_ticklabels(np.arange(0, 165, 15))
-        if variable == 'hfss':
-            colour_bar.set_ticks(np.arange(0, 110, 10))
-            colour_bar.set_ticklabels(np.arange(0, 110, 10))
-
-        colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
-
-        variable_name = str(model_data.long_name)
-        variable_units = str(model_data.units)
-        colour_bar.set_label(variable_name+" ("+variable_units+")", fontsize=10)
-
         """Add a title."""
-        model_id = model_data.attributes['model_id']
-        plt.title(model_id, fontsize=20)
 
-        """Save the figure, close the plot and print an end statement."""
-        fig.savefig(variable+"_"+season_name+"_"+model_id+".png")
-        plt.close()
-        print model_id+" plot done"
+        plt.title(model_id, fontsize=10)
+
+        """Add 1 to the model number to loop through the next model."""
+        model_number +=1
+
+    colourbar_axis = fig.add_axes([0.31, 0.08, 0.40, 0.02])
+    colour_bar = plt.colorbar(contour_plot, colourbar_axis, orientation='horizontal')
+
+    if variable == 'hfls':
+        colour_bar.set_ticks(np.arange(0, 165, 15))
+        colour_bar.set_ticklabels(np.arange(0, 165, 15))
+    if variable == 'hfss':
+        colour_bar.set_ticks(np.arange(0, 110, 10))
+        colour_bar.set_ticklabels(np.arange(0, 110, 10))
+
+    colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
+
+    variable_name = str(model_data.long_name)
+    variable_units = str(model_data.units)
+    colour_bar.set_label(variable_name+" ("+variable_units+")", fontsize=10)
+
+    """Save the figure, close the plot and print an end statement."""
+    fig.savefig(variable+"_"+season_name+"_gridded.png")
+    plt.close()
+    print "plot done"
 
 # map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CCSM4/", "CESM1-CAM5/", "CMCC-CM/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "EC-EARTH/", "FGOALS-g2/", "FGOALS-s2/", "GFDL-CM3/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/"], "amip", "hfls", [1,2,12], "DJF")
 
-map(["ACCESS1-3"], "amip", "hfss", "SON")
+map(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfss", "SON")
+#map(["ACCESS1-3"], "amip", "hfss", "SON")

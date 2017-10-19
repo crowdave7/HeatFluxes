@@ -58,12 +58,18 @@ def regrid(list_of_models, model_type, variable):
 
         """Extract the model ID for naming the netCDF file."""
         model_id = regridded_model_data.attributes['model_id']
+        if model_id == 'ACCESS1.3':
 
-        """Save the regridded cube as a netCDF file."""
-        iris.save(regridded_model_data, "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles/"+variable+"_"+model_id+"_"+model_type+"_regridded_Africa.nc")
+            """Save the regridded cube as a netCDF file."""
+            iris.save(regridded_model_data, "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles/"+variable+"_ACCESS1-3_"+model_type+"_regridded_Africa.nc")
+
+        else:
+
+            """Save the regridded cube as a netCDF file."""
+            iris.save(regridded_model_data, "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles/"+variable+"_"+model_id+"_"+model_type+"_regridded_Africa.nc")
 
         """Print a statement to signify that regridding has finished for this model."""
         print model_id+" regridding done"
 
 
-regrid(["HadGEM2-A"], "amip", "hfls")
+regrid(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfss")

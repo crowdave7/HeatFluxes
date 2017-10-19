@@ -29,9 +29,13 @@ def plot_bowen(list_of_models, model_type, season_name):
             path = os.path.join(root, i)
             #print path
             for j in list_of_models:
-                if j in path and model_type in path:
+                for char in '/':
+                    j = j.replace(char,'')
+                if j in path and model_type in path and ('hfss' in path or 'hfls' in path):
                     model_file_paths = np.append(model_file_paths, path)
     model_file_paths.sort()
+
+    print model_file_paths
 
     """Load the sensible and latent heat flux data from each model into a cubelist."""
 
@@ -46,6 +50,8 @@ def plot_bowen(list_of_models, model_type, season_name):
 
     """ For each model compute the evaporative fraction in an iris cube and plot."""
     for j in list_of_models:
+        for char in '/':
+            j = j.replace(char,'')
 
         """Find the relevant model paths, and load into a cubelist."""
         paths_for_this_model = [k for k in model_file_paths if j in k]
@@ -145,7 +151,7 @@ def plot_bowen(list_of_models, model_type, season_name):
     iris.FUTURE.netcdf_promote = True
 
     """Define the contour levels for the input variables."""
-    contour_levels = np.arange(0, 1.1, 0.1)
+    contour_levels = np.arange(0.4, 1.05, 0.05)
 
     """Define the colour map and the projection."""
     cmap = matplotlib.cm.get_cmap('coolwarm_r')
@@ -175,8 +181,8 @@ def plot_bowen(list_of_models, model_type, season_name):
 
     """Add a colour bar, with ticks and labels."""
     colour_bar = plt.colorbar(contour_plot, orientation='horizontal', pad=0.1, aspect=40)
-    colour_bar.set_ticks(np.arange(0, 1.1, 0.1))
-    colour_bar.set_ticklabels(np.arange(0, 1.1, 0.1))
+    colour_bar.set_ticks(np.arange(0.4, 1.05, 0.05))
+    colour_bar.set_ticklabels(np.arange(0.4, 1.05, 0.05))
     colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
 
     variable_name = "Evaporative Fraction"
@@ -190,4 +196,5 @@ def plot_bowen(list_of_models, model_type, season_name):
     plt.close()
     print "Ensemble Mean Plot done"
 
-plot_bowen(["GFDL-CM3", "HadGEM2-A"], "amip", "DJF")
+
+plot_bowen(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "MAM")

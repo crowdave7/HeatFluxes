@@ -20,20 +20,21 @@ def plot_bowen(list_of_models, model_type, season_name):
     """Central African domain."""
 
     """Import the data."""
-    root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles"
+    root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
+    ensemble = "r1i1p1"
 
     """Find the paths to the files containing the model data"""
     model_file_paths = []
     for root, directories, files in os.walk(root_directory):
         for i in files:
             path = os.path.join(root, i)
-            #print path
             for j in list_of_models:
-                if j in path and model_type in path:
+                if j in path and model_type in path and ensemble in path and ('hfss' in path or 'hfls' in path):
                     model_file_paths = np.append(model_file_paths, path)
+
     model_file_paths.sort()
 
-    #print model_file_paths
+    print model_file_paths
 
     """Load the sensible and latent heat flux data from each model into a cubelist."""
 
@@ -111,9 +112,12 @@ def plot_bowen(list_of_models, model_type, season_name):
         """Now compute the evaporative fraction for the one model."""
 
         """Select the numerator (latent heat flux)."""
-        variable_name = str(cubes[0].standard_name)
-        if "latent" in variable_name:
+        variable_name_0 = str(cubes[0].standard_name)
+        variable_name_1 = str(cubes[1].standard_name)
+        if "latent" in variable_name_0:
             numerator = cubes[0]
+        elif "latent" in variable_name_1:
+            numerator = cubes[1]
 
         """Calculate the denominator (latent + sensible heat flux)."""
         denominator = iris.analysis.maths.add(cubes[0], cubes[1])
@@ -137,7 +141,7 @@ def plot_bowen(list_of_models, model_type, season_name):
         iris.FUTURE.netcdf_promote = True
 
         """Define the contour levels for the input variables."""
-        contour_levels = np.arange(0, 1.1, 0.1)
+        contour_levels = np.arange(0.3, 1.05, 0.05)
 
         """Define the colour map and the projection."""
         cmap = matplotlib.cm.get_cmap('coolwarm_r')
@@ -167,8 +171,8 @@ def plot_bowen(list_of_models, model_type, season_name):
 
         """Add a colour bar, with ticks and labels."""
         colour_bar = plt.colorbar(contour_plot, orientation='horizontal', pad=0.1, aspect=40)
-        colour_bar.set_ticks(np.arange(0, 1.1, 0.1))
-        colour_bar.set_ticklabels(np.arange(0, 1.1, 0.1))
+        colour_bar.set_ticks(np.arange(0.4, 1.05, 0.05))
+        colour_bar.set_ticklabels(np.arange(0.4, 1.05, 0.05))
         colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
 
         variable_name = "Evaporative Fraction"
@@ -182,4 +186,5 @@ def plot_bowen(list_of_models, model_type, season_name):
         plt.close()
         print model_id+" plot done"
 
-plot_bowen(["GFDL-CM3", "HadGEM2-A"], "amip", "DJF")
+
+plot_bowen(["ACCESS1-3"], "amip", "JJA")
