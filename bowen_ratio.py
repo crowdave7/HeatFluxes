@@ -32,7 +32,7 @@ def plot_bowen(list_of_models, model_type, season_name):
                 if j in path and model_type in path and ensemble in path and ('hfss' in path or 'hfls' in path):
                     model_file_paths = np.append(model_file_paths, path)
 
-    model_file_paths.sort()
+    model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
     print model_file_paths
 
@@ -49,8 +49,9 @@ def plot_bowen(list_of_models, model_type, season_name):
 
         """Find the relevant model paths, and load into a cubelist."""
         paths_for_this_model = [k for k in model_file_paths if j in k]
-        cubes = iris.load(paths_for_this_model)
+        cubes = iris.load(paths_for_this_model, ['surface_upward_latent_heat_flux', 'surface_upward_sensible_heat_flux'])
         count = 0
+        print cubes
 
         """Constrain the years. Print the model ID, length of time dimension, and first and last model dates."""
         for i in cubes:
@@ -175,16 +176,15 @@ def plot_bowen(list_of_models, model_type, season_name):
         colour_bar.set_ticklabels(np.arange(0.4, 1.05, 0.05))
         colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
 
-        variable_name = "Evaporative Fraction"
         colour_bar.set_label(("Evaporative Fraction"), fontsize=10)
 
         """Add a title."""
         plt.title(model_id+' (AMIP) 1979-2008 ' ''+season_name+'', fontsize=10)
 
         """Save the figure, close the plot and print an end statement."""
-        fig.savefig("Evap_Frac_"+season_name+"_"+model_id+".png")
+        fig.savefig("Evap_Frac_"+season_name+"_"+model_id+".png", dpi=600)
         plt.close()
         print model_id+" plot done"
 
 
-plot_bowen(["ACCESS1-3"], "amip", "JJA")
+plot_bowen(["GFDL-HIRAM-C360"], "amip", "JJA")

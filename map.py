@@ -40,11 +40,10 @@ def map(list_of_models, model_type, variable, season_name):
             if variable in j:
                 model_file_path = os.path.join(i, j)
                 model_file_paths = np.append(model_file_paths, model_file_path)
-    model_file_paths.sort()
+
+    model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
     print model_file_paths
-
-    model_file_paths.sort()
 
     """Define a time range to constrain the years of the data."""
     time_range = iris.Constraint(time=lambda cell: 1979 <= cell.point.year <= 2008)
@@ -119,6 +118,8 @@ def map(list_of_models, model_type, variable, season_name):
             constraint = iris.Constraint(clim_season=season_name.lower())
             model_data_season = seasonal_means.extract(constraint)
 
+            print model_data_season.coord('time')
+
             """Take the mean over the cube."""
             model_data = model_data_season.collapsed('time', iris.analysis.MEAN)
 
@@ -151,10 +152,11 @@ def map(list_of_models, model_type, variable, season_name):
         ax = plt.subplot(111, projection=crs_latlon)
         ax.set_extent([-22, 62, -22, 12], crs=crs_latlon)
         contour_plot = iplt.contourf(model_data, contour_levels, cmap=cmap, extend='both')
-        ax.add_feature(coastline, zorder=5, edgecolor='k', linewidth=2)
         ax.add_feature(lake_borders, zorder=5, edgecolor='k', linewidth=1)
         for i in country_borders:
             ax.add_geometries(i.geometry, ccrs.PlateCarree(), edgecolor="black", facecolor="None")
+        ax.add_feature(cart.feature.OCEAN, zorder=1, facecolor="w")
+        ax.add_feature(coastline, zorder=5, edgecolor='k', linewidth=2)
 
         """Define gridlines."""
         gridlines = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, color='black', linewidth=0.4, linestyle='--')

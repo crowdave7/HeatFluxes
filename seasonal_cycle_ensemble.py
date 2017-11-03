@@ -32,7 +32,8 @@ def seasonal_cycle_ensemble(list_of_models, model_type, variable, lower_lat, upp
                         j = j.replace(char,'')
                     if j in path and model_type in path and variable in path and ('hfss' in path or 'hfls' in path):
                         model_file_paths = np.append(model_file_paths, path)
-        model_file_paths.sort()
+
+        model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
     if variable == "evap_fraction":
 
@@ -41,13 +42,13 @@ def seasonal_cycle_ensemble(list_of_models, model_type, variable, lower_lat, upp
         for root, directories, files in os.walk(root_directory):
             for i in files:
                 path = os.path.join(root, i)
-                print path
                 for j in list_of_models:
                     for char in '/':
                         j = j.replace(char,'')
                     if j in path and model_type in path and ('hfss' in path or 'hfls' in path):
                         model_file_paths = np.append(model_file_paths, path)
-        model_file_paths.sort()
+
+        model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
         print model_file_paths
 

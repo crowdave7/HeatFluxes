@@ -33,7 +33,8 @@ def plot_bowen(list_of_models, model_type, season_name):
                     j = j.replace(char,'')
                 if j in path and model_type in path and ('hfss' in path or 'hfls' in path):
                     model_file_paths = np.append(model_file_paths, path)
-    model_file_paths.sort()
+
+    model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
     print model_file_paths
 
@@ -55,7 +56,7 @@ def plot_bowen(list_of_models, model_type, season_name):
 
         """Find the relevant model paths, and load into a cubelist."""
         paths_for_this_model = [k for k in model_file_paths if j in k]
-        cubes = iris.load(paths_for_this_model)
+        cubes = iris.load(paths_for_this_model, ['surface_upward_latent_heat_flux', 'surface_upward_sensible_heat_flux'])
 
         """Constrain the years. Print the model ID, length of time dimension, and first and last model dates."""
         count = 0
@@ -197,4 +198,4 @@ def plot_bowen(list_of_models, model_type, season_name):
     print "Ensemble Mean Plot done"
 
 
-plot_bowen(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "MAM")
+#plot_bowen(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "SON")

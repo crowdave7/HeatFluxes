@@ -33,7 +33,8 @@ def ensemble(list_of_models, model_type, variable, season_name):
                     j = j.replace(char,'')
                 if j in path and model_type in path and variable in path:
                     model_file_paths = np.append(model_file_paths, path)
-    model_file_paths.sort()
+
+    model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
     print model_file_paths
 
@@ -202,4 +203,4 @@ def ensemble(list_of_models, model_type, variable, season_name):
 # map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CCSM4/", "CESM1-CAM5/", "CMCC-CM/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "EC-EARTH/", "FGOALS-g2/", "FGOALS-s2/", "GFDL-CM3/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/"], "amip", "hfls", [1,2,12], "DJF")
 
 
-ensemble(["ACCESS1-3", "bcc-csm1-1", "BNU-ESM", "CanAM4", "CNRM-CM5", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M"], "amip", "hfss", "JJA")
+ensemble(["ACCESS1-3", "bcc-csm1-1", "BNU-ESM", "CanAM4", "CNRM-CM5", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M"], "amip", "hfss", "SON")

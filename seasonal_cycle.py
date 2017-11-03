@@ -1,5 +1,4 @@
 """Import necessary modules for this code."""
-import copy
 import iris
 import iris.analysis
 import iris.analysis.cartography
@@ -7,11 +6,10 @@ import matplotlib.pyplot as plt
 import matplotlib
 from mpl_toolkits.basemap import Basemap, maskoceans
 import netCDF4
-from netCDF4 import num2date
-from netCDF4 import date2num
 import numpy as np
 import os
 import seasonal_cycle_ensemble
+import seasonal_cycle_reanalysis
 matplotlib.use('Agg')
 
 
@@ -73,7 +71,7 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
     ax1.tick_params(axis='x', direction='in', which='both', labelbottom='on', labeltop='off', bottom='on', top='on')
     ax1.tick_params(axis='y', direction='in', which='both', labelleft='on', labelright='off', left='on', right='on')
     ax1.patch.set_visible(False)
-    plt.title('Central Africa, AMIP, 1979-2008', fontsize = 10)
+    #plt.title('Central Africa, AMIP (Land), 1979-2008', fontsize = 10)
 
     """Load the data from the model file paths into a cube. Constrain the input years"""
     """Print the model ID, length of time dimension, and first and last model dates."""
@@ -94,7 +92,6 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
         """Extract the sensible and latent paths."""
 
         paths_for_this_model = [k for k in model_file_paths if j in k]
-        #print paths_for_this_model
         latent_path = [k for k in paths_for_this_model if 'hfls' in k]
         sensible_path = [k for k in paths_for_this_model if 'hfss' in k]
 
@@ -129,14 +126,14 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
 
         ax1.plot(x_pos, data_array, zorder=1, linestyle='-', color=line_colour, label = str(model_id))
         handles, labels = ax1.get_legend_handles_labels()
-        handles = [copy.copy(ha) for ha in handles]
-        [ha.set_linestyle("-") for ha in handles]
-        legend = plt.legend(handles, labels, loc="upper left", bbox_to_anchor=(1, 1))
+        handles[-1].set_linestyle("-")
+        legend = plt.legend(handles, labels, loc="center left", bbox_to_anchor=(1.03, 0.5), fontsize=9, handlelength=2.5)
+
         if variable == 'hfls':
-            plt.ylabel('Latent Heat Flux (W m-2)')
+            plt.ylabel('Latent Heat Flux (W $\mathregular{m^{-2}}$)')
             plt.ylim(0, 160)
         if variable == 'hfss':
-            plt.ylabel('Sensible Heat Flux (W m-2)')
+            plt.ylabel('Sensible Heat Flux (W $\mathregular{m^{-2}}$)')
             plt.ylim(0, 160)
         if variable == 'evap_fraction':
             plt.ylabel('Evaporative Fraction')
@@ -152,93 +149,142 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
 
     """Add the ensemble mean seasonal cycle to the plot."""
 
-    ax1.plot(x_pos, ensemble_mean_array, zorder=1, linestyle=':', color='black', label = "Ensemble")
+    ax1.plot(x_pos, ensemble_mean_array, zorder=2, linestyle='-', linewidth=4.0, color='black', label = "Ensemble")
     handles, labels = ax1.get_legend_handles_labels()
-    handles = [copy.copy(ha) for ha in handles]
-    [ha.set_linestyle("-") for ha in handles]
-    legend = plt.legend(handles, labels, loc="upper left", bbox_to_anchor=(1, 1))
+    handles[-1].set_linestyle("-")
+    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+
+    """Define the colours for the reanalysess."""
+
+    colours = [cmap(i) for i in np.linspace(0, 1, 6)]
+
+    """Add the CFSR reanalysis seasonal cycle to the plot."""
+
+    cfsr_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["cfsr"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
+    ax1.plot(x_pos, cfsr_array, zorder=1, linestyle='--', color = colours[0], label = "CFSR")
+    handles, labels = ax1.get_legend_handles_labels()
+    handles[-1].set_linestyle("--")
+    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+
+    """Add the DOE reanalysis seasonal cycle to the plot."""
+
+    doe_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["doe"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
+    ax1.plot(x_pos, doe_array, zorder=1, linestyle='--', color = colours[1], label = "NCEP DOE-2")
+    handles, labels = ax1.get_legend_handles_labels()
+    handles[-1].set_linestyle("--")
+    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+
+    """Add the ERAI reanalysis seasonal cycle to the plot."""
+
+    erai_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["erai"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
+    ax1.plot(x_pos, erai_array, zorder=1, linestyle='--', color = colours[2], label = "ERA-Interim")
+    handles, labels = ax1.get_legend_handles_labels()
+    handles[-1].set_linestyle("--")
+    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+
+    """Add the GLEAM reanalysis seasonal cycle to the plot."""
+
+    gleam_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["gleam"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
+    ax1.plot(x_pos, gleam_array, zorder=1, linestyle='--', color = colours[3], label = "GLEAM-LE")
+    handles, labels = ax1.get_legend_handles_labels()
+    handles[-1].set_linestyle("--")
+    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+
+    """Add the JRA-55 reanalysis seasonal cycle to the plot."""
+
+    jra_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["jra"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
+    ax1.plot(x_pos, jra_array, zorder=1, linestyle='--', color = colours[4], label = "JRA-55")
+    handles, labels = ax1.get_legend_handles_labels()
+    handles[-1].set_linestyle("--")
+    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+
+    """Add the MERRA2 reanalysis seasonal cycle to the plot."""
+
+    merra2_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["merra2"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
+    ax1.plot(x_pos, merra2_array, zorder=1, linestyle='--', color = colours[5], label = "MERRA-2")
+    handles, labels = ax1.get_legend_handles_labels()
+    handles[-1].set_linestyle("--")
+    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
 
     """Save the figure."""
-    fig.savefig("Seasonal_Cycle_"+variable+"_test.png", bbox_extra_artists=(legend,), bbox_inches='tight')
+    fig.savefig("Seasonal_Cycle_"+variable+".png", bbox_extra_artists=(legend,), bbox_inches='tight', dpi=600)
+    print "Plot done."
 
 
 def extract_seasonal_cycle_data(input_cube, path, lower_lat, upper_lat, lower_lon, upper_lon):
     """Extract seasonal cycle data from an iris cube given the cube, its path, and the chosen lats/lons."""
     data_array = []
 
-    """For each month,"""
-    for i in np.arange(1, 13, 1):
+    with iris.FUTURE.context(cell_datetime_objects=True):
 
-        """Load the dataset using the input path, and load the times to constrain the data by month."""
-        times = constrain_month(netCDF4.Dataset(path), [i])
+        """For each month,"""
+        for i in np.arange(1, 13, 1):
 
-        """Load in the cube."""
-        data = input_cube
+            """Constrain the data for each month only."""
+            time_range = iris.Constraint(time=lambda cell: cell.point.month == i)
+            data = input_cube.extract(time_range)
 
-        """Constrain the times in the cube."""
-        data = data.extract(iris.Constraint(time = times))
+            """Constrain the latitudes and longitudes of the data."""
+            data = data.intersection(latitude=(lower_lat, upper_lat), longitude=(lower_lon, upper_lon))
 
-        """Constrain the latitudes and longitudes of the data."""
-        data = data.intersection(latitude=(lower_lat, upper_lat), longitude=(lower_lon, upper_lon))
+            """Collapse the time dimension to take the mean over time."""
+            data_unmasked = data.collapsed('time', iris.analysis.MEAN)
 
-        """Collapse the time dimension to take the mean over time."""
-        data_unmasked = data.collapsed('time', iris.analysis.MEAN)
+            """Mask out the oceans from the data."""
 
-        """Mask out the oceans from the data."""
+            """Extract the longitudes and latitudes of the array."""
+            longitude = data_unmasked.coord('longitude').points
+            latitude = data_unmasked.coord('latitude').points
 
-        """Extract the longitudes and latitudes of the array."""
-        longitude = data_unmasked.coord('longitude').points
-        latitude = data_unmasked.coord('latitude').points
+            """Set up Basemap to begin to mask out the ocean points from the array."""
+            map = Basemap(llcrnrlon=lower_lon, llcrnrlat=lower_lat, urcrnrlon=upper_lon, urcrnrlat=upper_lat, projection='mill')
+            longitude, latitude = np.meshgrid(longitude, latitude)
+            x, y = map(longitude, latitude)
 
-        """Set up Basemap to begin to mask out the ocean points from the array."""
-        map = Basemap(llcrnrlon=lower_lon, llcrnrlat=lower_lat, urcrnrlon=upper_lon, urcrnrlat=upper_lat, projection='mill')
-        longitude, latitude = np.meshgrid(longitude, latitude)
-        x, y = map(longitude, latitude)
+            """Mask out ocean points from the array, not including lakes."""
 
-        """Mask out ocean points from the array, not including lakes."""
+            """Create an array with the ocean data points masked."""
+            masked_array = maskoceans(longitude, latitude, data_unmasked.data, resolution = 'f', grid = 1.25)
 
-        """Create an array with the ocean data points masked."""
-        masked_array = maskoceans(longitude, latitude, data_unmasked.data, resolution = 'f', grid = 1.25)
+            """Convert the masked ocean data points to boolean to begin creating a boolean mask."""
+            mask_bool = np.ma.filled(masked_array, 1)
 
-        """Convert the masked ocean data points to boolean to begin creating a boolean mask."""
-        mask_bool = np.ma.filled(masked_array, 1)
+            """Convert the unmasked data points to boolean to finish creating the boolean mask."""
+            mask_bool[mask_bool != 1] = 0
 
-        """Convert the unmasked data points to boolean to finish creating the boolean mask."""
-        mask_bool[mask_bool != 1] = 0
+            """Add the mask to the unmasked array."""
+            data_unmasked.data = np.ma.array(data_unmasked.data, mask=mask_bool)
 
-        """Add the mask to the unmasked array."""
-        data_unmasked.data = np.ma.array(data_unmasked.data, mask=mask_bool)
+            """The unmasked data is now masked. Rename the array."""
+            data = data_unmasked
 
-        """The unmasked data is now masked. Rename the array."""
-        data = data_unmasked
+            """Leave this code commented out. It enables printing the data on a map to test the mask to see if it has worked."""
 
-        """Leave this code commented out. It enables printing the data on a map to test the mask to see if it has worked."""
+            """
+            fig = plt.figure()
+            map.drawcoastlines(linewidth=1.5)
+            map.drawcountries(linewidth=1)
+            map.drawparallels(np.arange(-50, 60, 10), labels=[1, 0, 0, 0], fontsize=10, linewidth=0.4)
+            map.drawmeridians(np.arange(-40, 80, 20), labels=[0, 0, 0, 1], fontsize=10, linewidth=0.4)
+            contour_levels = np.arange(0, 110, 10)
+            contour_plot = map.contourf(x, y, data_unmasked.data, contour_levels, extend='both', cmap = 'coolwarm')
+            colour_bar = map.colorbar(contour_plot, location='bottom', pad='15%')
+            fig.savefig("test1.png")
+            print " plot done"
+            plt.close()
+            """
 
-        """
-        fig = plt.figure()
-        map.drawcoastlines(linewidth=1.5)
-        map.drawcountries(linewidth=1)
-        map.drawparallels(np.arange(-50, 60, 10), labels=[1, 0, 0, 0], fontsize=10, linewidth=0.4)
-        map.drawmeridians(np.arange(-40, 80, 20), labels=[0, 0, 0, 1], fontsize=10, linewidth=0.4)
-        contour_levels = np.arange(0, 110, 10)
-        contour_plot = map.contourf(x, y, data_unmasked.data, contour_levels, extend='both', cmap = 'coolwarm')
-        colour_bar = map.colorbar(contour_plot, location='bottom', pad='15%')
-        fig.savefig("test1.png")
-        print " plot done"
-        plt.close()
-        """
+            """Area average the data using the iris weights method."""
+            grid_areas = iris.analysis.cartography.area_weights(data)
+            data = data.collapsed(['longitude', 'latitude'], iris.analysis.MEAN, weights = grid_areas)
 
-        """Area average the data using the iris weights method."""
-        grid_areas = iris.analysis.cartography.area_weights(data)
-        data = data.collapsed(['longitude', 'latitude'], iris.analysis.MEAN, weights = grid_areas)
+            """Print out the data for the month."""
+            data = data.data
+            print i
+            print data
 
-        """Print out the data for the month."""
-        data = data.data
-        print i
-        print data
-
-        """Append the data to the array outside the loop to produce the data for the seasonal cycle."""
-        data_array = np.append(data_array, data)
+            """Append the data to the array outside the loop to produce the data for the seasonal cycle."""
+            data_array = np.append(data_array, data)
 
     return data_array
 
@@ -257,28 +303,7 @@ def constrain_year(cube, time_range):
         return cube
 
 
-def constrain_month(data, list_of_months):
-    """Array contains the months by which the cube should be sliced."""
-    time_data = num2date(data.variables['time'][:], units = data.variables['time'].units)
+seasonal_cycle(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "evap_fraction", -10, 5, 5, 35)
 
-    list_time = np.array(time_data).tolist()
-
-    indices_list_time = []
-
-    for index, i in enumerate(list_time):
-        for elem in list_of_months:
-            if i.month == elem:
-                indices_list_time = np.append(indices_list_time, (index))
-
-    indices_list_time = [int(i) for i in indices_list_time]
-
-    time_data = time_data[indices_list_time]
-    time_data = date2num(time_data, data.variables['time'].units)
-    np.set_printoptions(suppress = True)
-    return time_data
-
-
-#seasonal_cycle(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "evap_fraction", -10, 5, 5, 35)
-
-#seasonal_cycle(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "evap_fraction", -10, 5, 5, 35)
-seasonal_cycle(["ACCESS1-3"], "amip", "evap_fraction", -10, 5, 5, 35)
+#seasonal_cycle(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfls", -10, 5, 5, 35)
+#seasonal_cycle(["ACCESS1-3"], "amip", "hfls", -10, 5, 5, 35)

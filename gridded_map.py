@@ -3,6 +3,7 @@ import cartopy as cart
 import cartopy.crs as ccrs
 import cartopy.io.shapereader as shapereader
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+import ensemble_cube
 import iris
 import iris.analysis
 import iris.coord_categorisation
@@ -12,6 +13,7 @@ import matplotlib.ticker as mticker
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import reanalysis_cube
 
 
 def map(list_of_models, model_type, variable, season_name):
@@ -93,22 +95,33 @@ def map(list_of_models, model_type, variable, season_name):
 
     """Define the contour levels for the input variables."""
     if variable == 'hfls':
-        contour_levels = np.arange(0, 165, 15)
+        contour_levels = np.arange(80, 145, 5)
     if variable == 'hfss':
-        contour_levels = np.arange(0, 110, 10)
+        contour_levels = np.arange(0, 65, 5)
 
     """Define the colour map and the projection."""
-    cmap = matplotlib.cm.get_cmap('coolwarm')
+    if variable == 'hfss':
+        cmap = matplotlib.cm.get_cmap('YlGnBu_r')
+    if variable == 'hfls':
+        cmap = matplotlib.cm.get_cmap('YlGnBu')
     crs_latlon = ccrs.PlateCarree()
 
     """Define a model number to begin with."""
     model_number = 0
 
+    """Define the original long name."""
+    original_long_name = cubes[0].long_name
+    original_units = cubes[0].units
+
     """Plot the figure."""
-    fig = plt.figure(figsize=(12, 6))
+    fig = plt.figure(figsize=(8, 8))
 
     """For each cube (for each model),"""
     for model_data in cubes:
+
+        model_id = cubes[model_number].attributes['model_id']
+
+        model_data.long_name = model_id
 
         """Plot up a map for the file."""
 
@@ -117,6 +130,9 @@ def map(list_of_models, model_type, variable, season_name):
 
             """Take the mean over the cube."""
             model_data = model_data.collapsed('time', iris.analysis.MEAN)
+
+            """Add 1 to the model number to loop through the next model."""
+            model_number +=1
 
         """ If the input month is defined as a season,"""
         if season_name in ['DJF', 'MAM', 'JJA', 'SON']:
@@ -135,11 +151,49 @@ def map(list_of_models, model_type, variable, season_name):
             """Take the mean over the cube."""
             model_data = model_data_season.collapsed('time', iris.analysis.MEAN)
 
-        model_id = model_data.attributes['model_id']
-        print model_id+' cube loaded'
+            """Return this mean to the cubelist."""
+            cubes[model_number] = model_data
 
-        ax = plt.subplot(4, 5, model_number+1, projection=crs_latlon)
-        ax.set_extent([-22, 62, -22, 12], crs=crs_latlon)
+            """Add 1 to the model number to loop through the next model."""
+            model_number +=1
+
+    """Add the ensemble mean to the cubelist."""
+    ensemble_cube_data = ensemble_cube.ensemble(list_of_models, model_type, variable, season_name)
+    cubes = np.append(cubes, ensemble_cube_data)
+
+    """Add CFSR data to the cubelist."""
+    cfsr_cube_data = reanalysis_cube.reanalysis(["cfsr"], variable, season_name)
+    cubes = np.append(cubes, cfsr_cube_data)
+
+    """Add ERA-Interim data to the cubelist."""
+    erai_cube_data = reanalysis_cube.reanalysis(["erai"], variable, season_name)
+    cubes = np.append(cubes, erai_cube_data)
+
+    """Add GLEAM data to the cubelist."""
+    gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
+    cubes = np.append(cubes, gleam_cube_data)
+
+    """Add JRA-55 data to the cubelist."""
+    jra_cube_data = reanalysis_cube.reanalysis(["jra"], variable, season_name)
+    cubes = np.append(cubes, jra_cube_data)
+
+    """Add MERRA-2 data to the cubelist."""
+    merra_cube_data = reanalysis_cube.reanalysis(["merra2"], variable, season_name)
+    cubes = np.append(cubes, merra_cube_data)
+
+    """Add NCEP DOE-2 data to the cubelist."""
+    doe_cube_data = reanalysis_cube.reanalysis(["doe"], variable, season_name)
+    cubes = np.append(cubes, doe_cube_data)
+
+    print cubes[-1]
+
+    """Plot each model and the ensemble mean up."""
+    model_number = 0
+
+    for model_data in cubes:
+
+        ax = plt.subplot(6, 4, model_number+1, projection=crs_latlon)
+        ax.set_extent([-22, 62, -24, 17], crs=crs_latlon)
         contour_plot = iplt.contourf(model_data, contour_levels, cmap=cmap, extend='both')
 
         """Import coastlines and lake borders. Set the scale to 10m, 50m or 110m resolution for more detail."""
@@ -160,6 +214,7 @@ def map(list_of_models, model_type, variable, season_name):
         ax.add_feature(lake_borders, zorder=5, edgecolor='k', linewidth=1)
         for i in country_borders:
             ax.add_geometries(i.geometry, ccrs.PlateCarree(), edgecolor="black", facecolor="None")
+        ax.add_feature(cart.feature.OCEAN, zorder=1, facecolor="w")
 
         """Define gridlines."""
         gridlines = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, color='black', linewidth=0.4, linestyle='--')
@@ -169,42 +224,48 @@ def map(list_of_models, model_type, variable, season_name):
         gridlines.ylabels_right = False
         gridlines.xlabel_style = {'size': 6, 'color': 'black'}
         gridlines.ylabel_style = {'size': 6, 'color': 'black'}
-        gridlines.xlines = True
-        gridlines.ylines = True
+        gridlines.xlines = False
+        gridlines.ylines = False
         gridlines.xformatter = LONGITUDE_FORMATTER
         gridlines.yformatter = LATITUDE_FORMATTER
         gridlines.xlocator = mticker.FixedLocator(np.arange(-40, 100, 20))
         gridlines.ylocator = mticker.FixedLocator(np.arange(-50, 70, 10))
 
         """Add a title."""
-
-        plt.title(model_id, fontsize=10)
+        plt.title(model_data.long_name, fontsize=8)
 
         """Add 1 to the model number to loop through the next model."""
         model_number +=1
+        print model_number
 
-    colourbar_axis = fig.add_axes([0.31, 0.08, 0.40, 0.02])
+    colourbar_axis = fig.add_axes([0.20, 0.07, 0.60, 0.02])
     colour_bar = plt.colorbar(contour_plot, colourbar_axis, orientation='horizontal')
 
     if variable == 'hfls':
-        colour_bar.set_ticks(np.arange(0, 165, 15))
-        colour_bar.set_ticklabels(np.arange(0, 165, 15))
+        colour_bar.set_ticks(np.arange(80, 145, 10))
+        colour_bar.set_ticklabels(np.arange(80, 145, 10))
     if variable == 'hfss':
-        colour_bar.set_ticks(np.arange(0, 110, 10))
-        colour_bar.set_ticklabels(np.arange(0, 110, 10))
+        colour_bar.set_ticks(np.arange(0, 65, 10))
+        colour_bar.set_ticklabels(np.arange(0, 65, 10))
 
     colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
 
-    variable_name = str(model_data.long_name)
-    variable_units = str(model_data.units)
+    variable_name = str(original_long_name)
+    variable_units = str(original_units)
+    print variable_units
+    if variable_units == "W m-2":
+        variable_units = "W $\mathregular{m^{-2}}$"
     colour_bar.set_label(variable_name+" ("+variable_units+")", fontsize=10)
 
+    fig.subplots_adjust(left=0.125, right=0.9, bottom=0.14, top=0.93, wspace=0.4, hspace=0.9)
+
     """Save the figure, close the plot and print an end statement."""
-    fig.savefig(variable+"_"+season_name+"_gridded.png")
+    print "saving final figure"
+    fig.savefig(variable+"_"+season_name+"_gridded.png", dpi=600)
     plt.close()
     print "plot done"
 
 # map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CCSM4/", "CESM1-CAM5/", "CMCC-CM/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "EC-EARTH/", "FGOALS-g2/", "FGOALS-s2/", "GFDL-CM3/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/"], "amip", "hfls", [1,2,12], "DJF")
 
-map(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfss", "SON")
+map(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfss", "SON")
 #map(["ACCESS1-3"], "amip", "hfss", "SON")

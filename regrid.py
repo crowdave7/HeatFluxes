@@ -32,7 +32,8 @@ def regrid(list_of_models, model_type, variable):
             if variable in j:
                 model_file_path = os.path.join(i, j)
                 model_file_paths = np.append(model_file_paths, model_file_path)
-    model_file_paths.sort()
+
+    model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
     print model_file_paths
 
@@ -72,4 +73,5 @@ def regrid(list_of_models, model_type, variable):
         print model_id+" regridding done"
 
 
-regrid(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfss")
+#regrid(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfss")
+regrid(["IPSL-CM5B-LR", "MRI-AGCM3-2S"], "amip", "hfls")
