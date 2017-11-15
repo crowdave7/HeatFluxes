@@ -15,6 +15,10 @@ def reanalysis(reanalysis_type, variable, season_name):
     """Import the data."""
     root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles"
 
+    """If variable is pr, distinguish between pr and precipitable water to find model files."""
+    if variable == 'pr':
+        variable = 'pr_'
+
     """Find the paths to the files containing the model data"""
     model_file_paths = []
     for root, directories, files in os.walk(root_directory):
@@ -28,6 +32,10 @@ def reanalysis(reanalysis_type, variable, season_name):
 
     print model_file_paths
 
+    """If variable is pr_, convert variable back to pr"""
+    if variable == 'pr_':
+        variable = 'pr'
+
     """Load the data into a cubelist."""
 
     """Define a time range to constrain the years of the data."""
@@ -37,14 +45,12 @@ def reanalysis(reanalysis_type, variable, season_name):
     cubes = iris.load(model_file_paths)
     count = 0
 
-    """For the cubes constrain the time range. If the cube is ERAI, divide by -86400."""
+    """For the cubes constrain the time range."""
     for i in cubes:
         with iris.FUTURE.context(cell_datetime_objects=True):
             cubes[count] = i.extract(time_range)
             time_points = cubes[count].coord('time').points
             times = cubes[count].coord('time').units.num2date(time_points)
-            if reanalysis_type == ['erai']:
-                cubes[count] = iris.analysis.maths.divide(cubes[count], -86400)
             model_id = reanalysis_type
             print model_id
             print len(times)
@@ -61,12 +67,9 @@ def reanalysis(reanalysis_type, variable, season_name):
         """Slice the regridded cube down to the African domain."""
         cube = i.intersection(latitude=(-40, 40), longitude=(-30, 70))
 
+        """Reminder of time points."""
         time_points = cube.coord('time').points
         times = cube.coord('time').units.num2date(time_points)
-
-        """If the reanalysis type is ERA-I, divide by 86400."""
-        if reanalysis_type == ['erai']:
-            cube = iris.analysis.maths.divide(cube, 86400)
 
         """Plot up a map for the file."""
 
@@ -86,11 +89,11 @@ def reanalysis(reanalysis_type, variable, season_name):
         if season_name in ['DJF', 'MAM', 'JJA', 'SON']:
 
             """Create two coordinates on the cube to represent seasons and the season year."""
-            iris.coord_categorisation.add_season(i, 'time', name='clim_season')
-            iris.coord_categorisation.add_season_year(i, 'time', name='season_year')
+            iris.coord_categorisation.add_season(cube, 'time', name='clim_season')
+            iris.coord_categorisation.add_season_year(cube, 'time', name='season_year')
 
             """Aggregate the data by season and season year."""
-            seasonal_means = i.aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
+            seasonal_means = cube.aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
 
             """Constrain the data by the input season. Decapitalise the input variable."""
             constraint = iris.Constraint(clim_season=season_name.lower())
@@ -123,9 +126,12 @@ def reanalysis(reanalysis_type, variable, season_name):
     if reanalysis_type == ['merra2']:
         cubes[0].long_name = "MERRA-2"
 
+    if reanalysis_type == ['mswep']:
+        cubes[0].long_name = "GLEAM (MSWEP)"
+
     if reanalysis_type == ["ncep"]:
         cubes[0].long_name = "NCEP/NCAR"
 
     return cubes[0]
 
-#reanalysis(["gleam"], "hfss", "SON")
+#reanalysis(["cfsr"], "pr", "SON")

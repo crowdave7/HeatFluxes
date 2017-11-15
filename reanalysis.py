@@ -22,6 +22,10 @@ def reanalysis(reanalysis_type, variable, season_name):
     """Import the data."""
     root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/"
 
+    """If variable is pr, distinguish between pr and precipitable water to find model files."""
+    if variable == 'pr':
+        variable = 'pr_'
+
     """Find the paths to the files containing the model data"""
     model_file_paths = []
     for root, directories, files in os.walk(root_directory):
@@ -32,11 +36,11 @@ def reanalysis(reanalysis_type, variable, season_name):
                     model_file_paths = np.append(model_file_paths, path)
 
     model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
-    #print model_file_paths
-
-    model_file_paths = "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/hfss_gleam.nc"
-
     print model_file_paths
+
+    """If variable is pr_, convert variable back to pr"""
+    if variable == 'pr_':
+        variable = 'pr'
 
     """Load the data into a cubelist."""
 
@@ -54,16 +58,11 @@ def reanalysis(reanalysis_type, variable, season_name):
             time_points = cubes[count].coord('time').points
             times = cubes[count].coord('time').units.num2date(time_points)
             model_id = reanalysis_type
-            """If the reanalysis type is ERA-I, divide by -86400."""
-            if reanalysis_type == ['erai']:
-                cubes[count] = iris.analysis.maths.divide(cubes[count], -86400)
             print model_id
             print len(times)
             print times[0]
             print times[-1]
             count +=1
-
-    print cubes[0].data
 
     """Take the mean over time for each cube in the cubelist."""
     cube_id = 0
@@ -74,6 +73,7 @@ def reanalysis(reanalysis_type, variable, season_name):
         """Slice the regridded cube down to the African domain."""
         cube = i.intersection(latitude=(-40, 40), longitude=(-30, 70))
 
+        """Reminder of time points."""
         time_points = cube.coord('time').points
         times = cube.coord('time').units.num2date(time_points)
 
@@ -134,6 +134,8 @@ def reanalysis(reanalysis_type, variable, season_name):
         contour_levels = np.arange(80, 145, 5)
     if variable == 'hfss':
         contour_levels = np.arange(0, 65, 5)
+    if variable == 'pr':
+        contour_levels = np.arange(1, 12, 1)
 
     """Define the colour map and the projection."""
     cmap = matplotlib.cm.get_cmap('YlGnBu')
@@ -177,6 +179,12 @@ def reanalysis(reanalysis_type, variable, season_name):
         variable_name = "Surface Upward Sensible Heat Flux"
         variable_units = "W m-2"
 
+    if variable == 'pr':
+        colour_bar.set_ticks(np.arange(1, 12, 1))
+        colour_bar.set_ticklabels(np.arange(1, 12, 1))
+        variable_name = "Precipitation"
+        variable_units = "mm day-1"
+
     colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
     colour_bar.set_label(variable_name+" ("+variable_units+")", fontsize=10)
 
@@ -187,7 +195,7 @@ def reanalysis(reanalysis_type, variable, season_name):
         title = "ERA-Interim 1979-2008 "
 
     if reanalysis_type == ["merra2"]:
-        title = "MERRA-2 1979-2008"
+        title = "MERRA-2 1979-2008 "
 
     if reanalysis_type == ["doe"]:
         title = "NCEP DOE-2 1979-2008 "
@@ -198,6 +206,9 @@ def reanalysis(reanalysis_type, variable, season_name):
     if reanalysis_type == ["jra"]:
         title = "JRA 1979-2008 "
 
+    if reanalysis_type == ["mswep"]:
+        title = "MSWEP 1979-2008 "
+
     """Add a title."""
     plt.title(title+""+season_name+"", fontsize=10)
 
@@ -206,4 +217,4 @@ def reanalysis(reanalysis_type, variable, season_name):
     plt.close()
     print "Plot done"
 
-reanalysis(["gleam"], "hfss", "SON")
+reanalysis(["jra"], "pr", "SON")

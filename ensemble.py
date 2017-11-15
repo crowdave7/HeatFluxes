@@ -23,6 +23,10 @@ def ensemble(list_of_models, model_type, variable, season_name):
     """Import the data."""
     root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles"
 
+    """If variable is pr, distinguish between pr and precipitable water to find model files."""
+    if variable == 'pr':
+        variable = 'pr_'
+
     """Find the paths to the files containing the model data"""
     model_file_paths = []
     for root, directories, files in os.walk(root_directory):
@@ -37,6 +41,10 @@ def ensemble(list_of_models, model_type, variable, season_name):
     model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
     print model_file_paths
+
+    """If variable is pr_, convert variable back to pr"""
+    if variable == 'pr_':
+        variable = 'pr'
 
     """Define a time range to constrain the years of the data."""
     time_range = iris.Constraint(time=lambda cell: 1979 <= cell.point.year <= 2008)
@@ -86,11 +94,41 @@ def ensemble(list_of_models, model_type, variable, season_name):
                 print times[-1]
                 count +=1
 
-    """Take the mean over time for each cube in the cubelist."""
+    if variable == 'pr':
+        name = 'precipitation_flux'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
+    """Define a model number to begin with."""
     cube_id = 0
 
-    """For each cube,"""
+    """For each cube (for each model),"""
     for regridded_model_data in cubes:
+
+        """Select the model ID"""
+        model_id = cubes[cube_id].attributes['model_id']
+
+        """If the variable is precipitation, multiply model cubes by 86400"""
+        if variable == 'pr':
+            regridded_model_data = iris.analysis.maths.multiply(cubes[cube_id], 86400)
+
+        """Reassign a model ID to the new multiplied cube."""
+        regridded_model_data.long_name = model_id
 
         """ If the input month is defined as the whole year,"""
         if season_name == 'Climatology':
@@ -149,22 +187,27 @@ def ensemble(list_of_models, model_type, variable, season_name):
 
     """Define the contour levels for the input variables."""
     if variable == 'hfls':
-        contour_levels = np.arange(0, 165, 15)
+        contour_levels = np.arange(80, 145, 5)
+        cmap = matplotlib.cm.get_cmap('YlGnBu')
     if variable == 'hfss':
-        contour_levels = np.arange(0, 110, 10)
+        contour_levels = np.arange(0, 65, 5)
+        cmap = matplotlib.cm.get_cmap('YlGnBu_r')
+    if variable == 'pr':
+        contour_levels = np.arange(1, 12, 1)
+        cmap = matplotlib.cm.get_cmap('YlGnBu')
 
     """Define the colour map and the projection."""
-    cmap = matplotlib.cm.get_cmap('coolwarm')
     crs_latlon = ccrs.PlateCarree()
 
     """Plot the map using cartopy, and add map features."""
     ax = plt.subplot(111, projection=crs_latlon)
     ax.set_extent([-22, 62, -22, 12], crs=crs_latlon)
     contour_plot = iplt.contourf(ensemble_mean, contour_levels, cmap=cmap, extend='both')
-    ax.add_feature(coastline, zorder=5, edgecolor='k', linewidth=2)
     ax.add_feature(lake_borders, zorder=5, edgecolor='k', linewidth=1)
     for i in country_borders:
         ax.add_geometries(i.geometry, ccrs.PlateCarree(), edgecolor="black", facecolor="None")
+    ax.add_feature(cart.feature.OCEAN, zorder=1, facecolor="w")
+    ax.add_feature(coastline, zorder=5, edgecolor='k', linewidth=2)
 
     """Define gridlines."""
     gridlines = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, color='black', linewidth=0.4, linestyle='--')
@@ -183,13 +226,22 @@ def ensemble(list_of_models, model_type, variable, season_name):
     colour_bar = plt.colorbar(contour_plot, orientation='horizontal', pad=0.1, aspect=40)
 
     if variable == 'hfls':
-        colour_bar.set_ticks(np.arange(0, 165, 15))
-        colour_bar.set_ticklabels(np.arange(0, 165, 15))
+        colour_bar.set_ticks(np.arange(80, 145, 5))
+        colour_bar.set_ticklabels(np.arange(80, 145, 5))
     if variable == 'hfss':
-        colour_bar.set_ticks(np.arange(0, 110, 10))
-        colour_bar.set_ticklabels(np.arange(0, 110, 10))
+        colour_bar.set_ticks(np.arange(0, 65, 10))
+        colour_bar.set_ticklabels(np.arange(0, 65, 10))
+    if variable == 'pr':
+        colour_bar.set_ticks(np.arange(1, 12, 1))
+        colour_bar.set_ticklabels(np.arange(1, 12, 1))
 
     colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
+
+    if variable_units == "W m-2":
+        variable_units = "W $\mathregular{m^{-2}}$"
+    if variable_units == 'kg m-2 s-1':
+        variable_units = "mm $\mathregular{day^{-1}}$"
+
     colour_bar.set_label(variable_name+" ("+variable_units+")", fontsize=10)
 
     """Add a title."""
@@ -203,4 +255,4 @@ def ensemble(list_of_models, model_type, variable, season_name):
 # map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CCSM4/", "CESM1-CAM5/", "CMCC-CM/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "EC-EARTH/", "FGOALS-g2/", "FGOALS-s2/", "GFDL-CM3/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/"], "amip", "hfls", [1,2,12], "DJF")
 
 
-ensemble(["ACCESS1-3", "bcc-csm1-1", "BNU-ESM", "CanAM4", "CNRM-CM5", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M"], "amip", "hfss", "SON")
+ensemble(["ACCESS1-3", "bcc-csm1-1", "BNU-ESM", "CanAM4", "CNRM-CM5", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M"], "amip", "pr", "SON")

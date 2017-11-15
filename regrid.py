@@ -15,6 +15,10 @@ def regrid(list_of_models, model_type, variable):
     root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
     ensemble = "r1i1p1"
 
+    """If variable is pr, distinguish between pr and precipitable water to find model files."""
+    if variable == 'pr':
+        variable = 'pr_'
+
     """Find the paths to the directories containing the model data"""
     directory_paths = []
     for root, directories, files in os.walk(root_directory):
@@ -37,12 +41,19 @@ def regrid(list_of_models, model_type, variable):
 
     print model_file_paths
 
+    """If variable is pr_, convert variable back to pr"""
+    if variable == 'pr_':
+        variable = 'pr'
+
     """Load the data from the model file paths into a cube."""
     if variable == 'hfls':
         name = 'surface_upward_latent_heat_flux'
         cubes = iris.load(model_file_paths, name)
     if variable == 'hfss':
         name = 'surface_upward_sensible_heat_flux'
+        cubes = iris.load(model_file_paths, name)
+    if variable == 'pr':
+        name = 'precipitation_flux'
         cubes = iris.load(model_file_paths, name)
 
     """Define the reanalysis data to regrid onto."""
@@ -73,5 +84,5 @@ def regrid(list_of_models, model_type, variable):
         print model_id+" regridding done"
 
 
-#regrid(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfss")
-regrid(["IPSL-CM5B-LR", "MRI-AGCM3-2S"], "amip", "hfls")
+#regrid(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "pr")
+regrid(["IPSL-CM5B-LR", "MRI-AGCM3-2S"], "amip", "pr")

@@ -36,18 +36,6 @@ def reanalysis_bowen(reanalysis_type, season_name):
     cubes = iris.load(model_file_paths)
     count = 0
 
-    """If the reanalysis type is ERA-I, divide by -86400 and reset variable names."""
-
-    if reanalysis_type == ['erai']:
-        for i in cubes:
-            variable_name = cubes[count].long_name
-            cubes[count] = iris.analysis.maths.divide(cubes[count], -86400)
-            cubes[count].long_name = variable_name
-            count +=1
-
-    """Reset the count variable."""
-    count = 0
-
     """For the cubes constrain the time range."""
     for i in cubes:
         with iris.FUTURE.context(cell_datetime_objects=True):

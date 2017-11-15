@@ -23,6 +23,10 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
 
     if variable != "evap_fraction":
 
+        """If variable is pr, distinguish between pr and precipitable water to find model files."""
+        if variable == 'pr':
+            variable = 'pr_'
+
         """Find the paths to the files containing the model data"""
         """Find the paths to the directories containing the model data"""
         directory_paths = []
@@ -44,6 +48,12 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
 
         model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
+        print model_file_paths
+
+        """If variable is pr_, convert variable back to pr"""
+        if variable == 'pr_':
+            variable = 'pr'
+
     if variable == "evap_fraction":
 
         """Find the paths to the files containing the model data"""
@@ -55,7 +65,7 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
                     if j in path and model_type in path and ensemble in path and ('hfss' in path or 'hfls' in path):
                         model_file_paths = np.append(model_file_paths, path)
 
-    model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
+        model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
     """Define a time range to constrain the years of the data."""
     time_range = iris.Constraint(time=lambda cell: 1979 <= cell.point.year <= 2008)
@@ -94,6 +104,7 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
         paths_for_this_model = [k for k in model_file_paths if j in k]
         latent_path = [k for k in paths_for_this_model if 'hfls' in k]
         sensible_path = [k for k in paths_for_this_model if 'hfss' in k]
+        precip_path = [k for k in paths_for_this_model if 'pr' in k]
 
         """Extract the model ID."""
         data = netCDF4.Dataset(paths_for_this_model[0])
@@ -102,15 +113,20 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
         """Load the cube for each variable, constrain the years and extract the seasonal cycle array."""
         """Append the seasonal cycle array to the ensemble mean array outside the loop."""
 
+        if variable == 'pr':
+            data_cube = iris.load_cube(precip_path, 'precipitation_flux')
+            data_cube = constrain_year(data_cube, time_range)
+            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
+
         if variable == 'hfls':
             data_cube = iris.load_cube(latent_path, 'surface_upward_latent_heat_flux')
             data_cube = constrain_year(data_cube, time_range)
-            data_array = extract_seasonal_cycle_data(data_cube, latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
+            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
 
         if variable == 'hfss':
             data_cube = iris.load_cube(sensible_path, 'surface_upward_sensible_heat_flux')
             data_cube = constrain_year(data_cube, time_range)
-            data_array = extract_seasonal_cycle_data(data_cube, sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
+            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
 
         if variable == 'evap_fraction':
             cube_latent = iris.load_cube(latent_path, 'surface_upward_latent_heat_flux')
@@ -118,9 +134,9 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
             cube_sensible = iris.load_cube(sensible_path, 'surface_upward_sensible_heat_flux')
             cube_sensible = constrain_year(cube_sensible, time_range)
 
-            latent_seasonal_cycle_array = extract_seasonal_cycle_data(cube_latent, latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
-            sensible_seasonal_cycle_array = extract_seasonal_cycle_data(cube_sensible, sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
-            data_array = latent_seasonal_cycle_array / (latent_seasonal_cycle_array + sensible_seasonal_cycle_array)
+            latent_seasonal_cycle_array = extract_seasonal_cycle_data(cube_latent, latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            sensible_seasonal_cycle_array = extract_seasonal_cycle_data(cube_sensible, sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            data_array = latent_seasonal_cycle_array / (latent_seasonal_cycle_array + sensible_seasonal_cycle_array, variable)
 
         """Add the seasonal cycle to the plot."""
 
@@ -129,6 +145,9 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
         handles[-1].set_linestyle("-")
         legend = plt.legend(handles, labels, loc="center left", bbox_to_anchor=(1.03, 0.5), fontsize=9, handlelength=2.5)
 
+        if variable == 'pr':
+            plt.ylabel('Precipitation (mm $\mathregular{day^{-1}}$)')
+            plt.ylim(0, 10)
         if variable == 'hfls':
             plt.ylabel('Latent Heat Flux (W $\mathregular{m^{-2}}$)')
             plt.ylim(0, 160)
@@ -166,14 +185,6 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
     handles[-1].set_linestyle("--")
     legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
 
-    """Add the DOE reanalysis seasonal cycle to the plot."""
-
-    doe_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["doe"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
-    ax1.plot(x_pos, doe_array, zorder=1, linestyle='--', color = colours[1], label = "NCEP DOE-2")
-    handles, labels = ax1.get_legend_handles_labels()
-    handles[-1].set_linestyle("--")
-    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
-
     """Add the ERAI reanalysis seasonal cycle to the plot."""
 
     erai_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["erai"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
@@ -182,13 +193,35 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
     handles[-1].set_linestyle("--")
     legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
 
-    """Add the GLEAM reanalysis seasonal cycle to the plot."""
+    if variable == 'hfss':
 
-    gleam_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["gleam"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
-    ax1.plot(x_pos, gleam_array, zorder=1, linestyle='--', color = colours[3], label = "GLEAM-LE")
-    handles, labels = ax1.get_legend_handles_labels()
-    handles[-1].set_linestyle("--")
-    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+        """Add the GLEAM reanalysis seasonal cycle to the plot."""
+
+        gleam_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["gleam"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
+        ax1.plot(x_pos, gleam_array, zorder=1, linestyle='--', color = colours[3], label = "GLEAM-LE")
+        handles, labels = ax1.get_legend_handles_labels()
+        handles[-1].set_linestyle("--")
+        legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+
+    if variable == 'hfls':
+
+        """Add the MSWEP reanalysis seasonal cycle to the plot."""
+
+        gleam_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["gleam"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
+        ax1.plot(x_pos, gleam_array, zorder=1, linestyle='--', color = colours[3], label = "GLEAM-LE")
+        handles, labels = ax1.get_legend_handles_labels()
+        handles[-1].set_linestyle("--")
+        legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+
+    if variable == 'pr':
+
+        """Add the MSWEP reanalysis seasonal cycle to the plot."""
+
+        mswep_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["mswep"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
+        ax1.plot(x_pos, mswep_array, zorder=1, linestyle='--', color = colours[3], label = "GLEAM (MSWEP)")
+        handles, labels = ax1.get_legend_handles_labels()
+        handles[-1].set_linestyle("--")
+        legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
 
     """Add the JRA-55 reanalysis seasonal cycle to the plot."""
 
@@ -206,12 +239,20 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
     handles[-1].set_linestyle("--")
     legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
 
+    """Add the NCEP-DOE 2 reanalysis seasonal cycle to the plot."""
+
+    doe_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["doe"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
+    ax1.plot(x_pos, doe_array, zorder=1, linestyle='--', color = colours[1], label = "NCEP DOE-2")
+    handles, labels = ax1.get_legend_handles_labels()
+    handles[-1].set_linestyle("--")
+    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+
     """Save the figure."""
     fig.savefig("Seasonal_Cycle_"+variable+".png", bbox_extra_artists=(legend,), bbox_inches='tight', dpi=600)
     print "Plot done."
 
 
-def extract_seasonal_cycle_data(input_cube, path, lower_lat, upper_lat, lower_lon, upper_lon):
+def extract_seasonal_cycle_data(input_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable):
     """Extract seasonal cycle data from an iris cube given the cube, its path, and the chosen lats/lons."""
     data_array = []
 
@@ -280,6 +321,8 @@ def extract_seasonal_cycle_data(input_cube, path, lower_lat, upper_lat, lower_lo
 
             """Print out the data for the month."""
             data = data.data
+            if variable == 'pr':
+                data = data*86400
             print i
             print data
 
@@ -302,8 +345,9 @@ def constrain_year(cube, time_range):
         print times[-1]
         return cube
 
+#seasonal_cycle(["IPSL-CM5B-LR"], "amip", "pr", -10, 5, 5, 35)
 
-seasonal_cycle(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "evap_fraction", -10, 5, 5, 35)
+seasonal_cycle(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "pr", -10, 5, 5, 35)
 
 #seasonal_cycle(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfls", -10, 5, 5, 35)
 #seasonal_cycle(["ACCESS1-3"], "amip", "hfls", -10, 5, 5, 35)

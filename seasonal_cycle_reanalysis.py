@@ -18,6 +18,10 @@ def seasonal_cycle_reanalysis(reanalysis_type, variable, lower_lat, upper_lat, l
 
     if variable != "evap_fraction":
 
+        """If variable is pr, distinguish between pr and precipitable water to find model files."""
+        if variable == 'pr':
+            variable = 'pr_'
+
         """Find the paths to the files containing the model data"""
         model_file_paths = []
         for root, directories, files in os.walk(root_directory):
@@ -29,10 +33,11 @@ def seasonal_cycle_reanalysis(reanalysis_type, variable, lower_lat, upper_lat, l
 
         model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
-        print model_file_paths
+        """If variable is pr_, convert variable back to pr"""
+        if variable == 'pr_':
+            variable = 'pr'
 
     if variable == "evap_fraction":
-
         """Find the paths to the files containing the model data"""
         model_file_paths = []
         for root, directories, files in os.walk(root_directory):
@@ -43,8 +48,6 @@ def seasonal_cycle_reanalysis(reanalysis_type, variable, lower_lat, upper_lat, l
                         model_file_paths = np.append(model_file_paths, path)
 
         model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
-
-        print model_file_paths
 
     """Define a time range to constrain the years of the data."""
     time_range = iris.Constraint(time=lambda cell: 1979 <= cell.point.year <= 2008)
@@ -65,22 +68,27 @@ def seasonal_cycle_reanalysis(reanalysis_type, variable, lower_lat, upper_lat, l
         paths_for_this_model = [k for k in model_file_paths if j in k]
         latent_path = [k for k in paths_for_this_model if 'hfls' in k]
         sensible_path = [k for k in paths_for_this_model if 'hfss' in k]
-
-        print paths_for_this_model
+        precip_path = [k for k in paths_for_this_model if 'pr' in k]
 
         """Load the cube for each variable, constrain the years and extract the seasonal cycle array."""
         """Append the seasonal cycle array to the ensemble mean array outside the loop."""
 
+        if variable == 'pr':
+            data_cube = iris.load_cube(precip_path)
+            data_cube = constrain_year(data_cube, time_range, reanalysis_type)
+            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, reanalysis_type, variable)
+            reanalysis_array[count] = data_array
+
         if variable == 'hfls':
             data_cube = iris.load_cube(latent_path)
             data_cube = constrain_year(data_cube, time_range, reanalysis_type)
-            data_array = extract_seasonal_cycle_data(data_cube, latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon, reanalysis_type)
+            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, reanalysis_type, variable)
             reanalysis_array[count] = data_array
 
         if variable == 'hfss':
             data_cube = iris.load_cube(sensible_path)
             data_cube = constrain_year(data_cube, time_range, reanalysis_type)
-            data_array = extract_seasonal_cycle_data(data_cube, sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon, reanalysis_type)
+            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, reanalysis_type, variable)
             reanalysis_array[count] = data_array
 
         if variable == 'evap_fraction':
@@ -100,7 +108,7 @@ def seasonal_cycle_reanalysis(reanalysis_type, variable, lower_lat, upper_lat, l
     return reanalysis_array[0]
 
 
-def extract_seasonal_cycle_data(input_cube, path, lower_lat, upper_lat, lower_lon, upper_lon, reanalysis_type):
+def extract_seasonal_cycle_data(input_cube, lower_lat, upper_lat, lower_lon, upper_lon, reanalysis_type, variable):
     """Extract seasonal cycle data from an iris cube given the cube, its path, and the chosen lats/lons."""
     data_array = []
 
@@ -172,10 +180,8 @@ def extract_seasonal_cycle_data(input_cube, path, lower_lat, upper_lat, lower_lo
             grid_areas = iris.analysis.cartography.area_weights(data)
             data = data.collapsed(['longitude', 'latitude'], iris.analysis.MEAN, weights = grid_areas)
 
-            """Print out the data for the month. Divide by 86400 if ERAI."""
+            """Print out the data for the month. Precip already multiplied by 86400 in file."""
             data = data.data
-            if reanalysis_type == ['erai']:
-                data = data / -86400
             print i
             print data
 
@@ -198,8 +204,8 @@ def constrain_year(cube, time_range, reanalysis_type):
         print times[-1]
         return cube
 
-#seasonal_cycle_reanalysis(["cfsr"], "hfls", -10, 5, 5, 35)
-#seasonal_cycle_reanalysis(["doe"], "hfss", -10, 5, 5, 35)
+#seasonal_cycle_reanalysis(["cfsr"], "pr", -10, 5, 5, 35)
+#seasonal_cycle_reanalysis(["doe"], "pr", -10, 5, 5, 35)
 #seasonal_cycle_reanalysis(["erai"], "hfss", -10, 5, 5, 35)
 #seasonal_cycle_reanalysis(["gleam"], "hfss", -10, 5, 5, 35)
 #seasonal_cycle_reanalysis(["jra"], "hfss", -10, 5, 5, 35)

@@ -25,6 +25,10 @@ def map(list_of_models, model_type, variable, season_name):
     root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
     ensemble = "r1i1p1"
 
+    """If variable is pr, distinguish between pr and precipitable water to find model files."""
+    if variable == 'pr':
+        variable = 'pr_'
+
     """Find the paths to the directories containing the model data"""
     directory_paths = []
     for root, directories, files in os.walk(root_directory):
@@ -45,6 +49,10 @@ def map(list_of_models, model_type, variable, season_name):
 
     model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
     print model_file_paths
+
+    """If variable is pr_, convert variable back to pr"""
+    if variable == 'pr_':
+        variable = 'pr'
 
     """Define a time range to constrain the years of the data."""
     time_range = iris.Constraint(time=lambda cell: 1979 <= cell.point.year <= 2008)
@@ -93,16 +101,40 @@ def map(list_of_models, model_type, variable, season_name):
                 print times[-1]
                 count +=1
 
+    if variable == 'pr':
+        name = 'precipitation_flux'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
     """Define the contour levels for the input variables."""
     if variable == 'hfls':
         contour_levels = np.arange(80, 145, 5)
     if variable == 'hfss':
         contour_levels = np.arange(0, 65, 5)
+    if variable == 'pr':
+        contour_levels = np.arange(1, 12, 1)
 
     """Define the colour map and the projection."""
+    if variable == 'hfls':
+        cmap = matplotlib.cm.get_cmap('YlGnBu')
     if variable == 'hfss':
         cmap = matplotlib.cm.get_cmap('YlGnBu_r')
-    if variable == 'hfls':
+    if variable == 'pr':
         cmap = matplotlib.cm.get_cmap('YlGnBu')
     crs_latlon = ccrs.PlateCarree()
 
@@ -119,8 +151,14 @@ def map(list_of_models, model_type, variable, season_name):
     """For each cube (for each model),"""
     for model_data in cubes:
 
+        """Select the model ID"""
         model_id = cubes[model_number].attributes['model_id']
 
+        """If the variable is precipitation, multiply model cubes by 86400"""
+        if variable == 'pr':
+            model_data = iris.analysis.maths.multiply(cubes[model_number], 86400)
+
+        """Reassign a model ID to the new multiplied cube."""
         model_data.long_name = model_id
 
         """Plot up a map for the file."""
@@ -169,9 +207,20 @@ def map(list_of_models, model_type, variable, season_name):
     erai_cube_data = reanalysis_cube.reanalysis(["erai"], variable, season_name)
     cubes = np.append(cubes, erai_cube_data)
 
-    """Add GLEAM data to the cubelist."""
-    gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
-    cubes = np.append(cubes, gleam_cube_data)
+    if variable == 'hfss':
+        """Add GLEAM data to the cubelist."""
+        gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
+        cubes = np.append(cubes, gleam_cube_data)
+
+    if variable == 'hfls':
+        """Add GLEAM data to the cubelist."""
+        gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
+        cubes = np.append(cubes, gleam_cube_data)
+
+    if variable == 'pr':
+        """Add MSWEP data to the cubelist."""
+        mswep_cube_data = reanalysis_cube.reanalysis(["mswep"], variable, season_name)
+        cubes = np.append(cubes, mswep_cube_data)
 
     """Add JRA-55 data to the cubelist."""
     jra_cube_data = reanalysis_cube.reanalysis(["jra"], variable, season_name)
@@ -184,8 +233,6 @@ def map(list_of_models, model_type, variable, season_name):
     """Add NCEP DOE-2 data to the cubelist."""
     doe_cube_data = reanalysis_cube.reanalysis(["doe"], variable, season_name)
     cubes = np.append(cubes, doe_cube_data)
-
-    print cubes[-1]
 
     """Plot each model and the ensemble mean up."""
     model_number = 0
@@ -247,14 +294,19 @@ def map(list_of_models, model_type, variable, season_name):
     if variable == 'hfss':
         colour_bar.set_ticks(np.arange(0, 65, 10))
         colour_bar.set_ticklabels(np.arange(0, 65, 10))
+    if variable == 'pr':
+        colour_bar.set_ticks(np.arange(1, 12, 1))
+        colour_bar.set_ticklabels(np.arange(1, 12, 1))
 
     colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
 
     variable_name = str(original_long_name)
     variable_units = str(original_units)
-    print variable_units
+
     if variable_units == "W m-2":
         variable_units = "W $\mathregular{m^{-2}}$"
+    if variable_units == 'kg m-2 s-1':
+        variable_units = "mm $\mathregular{day^{-1}}$"
     colour_bar.set_label(variable_name+" ("+variable_units+")", fontsize=10)
 
     fig.subplots_adjust(left=0.125, right=0.9, bottom=0.14, top=0.93, wspace=0.4, hspace=0.9)
@@ -267,5 +319,5 @@ def map(list_of_models, model_type, variable, season_name):
 
 # map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CCSM4/", "CESM1-CAM5/", "CMCC-CM/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "EC-EARTH/", "FGOALS-g2/", "FGOALS-s2/", "GFDL-CM3/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/"], "amip", "hfls", [1,2,12], "DJF")
 
-map(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfss", "SON")
+map(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "pr", "SON")
 #map(["ACCESS1-3"], "amip", "hfss", "SON")

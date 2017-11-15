@@ -15,6 +15,10 @@ def ensemble(list_of_models, model_type, variable, season_name):
     """Import the data."""
     root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles"
 
+    """If variable is pr, distinguish between pr and precipitable water to find model files."""
+    if variable == 'pr':
+        variable = 'pr_'
+
     """Find the paths to the files containing the model data"""
     model_file_paths = []
     for root, directories, files in os.walk(root_directory):
@@ -29,6 +33,10 @@ def ensemble(list_of_models, model_type, variable, season_name):
     model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
     print model_file_paths
+
+    """If variable is pr_, convert variable back to pr"""
+    if variable == 'pr_':
+        variable = 'pr'
 
     """Define a time range to constrain the years of the data."""
     time_range = iris.Constraint(time=lambda cell: 1979 <= cell.point.year <= 2008)
@@ -78,11 +86,41 @@ def ensemble(list_of_models, model_type, variable, season_name):
                 print times[-1]
                 count +=1
 
+    if variable == 'pr':
+        name = 'precipitation_flux'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
     """Take the mean over time for each cube in the cubelist."""
     cube_id = 0
 
     """For each cube,"""
     for regridded_model_data in cubes:
+
+        """Select the model ID"""
+        model_id = cubes[cube_id].attributes['model_id']
+
+        """If the variable is precipitation, multiply model cubes by 86400"""
+        if variable == 'pr':
+            regridded_model_data = iris.analysis.maths.multiply(cubes[cube_id], 86400)
+
+        """Reassign a model ID to the new multiplied cube."""
+        regridded_model_data.long_name = model_id
 
         """ If the input month is defined as the whole year,"""
         if season_name == 'Climatology':
