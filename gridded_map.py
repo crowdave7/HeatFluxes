@@ -231,7 +231,7 @@ def map(list_of_models, model_type, variable, season_name):
     cubes = np.append(cubes, merra_cube_data)
 
     """Add NCEP DOE-2 data to the cubelist."""
-    doe_cube_data = reanalysis_cube.reanalysis(["doe"], variable, season_name)
+    doe_cube_data = reanalysis_cube.reanalysis(["ncep-doe"], variable, season_name)
     cubes = np.append(cubes, doe_cube_data)
 
     """Plot each model and the ensemble mean up."""

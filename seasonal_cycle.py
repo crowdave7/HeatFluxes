@@ -116,17 +116,17 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
         if variable == 'pr':
             data_cube = iris.load_cube(precip_path, 'precipitation_flux')
             data_cube = constrain_year(data_cube, time_range)
-            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            data_array = extract_seasonal_cycle_model_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
 
         if variable == 'hfls':
             data_cube = iris.load_cube(latent_path, 'surface_upward_latent_heat_flux')
             data_cube = constrain_year(data_cube, time_range)
-            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            data_array = extract_seasonal_cycle_model_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
 
         if variable == 'hfss':
             data_cube = iris.load_cube(sensible_path, 'surface_upward_sensible_heat_flux')
             data_cube = constrain_year(data_cube, time_range)
-            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            data_array = extract_seasonal_cycle_model_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
 
         if variable == 'evap_fraction':
             cube_latent = iris.load_cube(latent_path, 'surface_upward_latent_heat_flux')
@@ -134,8 +134,8 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
             cube_sensible = iris.load_cube(sensible_path, 'surface_upward_sensible_heat_flux')
             cube_sensible = constrain_year(cube_sensible, time_range)
 
-            latent_seasonal_cycle_array = extract_seasonal_cycle_data(cube_latent, latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon, variable)
-            sensible_seasonal_cycle_array = extract_seasonal_cycle_data(cube_sensible, sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            latent_seasonal_cycle_array = extract_seasonal_cycle_model_data(cube_latent, latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            sensible_seasonal_cycle_array = extract_seasonal_cycle_model_data(cube_sensible, sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon, variable)
             data_array = latent_seasonal_cycle_array / (latent_seasonal_cycle_array + sensible_seasonal_cycle_array, variable)
 
         """Add the seasonal cycle to the plot."""
@@ -241,7 +241,7 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
 
     """Add the NCEP-DOE 2 reanalysis seasonal cycle to the plot."""
 
-    doe_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["doe"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
+    doe_array = seasonal_cycle_reanalysis.seasonal_cycle_reanalysis(["ncep-doe"], variable, lower_lat, upper_lat, lower_lon, upper_lon)
     ax1.plot(x_pos, doe_array, zorder=1, linestyle='--', color = colours[1], label = "NCEP DOE-2")
     handles, labels = ax1.get_legend_handles_labels()
     handles[-1].set_linestyle("--")
@@ -252,7 +252,7 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
     print "Plot done."
 
 
-def extract_seasonal_cycle_data(input_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable):
+def extract_seasonal_cycle_model_data(input_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable):
     """Extract seasonal cycle data from an iris cube given the cube, its path, and the chosen lats/lons."""
     data_array = []
 

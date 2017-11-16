@@ -9,7 +9,7 @@ import iris.unit
 
 def reanalysis(reanalysis_type, variable, season_name):
     """Take the input variables, and find the paths to the relevant regridded model files."""
-    """Plot these up as a spatial map for the given season."""
+    """Produce the cube for the files."""
     """Central African domain."""
 
     """Import the data."""
@@ -110,9 +110,7 @@ def reanalysis(reanalysis_type, variable, season_name):
 
     if reanalysis_type == ["cfsr"]:
         cubes[0].long_name = "CFSR"
-
-    if reanalysis_type == ["doe"]:
-        cubes[0].long_name = "NCEP DOE-2"
+        cubes[0].rename("CFSR")
 
     if reanalysis_type == ['erai']:
         cubes[0].long_name = "ERA-Interim"
@@ -129,9 +127,15 @@ def reanalysis(reanalysis_type, variable, season_name):
     if reanalysis_type == ['mswep']:
         cubes[0].long_name = "GLEAM (MSWEP)"
 
-    if reanalysis_type == ["ncep"]:
+    if reanalysis_type == ["ncep-ncar"]:
         cubes[0].long_name = "NCEP/NCAR"
+
+    if reanalysis_type == ["ncep-doe"]:
+        cubes[0].long_name = "NCEP DOE-2"
+        cubes[0].rename("NCEP DOE-2")
+
 
     return cubes[0]
 
-#reanalysis(["cfsr"], "pr", "SON")
+
+reanalysis(["gleam"], "pr", "SON")

@@ -205,7 +205,7 @@ def constrain_year(cube, time_range, reanalysis_type):
         return cube
 
 #seasonal_cycle_reanalysis(["cfsr"], "pr", -10, 5, 5, 35)
-#seasonal_cycle_reanalysis(["doe"], "pr", -10, 5, 5, 35)
+#seasonal_cycle_reanalysis(["ncep-doe"], "pr", -10, 5, 5, 35)
 #seasonal_cycle_reanalysis(["erai"], "hfss", -10, 5, 5, 35)
 #seasonal_cycle_reanalysis(["gleam"], "hfss", -10, 5, 5, 35)
 #seasonal_cycle_reanalysis(["jra"], "hfss", -10, 5, 5, 35)

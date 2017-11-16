@@ -197,9 +197,6 @@ def reanalysis(reanalysis_type, variable, season_name):
     if reanalysis_type == ["merra2"]:
         title = "MERRA-2 1979-2008 "
 
-    if reanalysis_type == ["doe"]:
-        title = "NCEP DOE-2 1979-2008 "
-
     if reanalysis_type == ["gleam"]:
         title = "GLEAM 1979-2008 "
 
@@ -208,6 +205,9 @@ def reanalysis(reanalysis_type, variable, season_name):
 
     if reanalysis_type == ["mswep"]:
         title = "MSWEP 1979-2008 "
+
+    if reanalysis_type == ["ncep-doe"]:
+        title = "NCEP DOE-2 1979-2008 "
 
     """Add a title."""
     plt.title(title+""+season_name+"", fontsize=10)
