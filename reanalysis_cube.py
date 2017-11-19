@@ -134,8 +134,6 @@ def reanalysis(reanalysis_type, variable, season_name):
         cubes[0].long_name = "NCEP DOE-2"
         cubes[0].rename("NCEP DOE-2")
 
-
     return cubes[0]
 
-
-reanalysis(["gleam"], "pr", "SON")
+#reanalysis(["gleam"], "hfls", "SON")

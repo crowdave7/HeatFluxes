@@ -95,11 +95,11 @@ def reanalysis(reanalysis_type, variable, season_name):
         if season_name in ['DJF', 'MAM', 'JJA', 'SON']:
 
             """Create two coordinates on the cube to represent seasons and the season year."""
-            iris.coord_categorisation.add_season(i, 'time', name='clim_season')
-            iris.coord_categorisation.add_season_year(i, 'time', name='season_year')
+            iris.coord_categorisation.add_season(cube, 'time', name='clim_season')
+            iris.coord_categorisation.add_season_year(cube, 'time', name='season_year')
 
             """Aggregate the data by season and season year."""
-            seasonal_means = i.aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
+            seasonal_means = cube.aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
 
             """Constrain the data by the input season. Decapitalise the input variable."""
             constraint = iris.Constraint(clim_season=season_name.lower())
@@ -113,6 +113,8 @@ def reanalysis(reanalysis_type, variable, season_name):
 
             """Add 1 to the count variable."""
             cube_id +=1
+
+    print cubes[0]
 
     """Plot the figure."""
     fig = plt.figure()
@@ -143,7 +145,8 @@ def reanalysis(reanalysis_type, variable, season_name):
 
     """Plot the map using cartopy, and add map features."""
     ax = plt.subplot(111, projection=crs_latlon)
-    ax.set_extent([-22, 62, -22, 12], crs=crs_latlon)
+-10, 5, 5, 35
+    ax.set_extent([5, 62, -10, 5], crs=crs_latlon)
     contour_plot = iplt.contourf(cubes[0], contour_levels, cmap=cmap, extend='both')
     ax.add_feature(coastline, zorder=5, edgecolor='k', linewidth=2)
     ax.add_feature(lake_borders, zorder=5, edgecolor='k', linewidth=1)
@@ -217,4 +220,4 @@ def reanalysis(reanalysis_type, variable, season_name):
     plt.close()
     print "Plot done"
 
-reanalysis(["jra"], "pr", "SON")
+reanalysis(["gleam"], "hfls", "SON")

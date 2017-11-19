@@ -5,8 +5,9 @@ import iris.analysis
 import iris.analysis.cartography
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 import map_cube
-from mpl_toolkits.basemap import Basemap, maskoceans
+from mpl_toolkits.basemap import Basemap, maskoceans, interp
 import numpy as np
 import reanalysis_cube
 from scipy.stats.stats import pearsonr
@@ -20,6 +21,15 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
     ax1.tick_params(axis='x', direction='in', which='both', labelbottom='on', labeltop='off', bottom='on', top='on')
     ax1.tick_params(axis='y', direction='in', which='both', labelleft='on', labelright='off', left='on', right='on')
 
+    """If one of the input variable is evaporation, use latent heat flux for now."""
+    input_variable_x = variable_x
+    input_variable_y = variable_y
+
+    if input_variable_x == 'evaporation':
+        variable_x = 'hfls'
+    if input_variable_y == 'evaporation':
+        variable_y = 'hfls'
+
     """Extract the model cubes for the x variable."""
     cubes_x = map_cube.map_cube(list_of_models, model_type, variable_x, season_name_x)
 
@@ -27,8 +37,15 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
     cubes_y = map_cube.map_cube(list_of_models, model_type, variable_y, season_name_y)
 
     """For each cube, mask oceans and take an area average."""
-    model_variable_x = average_lat_lon(cubes_x, lower_lat, upper_lat, lower_lon, upper_lon, variable_x)
-    model_variable_y = average_lat_lon(cubes_y, lower_lat, upper_lat, lower_lon, upper_lon, variable_y)
+    model_variable_x = average_lat_lon(cubes_x, lower_lat, upper_lat, lower_lon, upper_lon, variable_x, season_name_x)
+    model_variable_y = average_lat_lon(cubes_y, lower_lat, upper_lat, lower_lon, upper_lon, variable_y, season_name_y)
+
+    """If one of the input variables is evaporation, convert latent heat flux to evaporation (divide by 28.00 at 30C)"""
+    if input_variable_x == 'evaporation':
+        model_variable_x = [float(i) / 28.00 for i in model_variable_x]
+
+    if input_variable_y == 'evaporation':
+        model_variable_y = [float(i) / 28.00 for i in model_variable_y]
 
     """Define the list of colours for each model."""
     cmap = plt.get_cmap('rainbow')
@@ -53,8 +70,15 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
     ensemble_cube_y = ensemble_cube.ensemble(list_of_models, model_type, variable_y, season_name_y)
 
     """For each cube, mask oceans and take an area average."""
-    ensemble_variable_x = average_lat_lon(iris.cube.CubeList([ensemble_cube_x]), lower_lat, upper_lat, lower_lon, upper_lon, variable_x)
-    ensemble_variable_y = average_lat_lon(iris.cube.CubeList([ensemble_cube_y]), lower_lat, upper_lat, lower_lon, upper_lon, variable_x)
+    ensemble_variable_x = average_lat_lon(iris.cube.CubeList([ensemble_cube_x]), lower_lat, upper_lat, lower_lon, upper_lon, variable_x, season_name_x)
+    ensemble_variable_y = average_lat_lon(iris.cube.CubeList([ensemble_cube_y]), lower_lat, upper_lat, lower_lon, upper_lon, variable_y, season_name_y)
+
+    """If one of the input variables is evaporation, convert latent heat flux to evaporation (*28.00 at 30C)"""
+    if input_variable_x == 'evaporation':
+        ensemble_variable_x = [float(i) / 28.00 for i in ensemble_variable_x]
+
+    if input_variable_y == 'evaporation':
+        ensemble_variable_y = [float(i) / 28.00 for i in ensemble_variable_y]
 
     """Add the scatter plot. Select dot colour, marker and label."""
     ax1.scatter(ensemble_variable_x, ensemble_variable_y, color='black', marker='o', label="Ensemble")
@@ -62,23 +86,33 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
     """Add a legend for the ensemble mean dot."""
     legend = plt.legend(loc="center left", bbox_to_anchor=(1.03, 0.5), fontsize=9)
 
+    """Set up a cubelist for the reanalysis x variable."""
+    reanalysis_cubes_x_list = []
+
     """If the x variable is precip, replace GLEAM with MSWEP."""
     if variable_x == 'pr':
         list_of_reanalysis = [i.replace("gleam", "mswep") for i in list_of_reanalysis]
 
-    """Set up two cubes to contain the reanalysis cubes."""
-    reanalysis_cubes_x_list = []
-    reanalysis_cubes_y_list = []
-
     """For each reanalysis, extract the x cube and append to the above list."""
     for i in list_of_reanalysis:
-
         reanalysis_cube_x = reanalysis_cube.reanalysis([i], variable_x, season_name_x)
         reanalysis_cubes_x_list = np.append(reanalysis_cubes_x_list, reanalysis_cube_x)
+
+    print reanalysis_cubes_x_list
+
+    """Take an average and mask the oceans."""
+    reanalysis_variable_x = average_lat_lon(reanalysis_cubes_x_list, lower_lat, upper_lat, lower_lon, upper_lon, variable_x, season_name_x)
+
+    """If variable x is precip and we have converted GLEAM to MSWEP, convert back before extracting variable y."""
+    if variable_x == 'pr':
+        list_of_reanalysis = [i.replace("mswep", "gleam") for i in list_of_reanalysis]
 
     """If the y variable is precip, replace GLEAM with MSWEP."""
     if variable_y == 'pr':
         list_of_reanalysis = [i.replace("gleam", "mswep") for i in list_of_reanalysis]
+
+    """Set up a cubelist for the reanalysis y variable."""
+    reanalysis_cubes_y_list = []
 
     """For each reanalysis, extract the y cube and append to the above list."""
     for i in list_of_reanalysis:
@@ -87,8 +121,14 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
         reanalysis_cubes_y_list = np.append(reanalysis_cubes_y_list, reanalysis_cube_y)
 
     """For each cube, mask oceans and take an area average."""
-    reanalysis_variable_x = average_lat_lon(reanalysis_cubes_x_list, lower_lat, upper_lat, lower_lon, upper_lon, variable_x)
-    reanalysis_variable_y = average_lat_lon(reanalysis_cubes_y_list, lower_lat, upper_lat, lower_lon, upper_lon, variable_y)
+    reanalysis_variable_y = average_lat_lon(reanalysis_cubes_y_list, lower_lat, upper_lat, lower_lon, upper_lon, variable_y, season_name_y)
+
+    """If one of the input variables is evaporation, convert latent heat flux to evaporation (*28.00 at 30C)"""
+    if input_variable_x == 'evaporation':
+        reanalysis_variable_x = [float(i) / 28.00 for i in reanalysis_variable_x]
+
+    if input_variable_y == 'evaporation':
+        reanalysis_variable_y = [float(i) / 28.00 for i in reanalysis_variable_y]
 
     """Define the list of colours for each model."""
     cmap = plt.get_cmap('rainbow')
@@ -97,105 +137,162 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
     """For each reanalysis file,"""
     for i in np.arange(0, len(reanalysis_variable_x), 1):
 
-        """Select the line colour and add one to the line count variable."""
+        """Select the cross colour."""
         cross_colour = colours[i]
 
-        """Add the scatter plot. Select dot colour, marker and label."""
+        """Add the scatter plot. Select cross colour, marker and label."""
         ax1.scatter(reanalysis_variable_x[i], reanalysis_variable_y[i], color=cross_colour, marker='x', label=reanalysis_cubes_x_list[i].long_name)
 
         """Add a legend for each dot."""
         legend = plt.legend(loc="center left", bbox_to_anchor=(1.03, 0.5), fontsize=9)
 
+    """Perform reduced major axis regression to plot the LOBF."""
+    standard_dev_variable_x = np.std(model_variable_x)
+    standard_dev_variable_y = np.std(model_variable_y)
+    gradient = standard_dev_variable_y / standard_dev_variable_x
+    mean_variable_x = np.mean(model_variable_x)
+    mean_variable_y = np.mean(model_variable_y)
+    intercept = mean_variable_y - (gradient*(mean_variable_x))
+    y_values_lobf = [gradient*i + intercept for i in model_variable_x]
+    plt.plot(model_variable_x, y_values_lobf, 'k')
+
     """Add a line of best fit just for the models."""
-    plt.plot(model_variable_x, np.poly1d(np.polyfit(model_variable_x, model_variable_y, 1))(model_variable_x), 'k')
+    #plt.plot(model_variable_x, np.poly1d(np.polyfit(model_variable_x, model_variable_y, 1))(model_variable_x), 'k')
 
     """Compute pearson correlation coefficient just for the models."""
     pearson = pearsonr(model_variable_x, model_variable_y)
     pearsoncoeff = pearson[0]
     pearsoncoeff_round = round(pearsoncoeff, 2)
     print str(pearsoncoeff_round)
-    plt.text(0.93, 0.95, "r = "+str(pearsoncoeff_round)+"", ha='center', va='center', transform=ax1.transAxes)
+    plt.text(0.95, 0.96, "r = "+str(pearsoncoeff_round)+"", ha='center', va='center', transform=ax1.transAxes, fontsize=8)
 
     """Add labels and set x and y limits."""
-    plt.xlabel('Upward Surface Latent Heat Flux (W $\mathregular{m^{-2}}$)')
-    plt.ylabel('Precipitation (mm $\mathregular{day^{-1}}$)')
-    plt.xlim((70, 130))
-    plt.ylim((3.5, 8.0))
+    if variable_x == 'hfls' and input_variable_x != 'evaporation':
+        plt.xlabel('Upward Surface Latent Heat Flux (W $\mathregular{m^{-2}}$)')
+        plt.xlim((60, 120))
+    if variable_y == 'hfls' and input_variable_y != 'evaporation':
+        plt.ylabel('Upward Surface Latent Heat Flux (W $\mathregular{m^{-2}}$)')
+        plt.ylim((60, 130))
+    if variable_x == 'pr':
+        plt.xlabel('Precipitation (mm $\mathregular{day^{-1}}$)')
+        plt.xlim((3.0, 8.0))
+    if variable_y == 'pr':
+        plt.ylabel('Precipitation (mm $\mathregular{day^{-1}}$)')
+        ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        plt.ylim((3.0, 8.0))
+    if input_variable_x == 'evaporation':
+        plt.xlabel('Surface Upward Evaporation Flux (mm $\mathregular{day^{-1}}$)')
+        plt.xlim((2.0, 4.5))
+    if input_variable_y == 'evaporation':
+        plt.ylabel('Surface Upward Evaporation Flux (mm $\mathregular{day^{-1}}$)')
+        plt.ylim((2.0, 4.5))
 
     """Save figure."""
     fig.savefig("Correlation.png", bbox_extra_artists=(legend,), bbox_inches='tight', dpi=600)
 
 
-def average_lat_lon(cubelist, lower_lat, upper_lat, lower_lon, upper_lon, variable):
+def average_lat_lon(cubelist, lower_lat, upper_lat, lower_lon, upper_lon, variable, season_name):
     """Set up a blank data array."""
     data_array = []
-
+    count = 0
     """For each cube,"""
+
     for cube in cubelist:
 
-        """Constrain the latitudes and longitudes of the data."""
-        data_unmasked = cube.intersection(latitude=(lower_lat, upper_lat), longitude=(lower_lon, upper_lon))
+        """Constrain the latitudes and longitudes of the data. Set up two cubes for transposing."""
+        data_unmasked = cube.intersection(latitude=(lower_lat-2, upper_lat+1), longitude=(lower_lon-1, upper_lon+1))
+        data_unmasked1 = cube.intersection(latitude=(lower_lat-2, upper_lat+1), longitude=(lower_lon-1, upper_lon+1))
 
-        """Mask out the oceans from the data."""
+        """If the coordinate needs transposing because the first coordinate is lon rather than that, transpose the data."""
+        coord_names = [coord.name() for coord in data_unmasked.coords()]
 
-        """Extract the longitudes and latitudes of the array."""
-        longitude = data_unmasked.coord('longitude').points
-        latitude = data_unmasked.coord('latitude').points
+        """If the first coordinate is longitude,"""
+        if coord_names[0] == 'longitude':
 
-        """Set up Basemap to begin to mask out the ocean points from the array."""
-        map = Basemap(llcrnrlon=lower_lon, llcrnrlat=lower_lat, urcrnrlon=upper_lon, urcrnrlat=upper_lat, projection='mill')
-        longitude, latitude = np.meshgrid(longitude, latitude)
-        x, y = map(longitude, latitude)
+            """Set up grid of longitudes and latitudes for basemap."""
+            map = Basemap(llcrnrlon=lower_lon, llcrnrlat=lower_lat, urcrnrlon=upper_lon, urcrnrlat=upper_lat, projection='mill')
+            longitude = data_unmasked1.coord('longitude').points
+            latitude = data_unmasked1.coord('latitude').points
+            longitude, latitude = np.meshgrid(longitude, latitude)
+            x, y = map(longitude, latitude)
 
-        """Mask out ocean points from the array, not including lakes."""
+            """Set up grid replacing each gridpoint with a 5x5 grid point."""
+            x2 = np.linspace(x[0][0],x[0][-1],x.shape[1]*5)
+            y2 = np.linspace(y[0][0],y[-1][0],y.shape[0]*5)
+            x2, y2 = np.meshgrid(x2, y2)
 
-        """Create an array with the ocean data points masked."""
-        masked_array = maskoceans(longitude, latitude, data_unmasked.data, resolution = 'f', grid = 1.25)
+            """Transpose the data to set lat first rather than lon."""
+            data_unmasked = np.transpose(data_unmasked1.data, (1, 0))
 
-        """Convert the masked ocean data points to boolean to begin creating a boolean mask."""
-        mask_bool = np.ma.filled(masked_array, 1)
+            """Interpolate each grid point of the transposed data into a 5x5 grid. Swap dimensions if wrong way round."""
+            try:
+                data2 = interp(data_unmasked, x[0], y[:, 0], x2, y2 ,order=1)
+            except ValueError:
+                data2 = interp(data_unmasked, x[0], np.flipud(y[:, 0]), x2, np.flipud(y2) ,order=1)
 
-        """Convert the unmasked data points to boolean to finish creating the boolean mask."""
-        mask_bool[mask_bool != 1] = 0
+            """Mask the oceans on the transposed data."""
+            lons2, lats2 = map(x2, y2, inverse=True)
+            mdata = maskoceans(lons2, lats2, data2, resolution = 'h', grid = 1.25, inlands=False)
 
-        """Add the mask to the unmasked array."""
-        data_unmasked.data = np.ma.array(data_unmasked.data, mask=mask_bool)
+        """If the first coordinate is latitude,"""
+        if coord_names[0] == 'latitude':
 
-        """The unmasked data is now masked. Rename the array as the cube."""
-        cube = data_unmasked
+            """Set up grid of longitudes and latitudes for basemap."""
+            map = Basemap(llcrnrlon=lower_lon, llcrnrlat=lower_lat, urcrnrlon=upper_lon, urcrnrlat=upper_lat, projection='mill')
+            longitude = data_unmasked.coord('longitude').points
+            latitude = data_unmasked.coord('latitude').points
+            longitude, latitude = np.meshgrid(longitude, latitude)
+            x, y = map(longitude, latitude)
 
-        """Leave this code commented out. It enables printing the data on a map to test the mask to see if it has worked."""
+            """Set up grid replacing each gridpoint with a 5x5 grid point."""
+            x2 = np.linspace(x[0][0],x[0][-1],x.shape[1]*5)
+            y2 = np.linspace(y[0][0],y[-1][0],y.shape[0]*5)
+            x2, y2 = np.meshgrid(x2, y2)
 
-        # fig = plt.figure()
-        # map.drawcoastlines(linewidth=1.5)
-        # map.drawcountries(linewidth=1)
-        # map.drawparallels(np.arange(-50, 60, 10), labels=[1, 0, 0, 0], fontsize=10, linewidth=0.4)
-        # map.drawmeridians(np.arange(-40, 80, 20), labels=[0, 0, 0, 1], fontsize=10, linewidth=0.4)
-        # contour_levels = np.arange(0, 11, 1)
-        # contour_plot = map.contourf(x, y, data_unmasked.data, contour_levels, extend='both', cmap = 'coolwarm')
-        # colour_bar = map.colorbar(contour_plot, location='bottom', pad='15%')
-        # fig.savefig("test1.png")
-        # print " plot done"
-        # plt.close()
+            """Interpolate each grid point of the transposed data into a 5x5 grid. Swap dimensions if wrong way round."""
+            try:
+                data2 = interp(data_unmasked.data, x[0], y[:, 0], x2, y2 ,order=1)
+            except ValueError:
+                data2 = interp(data_unmasked.data, x[0], np.flipud(y[:, 0]), x2, np.flipud(y2) ,order=1)
 
-        """Area average the data using the iris weights method."""
-        if cube.coord('latitude').bounds is None:
-            cube.coord('latitude').guess_bounds()
-        if cube.coord('longitude').bounds is None:
-            cube.coord('longitude').guess_bounds()
-        grid_areas = iris.analysis.cartography.area_weights(cube)
-        cube = cube.collapsed(['longitude', 'latitude'], iris.analysis.MEAN, weights = grid_areas)
+            """Mask the oceans on the transposed data."""
+            lons2, lats2 = map(x2, y2, inverse=True)
+            mdata = maskoceans(lons2, lats2, data2, resolution = 'h', grid = 1.25, inlands=False)
 
-        """Print out the data for the season."""
-        data = cube.data
+        """Plot figure to check that masking has worked."""
+
+        """
+        fig = plt.figure()
+        map.drawcoastlines(linewidth=2)
+        map.drawcountries(linewidth=2)
+        map.drawparallels(np.arange(-50, 60, 10), labels=[1, 0, 0, 0], fontsize=10, linewidth=0.4)
+        map.drawmeridians(np.arange(-40, 80, 20), labels=[0, 0, 0, 1], fontsize=10, linewidth=0.4)
+        if variable == 'pr':
+            contour_levels = np.arange(0, 11, 1)
+        if variable == 'hfss':
+            contour_levels = np.arange(0, 65, 5)
+        if variable == 'hfls':
+            contour_levels = np.arange(80, 145, 5)
+        contour_plot = map.contourf(x2, y2, mdata, contour_levels, extend='both', cmap = 'YlGnBu')
+        colour_bar = map.colorbar(contour_plot, location='bottom', pad='15%')
+        model_id = data_unmasked1.long_name
+        fig.savefig("mask_"+variable+"_"+season_name+"_"+model_id+".png")
+        print "plot done"
+
+        plt.close()
+        """
+
+        """Calculate the mean of the data array (excluding nans in mask) for correlation plot."""
+        data = np.nanmean(mdata)
         print data
-
         """Append the data to the array outside the loop to produce the data for the correlation."""
         data_array = np.append(data_array, data)
 
+        count +=1
     return data_array
 
+correlation(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], 'amip', ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"], 'evaporation', 'SON', 'pr', 'SON', -10, 5, 5, 35)
 
-correlation(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], 'amip', ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"], 'hfls', 'SON', 'pr', 'SON', -10, 5, 5, 35)
+#correlation(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], 'amip', ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"], 'hfls', 'SON', 'pr', 'SON', -10, 5, 5, 35)
 
-#correlation(["ACCESS1-3"], 'amip', ["cfsr"], 'hfls', 'SON', 'pr', 'SON', -10, 5, 5, 35)
+#correlation(["ACCESS1-3", "bcc-csm1-1/"], 'amip', ["cfsr", "gleam"], 'hfls', 'SON', 'pr', 'SON', -10, 5, 5, 35)
