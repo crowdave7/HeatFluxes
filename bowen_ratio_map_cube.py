@@ -14,7 +14,7 @@ import numpy as np
 import os
 
 
-def plot_bowen(list_of_models, model_type, season_name):
+def map_cube(list_of_models, model_type, season_name):
     """Take the input variables, and find the paths to the relevant regridded sensible and latent heat flux model files."""
     """Plot these up as a spatial map for the given season."""
     """Central African domain."""
@@ -43,6 +43,8 @@ def plot_bowen(list_of_models, model_type, season_name):
 
     """Load the data from the model file paths into a cube. Constrain the input years"""
     """Print the model ID, length of time dimension, and first and last model dates."""
+
+    cubes_ef = []
 
     """ For each model compute the evaporative fraction in an iris cube and plot."""
     for j in list_of_models:
@@ -126,65 +128,8 @@ def plot_bowen(list_of_models, model_type, season_name):
         """Calculate the evaporative fraction (latent/(latent+sensible))."""
         evap_fraction = iris.analysis.maths.divide(numerator, denominator)
 
-        """Plot the evaporative fraction for one model."""
-        fig = plt.figure()
+        cubes_ef = np.append(cubes_ef, evap_fraction)
 
-        """Import coastlines and lake borders. Set the scale to 10m, 50m or 110m resolution for more detail."""
-        coastline = cart.feature.NaturalEarthFeature(category='physical', name='coastline', scale='110m', facecolor='none')
-        lake_borders = cart.feature.NaturalEarthFeature(category='physical', name='lakes', scale='110m', facecolor='none')
+    return cubes_ef
 
-        """Import country borders."""
-        shapefile = shapereader.natural_earth(resolution='110m', category='cultural', name='admin_0_countries')
-        reader = shapereader.Reader(shapefile)
-        country_borders = reader.records()
-
-        """Remove iris warning message."""
-        iris.FUTURE.netcdf_promote = True
-
-        """Define the contour levels for the input variables."""
-        contour_levels = np.arange(0.3, 1.05, 0.05)
-
-        """Define the colour map and the projection."""
-        cmap = matplotlib.cm.get_cmap('coolwarm_r')
-        crs_latlon = ccrs.PlateCarree()
-
-        """Plot the map using cartopy, and add map features."""
-        ax = plt.subplot(111, projection=crs_latlon)
-        ax.set_extent([-22, 62, -22, 12], crs=crs_latlon)
-        contour_plot = iplt.contourf(evap_fraction, contour_levels, cmap=cmap, extend='both')
-        ax.add_feature(coastline, zorder=5, edgecolor='k', linewidth=2)
-        ax.add_feature(lake_borders, zorder=5, edgecolor='k', linewidth=1)
-        for i in country_borders:
-            ax.add_geometries(i.geometry, ccrs.PlateCarree(), edgecolor="black", facecolor="None")
-
-        """Define gridlines."""
-        gridlines = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, color='black', linewidth=0.4, linestyle='--')
-        gridlines.xlabels_top = False
-        gridlines.xlabels_bottom = True
-        gridlines.ylabels_left = True
-        gridlines.ylabels_right = False
-        gridlines.xlines = True
-        gridlines.ylines = True
-        gridlines.xformatter = LONGITUDE_FORMATTER
-        gridlines.yformatter = LATITUDE_FORMATTER
-        gridlines.xlocator = mticker.FixedLocator(np.arange(-40, 100, 20))
-        gridlines.ylocator = mticker.FixedLocator(np.arange(-50, 70, 10))
-
-        """Add a colour bar, with ticks and labels."""
-        colour_bar = plt.colorbar(contour_plot, orientation='horizontal', pad=0.1, aspect=40)
-        colour_bar.set_ticks(np.arange(0.4, 1.05, 0.05))
-        colour_bar.set_ticklabels(np.arange(0.4, 1.05, 0.05))
-        colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
-
-        colour_bar.set_label(("Evaporative Fraction"), fontsize=10)
-
-        """Add a title."""
-        plt.title(model_id+' (AMIP) 1979-2008 ' ''+season_name+'', fontsize=10)
-
-        """Save the figure, close the plot and print an end statement."""
-        fig.savefig("Evap_Frac_"+season_name+"_"+model_id+".png", dpi=600)
-        plt.close()
-        print model_id+" plot done"
-
-
-#plot_bowen(["GFDL-HIRAM-C360"], "amip", "JJA")
+#map_cube(["ACCESS1-3"], "amip", "JJA")

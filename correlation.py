@@ -1,4 +1,7 @@
 """Import necessary modules for this code."""
+import bowen_ratio_map_cube
+import bowen_ratio_ensemble_cube
+import bowen_ratio_reanalysis_cube
 import ensemble_cube
 import iris
 import iris.analysis
@@ -31,10 +34,16 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
         variable_y = 'hfls'
 
     """Extract the model cubes for the x variable."""
-    cubes_x = map_cube.map_cube(list_of_models, model_type, variable_x, season_name_x)
+    if input_variable_x == 'evap_fraction':
+        cubes_x = bowen_ratio_map_cube.map_cube(list_of_models, model_type, season_name_x)
+    else:
+        cubes_x = map_cube.map_cube(list_of_models, model_type, variable_x, season_name_x)
 
-    """Extract the model cubes for the y variable."""
-    cubes_y = map_cube.map_cube(list_of_models, model_type, variable_y, season_name_y)
+    """Extract the model cubes for the x variable."""
+    if input_variable_y == 'evap_fraction':
+        cubes_y = bowen_ratio_map_cube.map_cube(list_of_models, model_type, season_name_y)
+    else:
+        cubes_y = map_cube.map_cube(list_of_models, model_type, variable_x, season_name_y)
 
     """For each cube, mask oceans and take an area average."""
     model_variable_x = average_lat_lon(cubes_x, lower_lat, upper_lat, lower_lon, upper_lon, variable_x, season_name_x)
@@ -64,10 +73,16 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
         legend = plt.legend(loc="center left", bbox_to_anchor=(1.03, 0.5), fontsize=9)
 
     """Extract the ensemble cube for the x variable."""
-    ensemble_cube_x = ensemble_cube.ensemble(list_of_models, model_type, variable_x, season_name_x)
+    if input_variable_x == 'evap_fraction':
+        ensemble_cube_x = bowen_ratio_ensemble_cube.bowen_ensemble(list_of_models, model_type, season_name_x)
+    else:
+        ensemble_cube_x = ensemble_cube.ensemble(list_of_models, model_type, variable_x, season_name_x)
 
     """Extract the ensemble cube for the y variable."""
-    ensemble_cube_y = ensemble_cube.ensemble(list_of_models, model_type, variable_y, season_name_y)
+    if input_variable_y == 'evap_fraction':
+        ensemble_cube_y = bowen_ratio_ensemble_cube.bowen_ensemble(list_of_models, model_type, season_name_y)
+    else:
+        ensemble_cube_y = ensemble_cube.ensemble(list_of_models, model_type, variable_y, season_name_y)
 
     """For each cube, mask oceans and take an area average."""
     ensemble_variable_x = average_lat_lon(iris.cube.CubeList([ensemble_cube_x]), lower_lat, upper_lat, lower_lon, upper_lon, variable_x, season_name_x)
@@ -94,8 +109,12 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
         list_of_reanalysis = [i.replace("gleam", "mswep") for i in list_of_reanalysis]
 
     """For each reanalysis, extract the x cube and append to the above list."""
+
     for i in list_of_reanalysis:
-        reanalysis_cube_x = reanalysis_cube.reanalysis([i], variable_x, season_name_x)
+        if input_variable_x == 'evap_fraction':
+            reanalysis_cube_x = bowen_ratio_reanalysis_cube.reanalsis_bowen([i], season_name_x)
+        else:
+            reanalysis_cube_x = reanalysis_cube.reanalysis([i], variable_x, season_name_x)
         reanalysis_cubes_x_list = np.append(reanalysis_cubes_x_list, reanalysis_cube_x)
 
     print reanalysis_cubes_x_list
@@ -114,11 +133,14 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
     """Set up a cubelist for the reanalysis y variable."""
     reanalysis_cubes_y_list = []
 
-    """For each reanalysis, extract the y cube and append to the above list."""
     for i in list_of_reanalysis:
-
-        reanalysis_cube_y = reanalysis_cube.reanalysis([i], variable_y, season_name_y)
+        if input_variable_y == 'evap_fraction':
+            reanalysis_cube_y = bowen_ratio_reanalysis_cube.reanalysis_bowen([i], season_name_y)
+        else:
+            reanalysis_cube_y = reanalysis_cube.reanalysis([i], variable_y, season_name_y)
         reanalysis_cubes_y_list = np.append(reanalysis_cubes_y_list, reanalysis_cube_y)
+
+    print reanalysis_cubes_y_list
 
     """For each cube, mask oceans and take an area average."""
     reanalysis_variable_y = average_lat_lon(reanalysis_cubes_y_list, lower_lat, upper_lat, lower_lon, upper_lon, variable_y, season_name_y)
@@ -146,25 +168,25 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
         """Add a legend for each dot."""
         legend = plt.legend(loc="center left", bbox_to_anchor=(1.03, 0.5), fontsize=9)
 
-    """Perform reduced major axis regression to plot the LOBF."""
-    standard_dev_variable_x = np.std(model_variable_x)
-    standard_dev_variable_y = np.std(model_variable_y)
-    gradient = standard_dev_variable_y / standard_dev_variable_x
-    mean_variable_x = np.mean(model_variable_x)
-    mean_variable_y = np.mean(model_variable_y)
-    intercept = mean_variable_y - (gradient*(mean_variable_x))
-    y_values_lobf = [gradient*i + intercept for i in model_variable_x]
-    plt.plot(model_variable_x, y_values_lobf, 'k')
+    # """Perform reduced major axis regression to plot the LOBF."""
+    # standard_dev_variable_x = np.std(model_variable_x)
+    # standard_dev_variable_y = np.std(model_variable_y)
+    # gradient = standard_dev_variable_y / standard_dev_variable_x
+    # mean_variable_x = np.mean(model_variable_x)
+    # mean_variable_y = np.mean(model_variable_y)
+    # intercept = mean_variable_y - (gradient*(mean_variable_x))
+    # y_values_lobf = [gradient*i + intercept for i in model_variable_x]
+    # plt.plot(model_variable_x, y_values_lobf, 'k')
 
     """Add a line of best fit just for the models."""
     #plt.plot(model_variable_x, np.poly1d(np.polyfit(model_variable_x, model_variable_y, 1))(model_variable_x), 'k')
 
-    """Compute pearson correlation coefficient just for the models."""
-    pearson = pearsonr(model_variable_x, model_variable_y)
-    pearsoncoeff = pearson[0]
-    pearsoncoeff_round = round(pearsoncoeff, 2)
-    print str(pearsoncoeff_round)
-    plt.text(0.95, 0.96, "r = "+str(pearsoncoeff_round)+"", ha='center', va='center', transform=ax1.transAxes, fontsize=8)
+    # """Compute pearson correlation coefficient just for the models."""
+    # pearson = pearsonr(model_variable_x, model_variable_y)
+    # pearsoncoeff = pearson[0]
+    # pearsoncoeff_round = round(pearsoncoeff, 2)
+    # print str(pearsoncoeff_round)
+    # plt.text(0.95, 0.96, "r = "+str(pearsoncoeff_round)+"", ha='center', va='center', transform=ax1.transAxes, fontsize=8)
 
     """Add labels and set x and y limits."""
     if variable_x == 'hfls' and input_variable_x != 'evaporation':
@@ -186,6 +208,18 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
     if input_variable_y == 'evaporation':
         plt.ylabel('Surface Upward Evaporation Flux (mm $\mathregular{day^{-1}}$)')
         plt.ylim((2.0, 4.5))
+    if input_variable_x == 'mrsos':
+        plt.xlabel('Volumetric Soil Moisture Content (%)')
+        plt.xlim(15, 35)
+    if input_variable_y == 'mrsos':
+        plt.ylabel('Volumetric Soil Moisture Content (%)')
+        plt.ylim(15, 35)
+    if input_variable_x == 'evap_fraction':
+        plt.xlabel('Evaporative Fraction')
+        plt.xlim(0.5, 0.9)
+    if input_variable_y == 'evap_fraction':
+        plt.ylabel('Evaporative Fraction')
+        plt.ylim(0.5, 0.9)
 
     """Save figure."""
     fig.savefig("Correlation.png", bbox_extra_artists=(legend,), bbox_inches='tight', dpi=600)
@@ -291,7 +325,11 @@ def average_lat_lon(cubelist, lower_lat, upper_lat, lower_lon, upper_lon, variab
         count +=1
     return data_array
 
-correlation(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], 'amip', ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"], 'evaporation', 'SON', 'pr', 'SON', -10, 5, 5, 35)
+correlation(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "MIROC5", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], 'amip', ["cfsr", "erai", "gleam", "merra2", "ncep-doe"], 'mrsos', 'SON', 'evap_fraction', 'SON', -10, 5, 5, 35)
+
+
+#correlation(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], 'amip', ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"], 'evaporation', 'SON', 'pr', 'SON', -10, 5, 5, 35)
+
 
 #correlation(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], 'amip', ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"], 'hfls', 'SON', 'pr', 'SON', -10, 5, 5, 35)
 

@@ -3,7 +3,8 @@ import iris
 import iris.analysis
 import iris.analysis.cartography
 import matplotlib
-from mpl_toolkits.basemap import Basemap, maskoceans
+import matplotlib.pyplot as plt
+from mpl_toolkits.basemap import Basemap, maskoceans, interp
 import numpy as np
 import os
 matplotlib.use('Agg')
@@ -49,6 +50,8 @@ def seasonal_cycle_reanalysis(reanalysis_type, variable, lower_lat, upper_lat, l
 
         model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
+    print model_file_paths
+
     """Define a time range to constrain the years of the data."""
     time_range = iris.Constraint(time=lambda cell: 1979 <= cell.point.year <= 2008)
 
@@ -69,6 +72,7 @@ def seasonal_cycle_reanalysis(reanalysis_type, variable, lower_lat, upper_lat, l
         latent_path = [k for k in paths_for_this_model if 'hfls' in k]
         sensible_path = [k for k in paths_for_this_model if 'hfss' in k]
         precip_path = [k for k in paths_for_this_model if 'pr' in k]
+        sm_path = [k for k in paths_for_this_model if 'mrsos' in k]
 
         """Load the cube for each variable, constrain the years and extract the seasonal cycle array."""
         """Append the seasonal cycle array to the ensemble mean array outside the loop."""
@@ -102,6 +106,12 @@ def seasonal_cycle_reanalysis(reanalysis_type, variable, lower_lat, upper_lat, l
             data_array = latent_seasonal_cycle_array / (latent_seasonal_cycle_array + sensible_seasonal_cycle_array)
             reanalysis_array[count] = data_array
 
+        if variable == 'mrsos':
+            data_cube = iris.load_cube(sm_path)
+            data_cube = constrain_year(data_cube, time_range, reanalysis_type)
+            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, reanalysis_type, variable)
+            reanalysis_array[count] = data_array
+
         """Add 1 to the model number to loop through the next month."""
         count +=1
 
@@ -110,83 +120,142 @@ def seasonal_cycle_reanalysis(reanalysis_type, variable, lower_lat, upper_lat, l
 
 def extract_seasonal_cycle_data(input_cube, lower_lat, upper_lat, lower_lon, upper_lon, reanalysis_type, variable):
     """Extract seasonal cycle data from an iris cube given the cube, its path, and the chosen lats/lons."""
+    """Extract seasonal cycle data from an iris cube given the cube, its path, and the chosen lats/lons."""
+    """Extract seasonal cycle data from an iris cube given the cube, its path, and the chosen lats/lons."""
     data_array = []
 
     with iris.FUTURE.context(cell_datetime_objects=True):
 
+        """Constrain the latitudes and longitudes of the data. Set up two cubes for transposing."""
+        original_data_unmasked = input_cube.intersection(latitude=(lower_lat-2, upper_lat+1), longitude=(lower_lon-1, upper_lon+1))
+        original_data_unmasked_1 = input_cube.intersection(latitude=(lower_lat-2, upper_lat+1), longitude=(lower_lon-1, upper_lon+1))
+
+        """If the coordinate needs transposing because the first coordinate is lon rather than that, transpose the data."""
+        coord_names = [coord.name() for coord in original_data_unmasked.coords()]
+
+        print coord_names
+
         """For each month,"""
         for i in np.arange(1, 13, 1):
-
             """Constrain the data for each month only."""
             time_range = iris.Constraint(time=lambda cell: cell.point.month == i)
-            data = input_cube.extract(time_range)
+            data_unmasked = original_data_unmasked.extract(time_range)
+            data_unmasked = data_unmasked.collapsed('time', iris.analysis.MEAN)
 
-            """Constrain the latitudes and longitudes of the data."""
-            data = data.intersection(latitude=(lower_lat, upper_lat), longitude=(lower_lon, upper_lon))
+            """If the first coordinate is longitude,"""
+            if coord_names[1] == 'longitude':
 
-            """Collapse the time dimension to take the mean over time."""
-            data_unmasked = data.collapsed('time', iris.analysis.MEAN)
+                """Set up grid of longitudes and latitudes for basemap."""
+                map = Basemap(llcrnrlon=lower_lon, llcrnrlat=lower_lat, urcrnrlon=upper_lon, urcrnrlat=upper_lat, projection='mill')
+                longitude = original_data_unmasked_1.coord('longitude').points
+                latitude = original_data_unmasked_1.coord('latitude').points
+                longitude, latitude = np.meshgrid(longitude, latitude)
+                x, y = map(longitude, latitude)
 
-            """Mask out the oceans from the data."""
+                """Set up grid replacing each gridpoint with a 5x5 grid point."""
+                x2 = np.linspace(x[0][0],x[0][-1],x.shape[1]*5)
+                y2 = np.linspace(y[0][0],y[-1][0],y.shape[0]*5)
+                x2, y2 = np.meshgrid(x2, y2)
 
-            """Extract the longitudes and latitudes of the array."""
-            longitude = data_unmasked.coord('longitude').points
-            latitude = data_unmasked.coord('latitude').points
+                """Transpose the data to set lat first rather than lon."""
+                data_unmasked = np.transpose(data_unmasked.data, (1, 0))
 
-            """Set up Basemap to begin to mask out the ocean points from the array."""
-            map = Basemap(llcrnrlon=lower_lon, llcrnrlat=lower_lat, urcrnrlon=upper_lon, urcrnrlat=upper_lat, projection='mill')
-            longitude, latitude = np.meshgrid(longitude, latitude)
-            x, y = map(longitude, latitude)
+                """Interpolate each grid point of the transposed data into a 5x5 grid. Swap dimensions if wrong way round."""
+                try:
+                    data2 = interp(data_unmasked, x[0], y[:, 0], x2, y2 ,order=1)
+                except ValueError:
+                    data2 = interp(data_unmasked, x[0], np.flipud(y[:, 0]), x2, np.flipud(y2) ,order=1)
 
-            """Mask out ocean points from the array, not including lakes."""
+                """Mask the oceans on the transposed data."""
+                lons2, lats2 = map(x2, y2, inverse=True)
+                mdata = maskoceans(lons2, lats2, data2, resolution = 'h', grid = 1.25, inlands=False)
 
-            """Create an array with the ocean data points masked."""
-            masked_array = maskoceans(longitude, latitude, data_unmasked.data, resolution = 'f', grid = 1.25)
+                """Plot figure to check that masking has worked."""
+                """
+                fig = plt.figure()
+                map.drawcoastlines(linewidth=2)
+                map.drawcountries(linewidth=2)
+                map.drawparallels(np.arange(-50, 60, 10), labels=[1, 0, 0, 0], fontsize=10, linewidth=0.4)
+                map.drawmeridians(np.arange(-40, 80, 20), labels=[0, 0, 0, 1], fontsize=10, linewidth=0.4)
+                if variable == 'pr':
+                    contour_levels = np.arange(0, 11, 1)
+                if variable == 'hfss':
+                    contour_levels = np.arange(0, 65, 5)
+                if variable == 'hfls':
+                    contour_levels = np.arange(80, 145, 5)
+                contour_plot = map.contourf(x2, y2, mdata, contour_levels, extend='both', cmap = 'YlGnBu')
+                colour_bar = map.colorbar(contour_plot, location='bottom', pad='15%')
+                model_id = reanalysis_type[0]
+                fig.savefig("mask_"+variable+"_"+str(i)+"_"+str(model_id)+".png")
+                print "plot done"
 
-            """Convert the masked ocean data points to boolean to begin creating a boolean mask."""
-            mask_bool = np.ma.filled(masked_array, 1)
+                plt.close()
+                """
 
-            """Convert the unmasked data points to boolean to finish creating the boolean mask."""
-            mask_bool[mask_bool != 1] = 0
+                """Calculate the mean of the data array (excluding nans in mask) for correlation plot."""
+                data = np.nanmean(mdata)
 
-            """Add the mask to the unmasked array."""
-            data_unmasked.data = np.ma.array(data_unmasked.data, mask=mask_bool)
+                print i
+                print data
 
-            """The unmasked data is now masked. Rename the array."""
-            data = data_unmasked
+                """Append the data to the array outside the loop to produce the data for the seasonal cycle."""
+                data_array = np.append(data_array, data)
 
-            """Leave this code commented out. It enables printing the data on a map to test the mask to see if it has worked."""
+            """If the first coordinate is latitude,"""
+            if coord_names[1] == 'latitude':
 
-            """
-            fig = plt.figure()
-            map.drawcoastlines(linewidth=1.5)
-            map.drawcountries(linewidth=1)
-            map.drawparallels(np.arange(-50, 60, 10), labels=[1, 0, 0, 0], fontsize=10, linewidth=0.4)
-            map.drawmeridians(np.arange(-40, 80, 20), labels=[0, 0, 0, 1], fontsize=10, linewidth=0.4)
-            contour_levels = np.arange(0, 110, 10)
-            contour_plot = map.contourf(x, y, data_unmasked.data, contour_levels, extend='both', cmap = 'coolwarm')
-            colour_bar = map.colorbar(contour_plot, location='bottom', pad='15%')
-            fig.savefig("test1.png")
-            print " plot done"
-            plt.close()
-            """
+                """Set up grid of longitudes and latitudes for basemap."""
+                map = Basemap(llcrnrlon=lower_lon, llcrnrlat=lower_lat, urcrnrlon=upper_lon, urcrnrlat=upper_lat, projection='mill')
+                longitude = data_unmasked.coord('longitude').points
+                latitude = data_unmasked.coord('latitude').points
+                longitude, latitude = np.meshgrid(longitude, latitude)
+                x, y = map(longitude, latitude)
 
-            """Area average the data using the iris weights method."""
-            if data.coord('latitude').bounds is None:
-                data.coord('latitude').guess_bounds()
-            if data.coord('longitude').bounds is None:
-                data.coord('longitude').guess_bounds()
+                """Set up grid replacing each gridpoint with a 5x5 grid point."""
+                x2 = np.linspace(x[0][0],x[0][-1],x.shape[1]*5)
+                y2 = np.linspace(y[0][0],y[-1][0],y.shape[0]*5)
+                x2, y2 = np.meshgrid(x2, y2)
 
-            grid_areas = iris.analysis.cartography.area_weights(data)
-            data = data.collapsed(['longitude', 'latitude'], iris.analysis.MEAN, weights = grid_areas)
+                """Interpolate each grid point of the transposed data into a 5x5 grid. Swap dimensions if wrong way round."""
+                try:
+                    data2 = interp(data_unmasked.data, x[0], y[:, 0], x2, y2 ,order=1)
+                except ValueError:
+                    data2 = interp(data_unmasked.data, x[0], np.flipud(y[:, 0]), x2, np.flipud(y2) ,order=1)
 
-            """Print out the data for the month. Precip already multiplied by 86400 in file."""
-            data = data.data
-            print i
-            print data
+                """Mask the oceans on the transposed data."""
+                lons2, lats2 = map(x2, y2, inverse=True)
+                mdata = maskoceans(lons2, lats2, data2, resolution = 'h', grid = 1.25, inlands=False)
 
-            """Append the data to the array outside the loop to produce the data for the seasonal cycle."""
-            data_array = np.append(data_array, data)
+                """Plot figure to check that masking has worked."""
+                """
+                fig = plt.figure()
+                map.drawcoastlines(linewidth=2)
+                map.drawcountries(linewidth=2)
+                map.drawparallels(np.arange(-50, 60, 10), labels=[1, 0, 0, 0], fontsize=10, linewidth=0.4)
+                map.drawmeridians(np.arange(-40, 80, 20), labels=[0, 0, 0, 1], fontsize=10, linewidth=0.4)
+                if variable == 'pr':
+                    contour_levels = np.arange(0, 11, 1)
+                if variable == 'hfss':
+                    contour_levels = np.arange(0, 65, 5)
+                if variable == 'hfls':
+                    contour_levels = np.arange(80, 145, 5)
+                contour_plot = map.contourf(x2, y2, mdata, contour_levels, extend='both', cmap = 'YlGnBu')
+                colour_bar = map.colorbar(contour_plot, location='bottom', pad='15%')
+                model_id = reanalysis_type[0]
+                fig.savefig("mask_"+variable+"_"+str(i)+"_"+str(model_id)+".png")
+                print "plot done"
+
+                plt.close()
+                """
+
+                """Calculate the mean of the data array (excluding nans in mask) for correlation plot."""
+                data = np.nanmean(mdata)
+
+                print i
+                print data
+
+                """Append the data to the array outside the loop to produce the data for the seasonal cycle."""
+                data_array = np.append(data_array, data)
 
     return data_array
 
@@ -204,8 +273,8 @@ def constrain_year(cube, time_range, reanalysis_type):
         print times[-1]
         return cube
 
-#seasonal_cycle_reanalysis(["cfsr"], "pr", -10, 5, 5, 35)
-#seasonal_cycle_reanalysis(["ncep-doe"], "pr", -10, 5, 5, 35)
+#seasonal_cycle_reanalysis(["cfsr"], "hfss", -10, 5, 5, 35)
+#seasonal_cycle_reanalysis(["ncep-doe"], "hfss", -10, 5, 5, 35)
 #seasonal_cycle_reanalysis(["erai"], "hfss", -10, 5, 5, 35)
 #seasonal_cycle_reanalysis(["gleam"], "hfss", -10, 5, 5, 35)
 #seasonal_cycle_reanalysis(["jra"], "hfss", -10, 5, 5, 35)

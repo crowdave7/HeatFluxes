@@ -114,6 +114,26 @@ def ensemble(list_of_models, model_type, variable, season_name):
                 print times[-1]
                 count +=1
 
+    if variable == 'mrsos':
+        name = 'moisture_content_of_soil_layer'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
     """Define a model number to begin with."""
     cube_id = 0
 

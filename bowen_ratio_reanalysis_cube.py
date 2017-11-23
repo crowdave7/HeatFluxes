@@ -99,8 +99,10 @@ def reanalysis_bowen(reanalysis_type, season_name):
             cube_id +=1
 
     """Select the numerator (latent heat flux)."""
+
     variable_name_0 = str(cubes[0].long_name)
     variable_name_1 = str(cubes[1].long_name)
+
     if "Latent" in variable_name_0 or "latent" in variable_name_0:
         numerator = cubes[0]
     elif "Latent" in variable_name_1 or "latent" in variable_name_1:
@@ -135,4 +137,4 @@ def reanalysis_bowen(reanalysis_type, season_name):
 
     return evap_fraction
 
-#reanalysis_bowen(["gleam"], "SON")
+#reanalysis_bowen(["erai"], "SON")

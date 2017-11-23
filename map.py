@@ -47,7 +47,7 @@ def map(list_of_models, model_type, variable, season_name):
 
     model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
-    print model_file_paths
+    model_file_paths = ['/ouce-home/data_not_backed_up/model/cmip5/CNRM-CM5/amip/mon/Lmon/r1i1p1/atlas_mrsos_Lmon_CNRM-CM5_amip_r1i1p1_197901-200812.nc']
 
     """If variable is pr_, convert variable back to pr"""
     if variable == 'pr_':
@@ -103,6 +103,26 @@ def map(list_of_models, model_type, variable, season_name):
 
     if variable == 'pr':
         name = 'precipitation_flux'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
+    if variable == 'mrsos':
+        name = 'moisture_content_of_soil_layer'
         for i in model_file_paths:
             cube = iris.load_cube(i, name)
             cubes = np.append(cubes, cube)
@@ -187,6 +207,9 @@ def map(list_of_models, model_type, variable, season_name):
         if variable == 'pr':
             contour_levels = np.arange(1, 12, 1)
             cmap = matplotlib.cm.get_cmap('YlGnBu')
+        if variable == 'mrsos':
+            contour_levels = np.arange(0, 65, 5)
+            cmap = matplotlib.cm.get_cmap('YlGnBu')
 
         """Define the colour map and the projection."""
         crs_latlon = ccrs.PlateCarree()
@@ -226,6 +249,9 @@ def map(list_of_models, model_type, variable, season_name):
         if variable == 'pr':
             colour_bar.set_ticks(np.arange(1, 12, 1))
             colour_bar.set_ticklabels(np.arange(1, 12, 1))
+        if variable == 'mrsos':
+            colour_bar.set_ticks(np.arange(0, 65, 10))
+            colour_bar.set_ticklabels(np.arange(0, 65, 10))
 
         colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
 
@@ -233,6 +259,9 @@ def map(list_of_models, model_type, variable, season_name):
             variable_units = "W $\mathregular{m^{-2}}$"
         if variable_units == 'kg m-2 s-1':
             variable_units = "mm $\mathregular{day^{-1}}$"
+        if variable == 'mrsos':
+            variable_name = "Volumetric Soil Moisture Content of Upper Layer"
+            variable_units = "%"
         colour_bar.set_label(variable_name+" ("+variable_units+")", fontsize=10)
 
         """Add a title."""
@@ -247,6 +276,6 @@ def map(list_of_models, model_type, variable, season_name):
         model_number +=1
 
 
-map(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfss", "SON")
+#map(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfss", "SON")
 
-#map(["ACCESS1-3"], "amip", "pr", "SON")
+map(["CNRM-CR5/"], "amip", "mrsos", "SON")

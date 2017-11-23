@@ -136,4 +136,5 @@ def reanalysis(reanalysis_type, variable, season_name):
 
     return cubes[0]
 
-#reanalysis(["gleam"], "hfls", "SON")
+
+#reanalysis(["cfsr"], "mrsos", "SON")

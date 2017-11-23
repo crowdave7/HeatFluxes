@@ -138,6 +138,8 @@ def reanalysis(reanalysis_type, variable, season_name):
         contour_levels = np.arange(0, 65, 5)
     if variable == 'pr':
         contour_levels = np.arange(1, 12, 1)
+    if variable == 'mrsos':
+        contour_levels = np.arange(0, 65, 5)
 
     """Define the colour map and the projection."""
     cmap = matplotlib.cm.get_cmap('YlGnBu')
@@ -145,8 +147,7 @@ def reanalysis(reanalysis_type, variable, season_name):
 
     """Plot the map using cartopy, and add map features."""
     ax = plt.subplot(111, projection=crs_latlon)
--10, 5, 5, 35
-    ax.set_extent([5, 62, -10, 5], crs=crs_latlon)
+    ax.set_extent([-22, 62, -22, 12], crs=crs_latlon)
     contour_plot = iplt.contourf(cubes[0], contour_levels, cmap=cmap, extend='both')
     ax.add_feature(coastline, zorder=5, edgecolor='k', linewidth=2)
     ax.add_feature(lake_borders, zorder=5, edgecolor='k', linewidth=1)
@@ -188,6 +189,12 @@ def reanalysis(reanalysis_type, variable, season_name):
         variable_name = "Precipitation"
         variable_units = "mm day-1"
 
+    if variable == 'mrsos':
+        colour_bar.set_ticks(np.arange(0, 65, 10))
+        colour_bar.set_ticklabels(np.arange(0, 65, 10))
+        variable_name = "Volumetric Soil Moisture Content"
+        variable_units = "%"
+
     colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
     colour_bar.set_label(variable_name+" ("+variable_units+")", fontsize=10)
 
@@ -220,4 +227,9 @@ def reanalysis(reanalysis_type, variable, season_name):
     plt.close()
     print "Plot done"
 
-reanalysis(["gleam"], "hfls", "SON")
+#reanalysis(["cfsr"], "mrsos", "SON")
+#reanalysis(["erai"], "mrsos", "SON")
+#reanalysis(["gleam"], "mrsos", "SON")
+#reanalysis(["jra"], "mrsos", "SON")
+#reanalysis(["merra2"], "mrsos", "SON")
+#reanalysis(["ncep-doe"], "mrsos", "SON")

@@ -55,6 +55,9 @@ def regrid(list_of_models, model_type, variable):
     if variable == 'pr':
         name = 'precipitation_flux'
         cubes = iris.load(model_file_paths, name)
+    if variable == 'mrsos':
+        name = 'moisture_content_of_soil_layer'
+        cubes = iris.load(model_file_paths, name)
 
     """Define the reanalysis data to regrid onto."""
     reanalysis_data = iris.load_cube("/ouce-home/data_not_backed_up/analysis/erai/1.0x1.0/daily/precip/nc/erai.totprecip.dt.1979-2013.nc")
@@ -84,5 +87,5 @@ def regrid(list_of_models, model_type, variable):
         print model_id+" regridding done"
 
 
-#regrid(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "pr")
-regrid(["IPSL-CM5B-LR", "MRI-AGCM3-2S"], "amip", "pr")
+regrid(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "mrsos")
+#regrid(["IPSL-CM5B-LR", "MRI-AGCM3-2S"], "amip", "mrsos")

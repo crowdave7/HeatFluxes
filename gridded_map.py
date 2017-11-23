@@ -121,6 +121,26 @@ def map(list_of_models, model_type, variable, season_name):
                 print times[-1]
                 count +=1
 
+    if variable == 'mrsos':
+        name = 'moisture_content_of_soil_layer'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
     """Define the contour levels for the input variables."""
     if variable == 'hfls':
         contour_levels = np.arange(80, 145, 5)
@@ -128,6 +148,8 @@ def map(list_of_models, model_type, variable, season_name):
         contour_levels = np.arange(0, 65, 5)
     if variable == 'pr':
         contour_levels = np.arange(1, 12, 1)
+    if variable == 'mrsos':
+        contour_levels = np.arange(10, 55, 5)
 
     """Define the colour map and the projection."""
     if variable == 'hfls':
@@ -136,6 +158,9 @@ def map(list_of_models, model_type, variable, season_name):
         cmap = matplotlib.cm.get_cmap('YlGnBu_r')
     if variable == 'pr':
         cmap = matplotlib.cm.get_cmap('YlGnBu')
+    if variable == 'mrsos':
+        cmap = matplotlib.cm.get_cmap('YlGnBu')
+
     crs_latlon = ccrs.PlateCarree()
 
     """Define a model number to begin with."""
@@ -216,16 +241,21 @@ def map(list_of_models, model_type, variable, season_name):
         """Add GLEAM data to the cubelist."""
         gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
         cubes = np.append(cubes, gleam_cube_data)
-        print gleam_cube_data
+
+    if variable == 'mrsos':
+        """Add GLEAM data to the cubelist."""
+        gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
+        cubes = np.append(cubes, gleam_cube_data)
 
     if variable == 'pr':
         """Add MSWEP data to the cubelist."""
         mswep_cube_data = reanalysis_cube.reanalysis(["mswep"], variable, season_name)
         cubes = np.append(cubes, mswep_cube_data)
 
-    """Add JRA-55 data to the cubelist."""
-    jra_cube_data = reanalysis_cube.reanalysis(["jra"], variable, season_name)
-    cubes = np.append(cubes, jra_cube_data)
+    if variable != "mrsos":
+        """Add JRA-55 data to the cubelist."""
+        jra_cube_data = reanalysis_cube.reanalysis(["jra"], variable, season_name)
+        cubes = np.append(cubes, jra_cube_data)
 
     """Add MERRA-2 data to the cubelist."""
     merra_cube_data = reanalysis_cube.reanalysis(["merra2"], variable, season_name)
@@ -234,6 +264,9 @@ def map(list_of_models, model_type, variable, season_name):
     """Add NCEP DOE-2 data to the cubelist."""
     doe_cube_data = reanalysis_cube.reanalysis(["ncep-doe"], variable, season_name)
     cubes = np.append(cubes, doe_cube_data)
+
+    #print doe_cube_data
+    print cubes
 
     """Plot each model and the ensemble mean up."""
     model_number = 0
@@ -298,6 +331,9 @@ def map(list_of_models, model_type, variable, season_name):
     if variable == 'pr':
         colour_bar.set_ticks(np.arange(1, 12, 1))
         colour_bar.set_ticklabels(np.arange(1, 12, 1))
+    if variable == 'mrsos':
+        colour_bar.set_ticks(np.arange(10, 55, 10))
+        colour_bar.set_ticklabels(np.arange(10, 55, 10))
 
     colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
 
@@ -308,6 +344,9 @@ def map(list_of_models, model_type, variable, season_name):
         variable_units = "W $\mathregular{m^{-2}}$"
     if variable_units == 'kg m-2 s-1':
         variable_units = "mm $\mathregular{day^{-1}}$"
+    if variable == 'mrsos':
+        variable_name = "Top Layer Volumetric Soil Moisture Content"
+        variable_units = "%"
     colour_bar.set_label(variable_name+" ("+variable_units+")", fontsize=10)
 
     fig.subplots_adjust(left=0.125, right=0.9, bottom=0.14, top=0.93, wspace=0.4, hspace=0.9)
@@ -320,5 +359,5 @@ def map(list_of_models, model_type, variable, season_name):
 
 # map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CCSM4/", "CESM1-CAM5/", "CMCC-CM/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "EC-EARTH/", "FGOALS-g2/", "FGOALS-s2/", "GFDL-CM3/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/"], "amip", "hfls", [1,2,12], "DJF")
 
-map(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfls", "SON")
-#map(["ACCESS1-3"], "amip", "hfss", "SON")
+#map(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "mrsos", "SON")
+#map(["ACCESS1-3"], "amip", "mrsos", "SON")
