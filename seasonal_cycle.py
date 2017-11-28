@@ -67,6 +67,8 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
 
         model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
+        print model_file_paths
+
     """Define a time range to constrain the years of the data."""
     time_range = iris.Constraint(time=lambda cell: 1979 <= cell.point.year <= 2008)
 
@@ -110,6 +112,9 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
         """Extract the model ID."""
         data = netCDF4.Dataset(paths_for_this_model[0])
         model_id = data.model_id
+
+        if model_id == 'ACCESS1.3':
+            model_id = 'ACCESS1-3'
 
         """Load the cube for each variable, constrain the years and extract the seasonal cycle array."""
         """Append the seasonal cycle array to the ensemble mean array outside the loop."""
@@ -159,9 +164,9 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
             """Reassign a model ID to the new multiplied cube."""
             cube_latent.long_name = latent_model_id
 
-            latent_seasonal_cycle_array = extract_seasonal_cycle_model_data(cube_latent, latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon, variable)
-            sensible_seasonal_cycle_array = extract_seasonal_cycle_model_data(cube_sensible, sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon, variable)
-            data_array = latent_seasonal_cycle_array / (latent_seasonal_cycle_array + sensible_seasonal_cycle_array, variable)
+            latent_seasonal_cycle_array = extract_seasonal_cycle_model_data(cube_latent, lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            sensible_seasonal_cycle_array = extract_seasonal_cycle_model_data(cube_sensible, lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            data_array = latent_seasonal_cycle_array / (latent_seasonal_cycle_array + sensible_seasonal_cycle_array)
 
         if variable == 'mrsos':
             data_cube = iris.load_cube(sm_path, 'moisture_content_of_soil_layer')
@@ -171,8 +176,6 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
             """Reassign a model ID to the new multiplied cube."""
             data_cube.long_name = model_id
             data_array = extract_seasonal_cycle_model_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
-
-
 
         """Add the seasonal cycle to the plot."""
 
@@ -185,10 +188,10 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
             plt.ylabel('Precipitation (mm $\mathregular{day^{-1}}$)')
             plt.ylim(0, 10)
         if variable == 'hfls':
-            plt.ylabel('Latent Heat Flux (W $\mathregular{m^{-2}}$)')
+            plt.ylabel('Surface Upward Latent Heat Flux (W $\mathregular{m^{-2}}$)')
             plt.ylim(0, 160)
         if variable == 'hfss':
-            plt.ylabel('Sensible Heat Flux (W $\mathregular{m^{-2}}$)')
+            plt.ylabel('Surface Upward Sensible Heat Flux (W $\mathregular{m^{-2}}$)')
             plt.ylim(0, 160)
         if variable == 'evap_fraction':
             plt.ylabel('Evaporative Fraction')
@@ -201,6 +204,10 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
         model_number +=1
 
     """Take the mean seasonal cycle across the models."""
+
+    print list_of_models
+    print model_type
+    print variable
 
     ensemble_mean_array = seasonal_cycle_ensemble.seasonal_cycle_ensemble(list_of_models, model_type, variable, lower_lat, upper_lat, lower_lon, upper_lon)
     print ensemble_mean_array
@@ -232,7 +239,7 @@ def seasonal_cycle(list_of_models, model_type, variable, lower_lat, upper_lat, l
     handles[-1].set_linestyle("--")
     legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
 
-    if variable == 'hfss' or 'mrsos':
+    if variable == 'hfss' or variable == 'mrsos':
 
         """Add the GLEAM reanalysis seasonal cycle to the plot."""
 
@@ -448,7 +455,7 @@ def constrain_year(cube, time_range):
 
 #seasonal_cycle(["IPSL-CM5B-LR"], "amip", "pr", -10, 5, 5, 35)
 
-seasonal_cycle(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "MIROC5", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "mrsos", -10, 5, 5, 35)
+seasonal_cycle(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "evap_fraction", -10, 5, 5, 35)
 
 #seasonal_cycle(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfls", -10, 5, 5, 35)
 #seasonal_cycle(["ACCESS1-3"], "amip", "hfls", -10, 5, 5, 35)

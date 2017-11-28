@@ -19,12 +19,18 @@ def ensemble(list_of_models, model_type, variable, season_name):
     if variable == 'pr':
         variable = 'pr_'
 
+    """If variable is evspsbl, distinguish between evspsbl and evspsblsoi to find model files."""
+    if variable == 'evspsbl':
+        variable = 'evspsbl_'
+
     """Find the paths to the files containing the model data"""
     model_file_paths = []
     for root, directories, files in os.walk(root_directory):
         for i in files:
             path = os.path.join(root, i)
             for j in list_of_models:
+                if j == "bcc-csm1-1/":
+                    j = "bcc-csm1-1_"
                 for char in '/':
                     j = j.replace(char,'')
                 if j in path and model_type in path and variable in path:
@@ -37,6 +43,10 @@ def ensemble(list_of_models, model_type, variable, season_name):
     """If variable is pr_, convert variable back to pr"""
     if variable == 'pr_':
         variable = 'pr'
+
+    """If variable is evspsbl_, convert variable back to evspsbl"""
+    if variable == 'evspsbl_':
+        variable = 'evspsbl'
 
     """Define a time range to constrain the years of the data."""
     time_range = iris.Constraint(time=lambda cell: 1979 <= cell.point.year <= 2008)
@@ -126,6 +136,86 @@ def ensemble(list_of_models, model_type, variable, season_name):
                 print times[-1]
                 count +=1
 
+    if variable == 'tran':
+        name = 'transpiration_flux'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
+    if variable == 'evspsblsoi':
+        name = 'water_evaporation_flux_from_soil'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
+    if variable == 'evspsbl':
+        name = 'water_evaporation_flux'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
+    if variable == 'evspsblveg':
+        name = 'water_evaporation_flux_from_canopy'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
     """Take the mean over time for each cube in the cubelist."""
     cube_id = 0
 
@@ -135,8 +225,10 @@ def ensemble(list_of_models, model_type, variable, season_name):
         """Select the model ID"""
         model_id = cubes[cube_id].attributes['model_id']
 
+        print model_id
+
         """If the variable is precipitation, multiply model cubes by 86400"""
-        if variable == 'pr':
+        if variable == 'pr' or variable == 'tran' or variable == 'evspsblsoi' or variable == 'evspsbl' or variable == 'evspsblveg':
             regridded_model_data = iris.analysis.maths.multiply(cubes[cube_id], 86400)
 
         """Reassign a model ID to the new multiplied cube."""
@@ -189,6 +281,7 @@ def ensemble(list_of_models, model_type, variable, season_name):
     return ensemble_mean
 
 
-#ensemble(["ACCESS1-3", "bcc-csm1-1", "BNU-ESM", "CanAM4", "CNRM-CM5", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M"], "amip", "hfss", "JJA")
+
+#ensemble(["bcc-csm1-1/", "bcc-csm1-1-m/"], "amip", "hfls", "SON")
 
 #ensemble(["ACCESS1-3"], "amip", "mrsos", "SON")

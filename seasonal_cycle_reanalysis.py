@@ -101,8 +101,8 @@ def seasonal_cycle_reanalysis(reanalysis_type, variable, lower_lat, upper_lat, l
             cube_sensible = iris.load_cube(sensible_path)
             cube_sensible = constrain_year(cube_sensible, time_range, reanalysis_type)
 
-            latent_seasonal_cycle_array = extract_seasonal_cycle_data(cube_latent, latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon, reanalysis_type)
-            sensible_seasonal_cycle_array = extract_seasonal_cycle_data(cube_sensible, sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon, reanalysis_type)
+            latent_seasonal_cycle_array = extract_seasonal_cycle_data(cube_latent, lower_lat, upper_lat, lower_lon, upper_lon, reanalysis_type, variable)
+            sensible_seasonal_cycle_array = extract_seasonal_cycle_data(cube_sensible, lower_lat, upper_lat, lower_lon, upper_lon, reanalysis_type, variable)
             data_array = latent_seasonal_cycle_array / (latent_seasonal_cycle_array + sensible_seasonal_cycle_array)
             reanalysis_array[count] = data_array
 
@@ -271,11 +271,12 @@ def constrain_year(cube, time_range, reanalysis_type):
         print len(times)
         print times[0]
         print times[-1]
+
         return cube
 
-#seasonal_cycle_reanalysis(["cfsr"], "hfss", -10, 5, 5, 35)
+#seasonal_cycle_reanalysis(["cfsr"], "evap_fraction", -10, 5, 5, 35)
 #seasonal_cycle_reanalysis(["ncep-doe"], "hfss", -10, 5, 5, 35)
 #seasonal_cycle_reanalysis(["erai"], "hfss", -10, 5, 5, 35)
-#seasonal_cycle_reanalysis(["gleam"], "hfss", -10, 5, 5, 35)
+#seasonal_cycle_reanalysis(["gleam"], "pr", -10, 5, 5, 35)
 #seasonal_cycle_reanalysis(["jra"], "hfss", -10, 5, 5, 35)
 #seasonal_cycle_reanalysis(["merra2"], "hfss", -10, 5, 5, 35)

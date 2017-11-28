@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """Import necessary modules for this code."""
 import cartopy as cart
 import cartopy.crs as ccrs
@@ -15,6 +17,7 @@ import numpy as np
 import os
 import reanalysis_cube
 
+# WHEN ADDING NEW VARIABLE, MODIFY THIS SCRIPT, REANALYSIS_CUBE AND ENSEMBLE_CUBE
 
 def map(list_of_models, model_type, variable, season_name):
     """Take the input variables, and find the paths to the relevant model files."""
@@ -28,6 +31,10 @@ def map(list_of_models, model_type, variable, season_name):
     """If variable is pr, distinguish between pr and precipitable water to find model files."""
     if variable == 'pr':
         variable = 'pr_'
+
+    """If variable is evspsbl, distinguish between evspsbl and evspsblsoi to find model files."""
+    if variable == 'evspsbl':
+        variable = 'evspsbl_'
 
     """Find the paths to the directories containing the model data"""
     directory_paths = []
@@ -53,6 +60,10 @@ def map(list_of_models, model_type, variable, season_name):
     """If variable is pr_, convert variable back to pr"""
     if variable == 'pr_':
         variable = 'pr'
+
+    """If variable is evspsbl_, convert variable back to evspsbl"""
+    if variable == 'evspsbl_':
+        variable = 'evspsbl'
 
     """Define a time range to constrain the years of the data."""
     time_range = iris.Constraint(time=lambda cell: 1979 <= cell.point.year <= 2008)
@@ -141,6 +152,86 @@ def map(list_of_models, model_type, variable, season_name):
                 print times[-1]
                 count +=1
 
+    if variable == 'tran':
+        name = 'transpiration_flux'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
+    if variable == 'evspsblsoi':
+        name = 'water_evaporation_flux_from_soil'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
+    if variable == 'evspsbl':
+        name = 'water_evaporation_flux'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
+    if variable == 'evspsblveg':
+        name = 'water_evaporation_flux_from_canopy'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
     """Define the contour levels for the input variables."""
     if variable == 'hfls':
         contour_levels = np.arange(80, 145, 5)
@@ -149,7 +240,15 @@ def map(list_of_models, model_type, variable, season_name):
     if variable == 'pr':
         contour_levels = np.arange(1, 12, 1)
     if variable == 'mrsos':
-        contour_levels = np.arange(10, 55, 5)
+        contour_levels = np.arange(10, 55, 3)
+    if variable == 'tran':
+        contour_levels = np.arange(0.2, 3.2, 0.2)
+    if variable == 'evspsblsoi':
+        contour_levels = np.arange(0.2, 2.2, 0.2)
+    if variable == 'evspsbl':
+        contour_levels = np.arange(2.0, 5.2, 0.2)
+    if variable == 'evspsblveg':
+        contour_levels = np.arange(0.2, 2.2, 0.2)
 
     """Define the colour map and the projection."""
     if variable == 'hfls':
@@ -159,6 +258,14 @@ def map(list_of_models, model_type, variable, season_name):
     if variable == 'pr':
         cmap = matplotlib.cm.get_cmap('YlGnBu')
     if variable == 'mrsos':
+        cmap = matplotlib.cm.get_cmap('YlGnBu')
+    if variable == 'tran':
+        cmap = matplotlib.cm.get_cmap('YlGnBu')
+    if variable == 'evspsblsoi':
+        cmap = matplotlib.cm.get_cmap('YlGnBu')
+    if variable == 'evspsbl':
+        cmap = matplotlib.cm.get_cmap('YlGnBu')
+    if variable == 'evspsblveg':
         cmap = matplotlib.cm.get_cmap('YlGnBu')
 
     crs_latlon = ccrs.PlateCarree()
@@ -180,7 +287,7 @@ def map(list_of_models, model_type, variable, season_name):
         model_id = cubes[model_number].attributes['model_id']
 
         """If the variable is precipitation, multiply model cubes by 86400"""
-        if variable == 'pr':
+        if variable == 'pr' or variable == 'tran' or variable == 'evspsblsoi' or variable == 'evspsbl' or variable == 'evspsblveg':
             model_data = iris.analysis.maths.multiply(cubes[model_number], 86400)
 
         """Reassign a model ID to the new multiplied cube."""
@@ -217,6 +324,7 @@ def map(list_of_models, model_type, variable, season_name):
             """Return this mean to the cubelist."""
             cubes[model_number] = model_data
 
+            print model_number
             """Add 1 to the model number to loop through the next model."""
             model_number +=1
 
@@ -224,46 +332,58 @@ def map(list_of_models, model_type, variable, season_name):
     ensemble_cube_data = ensemble_cube.ensemble(list_of_models, model_type, variable, season_name)
     cubes = np.append(cubes, ensemble_cube_data)
 
-    """Add CFSR data to the cubelist."""
-    cfsr_cube_data = reanalysis_cube.reanalysis(["cfsr"], variable, season_name)
-    cubes = np.append(cubes, cfsr_cube_data)
+    """Ignore reanalysis if dealing with partitioned evapotranspiration variables."""
 
-    """Add ERA-Interim data to the cubelist."""
-    erai_cube_data = reanalysis_cube.reanalysis(["erai"], variable, season_name)
-    cubes = np.append(cubes, erai_cube_data)
+    if variable == 'evspsbl' or variable == 'evspsblsoi' or variable == 'evspsblveg' or variable == 'tran':
+        pass
 
-    if variable == 'hfss':
-        """Add GLEAM data to the cubelist."""
-        gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
-        cubes = np.append(cubes, gleam_cube_data)
+    else:
 
-    if variable == 'hfls':
-        """Add GLEAM data to the cubelist."""
-        gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
-        cubes = np.append(cubes, gleam_cube_data)
+        if variable != 'tran' or variable != 'evspsblsoi' or variable != 'evspsbl' or variable != 'evspsblveg':
+            """Add CFSR data to the cubelist."""
+            cfsr_cube_data = reanalysis_cube.reanalysis(["cfsr"], variable, season_name)
+            cubes = np.append(cubes, cfsr_cube_data)
 
-    if variable == 'mrsos':
-        """Add GLEAM data to the cubelist."""
-        gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
-        cubes = np.append(cubes, gleam_cube_data)
+        if variable != 'tran' or variable != 'evspsblsoi' or variable != 'evspsbl' or variable != 'evspsblveg':
+            """Add ERA-Interim data to the cubelist."""
+            erai_cube_data = reanalysis_cube.reanalysis(["erai"], variable, season_name)
+            cubes = np.append(cubes, erai_cube_data)
 
-    if variable == 'pr':
-        """Add MSWEP data to the cubelist."""
-        mswep_cube_data = reanalysis_cube.reanalysis(["mswep"], variable, season_name)
-        cubes = np.append(cubes, mswep_cube_data)
+        if variable == 'hfss':
+            """Add GLEAM data to the cubelist."""
+            gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
+            cubes = np.append(cubes, gleam_cube_data)
 
-    if variable != "mrsos":
-        """Add JRA-55 data to the cubelist."""
-        jra_cube_data = reanalysis_cube.reanalysis(["jra"], variable, season_name)
-        cubes = np.append(cubes, jra_cube_data)
+        if variable == 'hfls':
+            """Add GLEAM data to the cubelist."""
+            gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
+            cubes = np.append(cubes, gleam_cube_data)
 
-    """Add MERRA-2 data to the cubelist."""
-    merra_cube_data = reanalysis_cube.reanalysis(["merra2"], variable, season_name)
-    cubes = np.append(cubes, merra_cube_data)
+        if variable == 'mrsos':
+            """Add GLEAM data to the cubelist."""
+            gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
+            cubes = np.append(cubes, gleam_cube_data)
 
-    """Add NCEP DOE-2 data to the cubelist."""
-    doe_cube_data = reanalysis_cube.reanalysis(["ncep-doe"], variable, season_name)
-    cubes = np.append(cubes, doe_cube_data)
+        if variable == 'pr':
+            """Add MSWEP data to the cubelist."""
+            mswep_cube_data = reanalysis_cube.reanalysis(["mswep"], variable, season_name)
+            cubes = np.append(cubes, mswep_cube_data)
+
+        if variable != "mrsos":
+        #if variable != "mrsos" or variable != 'tran' or variable != 'evspsblsoi' or variable != 'evspsbl':
+            """Add JRA-55 data to the cubelist."""
+            jra_cube_data = reanalysis_cube.reanalysis(["jra"], variable, season_name)
+            cubes = np.append(cubes, jra_cube_data)
+
+        if variable != 'tran' or variable != 'evspsblsoi' or variable != 'evspsbl':
+            """Add MERRA-2 data to the cubelist."""
+            merra_cube_data = reanalysis_cube.reanalysis(["merra2"], variable, season_name)
+            cubes = np.append(cubes, merra_cube_data)
+
+        if variable != 'tran' or variable != 'evspsblsoi' or variable != 'evspsbl':
+            """Add NCEP DOE-2 data to the cubelist."""
+            doe_cube_data = reanalysis_cube.reanalysis(["ncep-doe"], variable, season_name)
+            cubes = np.append(cubes, doe_cube_data)
 
     #print doe_cube_data
     print cubes
@@ -312,6 +432,9 @@ def map(list_of_models, model_type, variable, season_name):
         gridlines.xlocator = mticker.FixedLocator(np.arange(-40, 100, 20))
         gridlines.ylocator = mticker.FixedLocator(np.arange(-50, 70, 10))
 
+        if model_data.long_name == 'ACCESS1.3':
+            model_data.long_name = 'ACCESS1-3'
+
         """Add a title."""
         plt.title(model_data.long_name, fontsize=8)
 
@@ -332,8 +455,20 @@ def map(list_of_models, model_type, variable, season_name):
         colour_bar.set_ticks(np.arange(1, 12, 1))
         colour_bar.set_ticklabels(np.arange(1, 12, 1))
     if variable == 'mrsos':
-        colour_bar.set_ticks(np.arange(10, 55, 10))
-        colour_bar.set_ticklabels(np.arange(10, 55, 10))
+        colour_bar.set_ticks(np.arange(10, 55, 6))
+        colour_bar.set_ticklabels(np.arange(10, 55, 6))
+    if variable == 'tran':
+        colour_bar.set_ticks(np.arange(0.2, 3.2, 0.2))
+        colour_bar.set_ticklabels(np.arange(0.2, 3.2, 0.2))
+    if variable == 'evspsblsoi':
+        colour_bar.set_ticks(np.arange(0.2, 2.2, 0.2))
+        colour_bar.set_ticklabels(np.arange(0.2, 2.2, 0.2))
+    if variable == 'evspsbl':
+        colour_bar.set_ticks(np.arange(2.0, 5.2, 0.2))
+        colour_bar.set_ticklabels(np.arange(2.0, 5.2, 0.2))
+    if variable == 'evspsveg':
+        colour_bar.set_ticks(np.arange(0.2, 2.2, 0.2))
+        colour_bar.set_ticklabels(np.arange(0.2, 2.2, 0.2))
 
     colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
 
@@ -345,7 +480,7 @@ def map(list_of_models, model_type, variable, season_name):
     if variable_units == 'kg m-2 s-1':
         variable_units = "mm $\mathregular{day^{-1}}$"
     if variable == 'mrsos':
-        variable_name = "Top Layer Volumetric Soil Moisture Content"
+        variable_name = "Volumetric Soil Moisture Content"
         variable_units = "%"
     colour_bar.set_label(variable_name+" ("+variable_units+")", fontsize=10)
 
@@ -353,11 +488,19 @@ def map(list_of_models, model_type, variable, season_name):
 
     """Save the figure, close the plot and print an end statement."""
     print "saving final figure"
-    fig.savefig(variable+"_"+season_name+"_gridded.png", dpi=600)
+    fig.savefig("Gridded_"+variable+"_"+season_name+".png", dpi=600)
     plt.close()
     print "plot done"
 
 # map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CCSM4/", "CESM1-CAM5/", "CMCC-CM/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "EC-EARTH/", "FGOALS-g2/", "FGOALS-s2/", "GFDL-CM3/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/"], "amip", "hfls", [1,2,12], "DJF")
 
-#map(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "mrsos", "SON")
-#map(["ACCESS1-3"], "amip", "mrsos", "SON")
+#map(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "mrsos", "SON")
+
+#map(["bcc-csm1-1/", "BNU-ESM", "CanAM4", "GFDL-HIRAM-C360", "GISS-E2-R/", "inmcm4", "MIROC5", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "evspsbl", "SON")
+
+#map(["bcc-csm1-1/", "BNU-ESM", "CanAM4", "GFDL-HIRAM-C360", "GISS-E2-R/", "inmcm4", "MIROC5", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "tran", "SON")
+
+
+#map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "mrsos", "SON")
+
+map(["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "tran", "SON")

@@ -19,6 +19,10 @@ def reanalysis(reanalysis_type, variable, season_name):
     if variable == 'pr':
         variable = 'pr_'
 
+    """If variable is evspsbl, distinguish between evspsbl and evspsblsoi to find model files."""
+    if variable == 'evspsbl':
+        variable = 'evspsbl_'
+
     """Find the paths to the files containing the model data"""
     model_file_paths = []
     for root, directories, files in os.walk(root_directory):
@@ -35,6 +39,10 @@ def reanalysis(reanalysis_type, variable, season_name):
     """If variable is pr_, convert variable back to pr"""
     if variable == 'pr_':
         variable = 'pr'
+
+    """If variable is evspsbl_, convert variable back to evspsbl"""
+    if variable == 'evspsbl_':
+        variable = 'evspsbl'
 
     """Load the data into a cubelist."""
 
@@ -108,6 +116,8 @@ def reanalysis(reanalysis_type, variable, season_name):
             """Add 1 to the count variable."""
             cube_id +=1
 
+    print cubes
+
     if reanalysis_type == ["cfsr"]:
         cubes[0].long_name = "CFSR"
         cubes[0].rename("CFSR")
@@ -137,4 +147,4 @@ def reanalysis(reanalysis_type, variable, season_name):
     return cubes[0]
 
 
-#reanalysis(["cfsr"], "mrsos", "SON")
+#reanalysis(["cfsr"], "evspsbl", "SON")

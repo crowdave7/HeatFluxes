@@ -24,13 +24,13 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
     ax1.tick_params(axis='x', direction='in', which='both', labelbottom='on', labeltop='off', bottom='on', top='on')
     ax1.tick_params(axis='y', direction='in', which='both', labelleft='on', labelright='off', left='on', right='on')
 
-    """If one of the input variable is evaporation, use latent heat flux for now."""
+    """If one of the input variable is evapotranspiration, use latent heat flux for now."""
     input_variable_x = variable_x
     input_variable_y = variable_y
 
-    if input_variable_x == 'evaporation':
+    if input_variable_x == 'evapotranspiration':
         variable_x = 'hfls'
-    if input_variable_y == 'evaporation':
+    if input_variable_y == 'evapotranspiration':
         variable_y = 'hfls'
 
     """Extract the model cubes for the x variable."""
@@ -39,21 +39,21 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
     else:
         cubes_x = map_cube.map_cube(list_of_models, model_type, variable_x, season_name_x)
 
-    """Extract the model cubes for the x variable."""
+    """Extract the model cubes for the y variable."""
     if input_variable_y == 'evap_fraction':
         cubes_y = bowen_ratio_map_cube.map_cube(list_of_models, model_type, season_name_y)
     else:
-        cubes_y = map_cube.map_cube(list_of_models, model_type, variable_x, season_name_y)
+        cubes_y = map_cube.map_cube(list_of_models, model_type, variable_y, season_name_y)
 
     """For each cube, mask oceans and take an area average."""
     model_variable_x = average_lat_lon(cubes_x, lower_lat, upper_lat, lower_lon, upper_lon, variable_x, season_name_x)
     model_variable_y = average_lat_lon(cubes_y, lower_lat, upper_lat, lower_lon, upper_lon, variable_y, season_name_y)
 
-    """If one of the input variables is evaporation, convert latent heat flux to evaporation (divide by 28.00 at 30C)"""
-    if input_variable_x == 'evaporation':
+    """If one of the input variables is evapotranspiration, convert latent heat flux to evapotranspiration (divide by 28.00 at 30C)"""
+    if input_variable_x == 'evapotranspiration':
         model_variable_x = [float(i) / 28.00 for i in model_variable_x]
 
-    if input_variable_y == 'evaporation':
+    if input_variable_y == 'evapotranspiration':
         model_variable_y = [float(i) / 28.00 for i in model_variable_y]
 
     """Define the list of colours for each model."""
@@ -88,11 +88,11 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
     ensemble_variable_x = average_lat_lon(iris.cube.CubeList([ensemble_cube_x]), lower_lat, upper_lat, lower_lon, upper_lon, variable_x, season_name_x)
     ensemble_variable_y = average_lat_lon(iris.cube.CubeList([ensemble_cube_y]), lower_lat, upper_lat, lower_lon, upper_lon, variable_y, season_name_y)
 
-    """If one of the input variables is evaporation, convert latent heat flux to evaporation (*28.00 at 30C)"""
-    if input_variable_x == 'evaporation':
+    """If one of the input variables is evapotranspiration, convert latent heat flux to evapotranspiration (div by 28.00 at 30C)"""
+    if input_variable_x == 'evapotranspiration':
         ensemble_variable_x = [float(i) / 28.00 for i in ensemble_variable_x]
 
-    if input_variable_y == 'evaporation':
+    if input_variable_y == 'evapotranspiration':
         ensemble_variable_y = [float(i) / 28.00 for i in ensemble_variable_y]
 
     """Add the scatter plot. Select dot colour, marker and label."""
@@ -145,11 +145,11 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
     """For each cube, mask oceans and take an area average."""
     reanalysis_variable_y = average_lat_lon(reanalysis_cubes_y_list, lower_lat, upper_lat, lower_lon, upper_lon, variable_y, season_name_y)
 
-    """If one of the input variables is evaporation, convert latent heat flux to evaporation (*28.00 at 30C)"""
-    if input_variable_x == 'evaporation':
+    """If one of the input variables is evapotranspiration, convert latent heat flux to evapotranspiration (div by 28.00 at 30C)"""
+    if input_variable_x == 'evapotranspiration':
         reanalysis_variable_x = [float(i) / 28.00 for i in reanalysis_variable_x]
 
-    if input_variable_y == 'evaporation':
+    if input_variable_y == 'evapotranspiration':
         reanalysis_variable_y = [float(i) / 28.00 for i in reanalysis_variable_y]
 
     """Define the list of colours for each model."""
@@ -189,10 +189,10 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
     # plt.text(0.95, 0.96, "r = "+str(pearsoncoeff_round)+"", ha='center', va='center', transform=ax1.transAxes, fontsize=8)
 
     """Add labels and set x and y limits."""
-    if variable_x == 'hfls' and input_variable_x != 'evaporation':
+    if variable_x == 'hfls' and input_variable_x != 'evapotranspiration':
         plt.xlabel('Upward Surface Latent Heat Flux (W $\mathregular{m^{-2}}$)')
         plt.xlim((60, 120))
-    if variable_y == 'hfls' and input_variable_y != 'evaporation':
+    if variable_y == 'hfls' and input_variable_y != 'evapotranspiration':
         plt.ylabel('Upward Surface Latent Heat Flux (W $\mathregular{m^{-2}}$)')
         plt.ylim((60, 130))
     if variable_x == 'pr':
@@ -202,11 +202,11 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
         plt.ylabel('Precipitation (mm $\mathregular{day^{-1}}$)')
         ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
         plt.ylim((3.0, 8.0))
-    if input_variable_x == 'evaporation':
-        plt.xlabel('Surface Upward Evaporation Flux (mm $\mathregular{day^{-1}}$)')
+    if input_variable_x == 'evapotranspiration':
+        plt.xlabel('Upward Evapotranspiration Flux (mm $\mathregular{day^{-1}}$)')
         plt.xlim((2.0, 4.5))
-    if input_variable_y == 'evaporation':
-        plt.ylabel('Surface Upward Evaporation Flux (mm $\mathregular{day^{-1}}$)')
+    if input_variable_y == 'evapotranspiration':
+        plt.ylabel('Upward Evapotranspiration Flux (mm $\mathregular{day^{-1}}$)')
         plt.ylim((2.0, 4.5))
     if input_variable_x == 'mrsos':
         plt.xlabel('Volumetric Soil Moisture Content (%)')
@@ -220,9 +220,25 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
     if input_variable_y == 'evap_fraction':
         plt.ylabel('Evaporative Fraction')
         plt.ylim(0.5, 0.9)
+    if input_variable_x == 'tran':
+        plt.xlabel('Upward Transpiration Flux (mm $\mathregular{day^{-1}}$)')
+    if input_variable_y == 'tran':
+        plt.ylabel('Upward Transpiration Flux (mm $\mathregular{day^{-1}}$)')
+    if input_variable_x == 'evspsblsoi':
+        plt.xlabel('Upward Bare Soil Evaporation Flux (mm $\mathregular{day^{-1}}$)')
+    if input_variable_y == 'evspsblsoi':
+        plt.ylabel('Upward Bare Soil Evaporation Flux (mm $\mathregular{day^{-1}}$)')
+    if input_variable_x == 'evspsbl':
+        plt.xlabel('Upward Evaporation Flux (mm $\mathregular{day^{-1}}$)')
+    if input_variable_y == 'evspsbl':
+        plt.ylabel('Upward Evaporation Flux (mm $\mathregular{day^{-1}}$)')
+    if input_variable_x == 'evspsblveg':
+        plt.ylabel('Upward Evaporation Flux from Canopy (mm $\mathregular{day^{-1}}$)')
+    if input_variable_y == 'evspsblveg':
+        plt.ylabel('Upward Evaporation Flux from Canopy (mm $\mathregular{day^{-1}}$)')
 
     """Save figure."""
-    fig.savefig("Correlation.png", bbox_extra_artists=(legend,), bbox_inches='tight', dpi=600)
+    fig.savefig("Correlation_"+variable_x+"_"+variable_y+".png", bbox_extra_artists=(legend,), bbox_inches='tight', dpi=600)
 
 
 def average_lat_lon(cubelist, lower_lat, upper_lat, lower_lon, upper_lon, variable, season_name):
@@ -325,7 +341,15 @@ def average_lat_lon(cubelist, lower_lat, upper_lat, lower_lon, upper_lon, variab
         count +=1
     return data_array
 
-correlation(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "MIROC5", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], 'amip', ["cfsr", "erai", "gleam", "merra2", "ncep-doe"], 'mrsos', 'SON', 'evap_fraction', 'SON', -10, 5, 5, 35)
+correlation(["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], 'amip', [], 'mrsos', 'SON', 'evspsblveg', 'SON', -10, 5, 5, 35)
+
+#correlation(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "MIROC5", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], 'amip', [], 'mrsos', 'SON', 'evspsbl', 'SON', -10, 5, 5, 35)
+
+#correlation(["bcc-csm1-1/", "BNU-ESM", "CanAM4", "GFDL-HIRAM-C360", "GISS-E2-R/", "inmcm4", "MIROC5", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], 'amip', [], 'mrsos', 'SON', 'evspsblsoi', 'SON', -10, 5, 5, 35)
+
+#correlation(["bcc-csm1-1/", "BNU-ESM", "CanAM4", "GFDL-HIRAM-C360", "GISS-E2-R/", "inmcm4", "MIROC5", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], 'amip', [], 'mrsos', 'SON', 'tran', 'SON', -10, 5, 5, 35)
+
+#correlation(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "MIROC5", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], 'amip', [], 'mrsos', 'SON', 'evapotranspiration', 'SON', -10, 5, 5, 35)
 
 
 #correlation(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], 'amip', ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"], 'evaporation', 'SON', 'pr', 'SON', -10, 5, 5, 35)

@@ -47,7 +47,7 @@ def map(list_of_models, model_type, variable, season_name):
 
     model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
-    model_file_paths = ['/ouce-home/data_not_backed_up/model/cmip5/CNRM-CM5/amip/mon/Lmon/r1i1p1/atlas_mrsos_Lmon_CNRM-CM5_amip_r1i1p1_197901-200812.nc']
+    #model_file_paths = ['/ouce-home/data_not_backed_up/model/cmip5/CNRM-CM5/amip/mon/Lmon/r1i1p1/atlas_mrsos_Lmon_CNRM-CM5_amip_r1i1p1_197901-200812.nc']
 
     """If variable is pr_, convert variable back to pr"""
     if variable == 'pr_':
@@ -278,4 +278,4 @@ def map(list_of_models, model_type, variable, season_name):
 
 #map(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "hfss", "SON")
 
-map(["CNRM-CR5/"], "amip", "mrsos", "SON")
+map(["IPSL-CM5B-LR/"], "amip", "mrsos", "SON")

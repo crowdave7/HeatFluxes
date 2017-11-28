@@ -29,6 +29,8 @@ def seasonal_cycle_ensemble(list_of_models, model_type, variable, lower_lat, upp
             for i in files:
                 path = os.path.join(root, i)
                 for j in list_of_models:
+                    if j == "bcc-csm1-1/":
+                        j = "bcc-csm1-1_"
                     for char in '/':
                         j = j.replace(char,'')
                     if j in path and model_type in path and variable in path:
@@ -48,6 +50,8 @@ def seasonal_cycle_ensemble(list_of_models, model_type, variable, lower_lat, upp
             for i in files:
                 path = os.path.join(root, i)
                 for j in list_of_models:
+                    if j == "bcc-csm1-1/":
+                        j = "bcc-csm1-1_"
                     for char in '/':
                         j = j.replace(char,'')
                     if j in path and model_type in path and ('hfss' in path or 'hfls' in path):
@@ -69,6 +73,8 @@ def seasonal_cycle_ensemble(list_of_models, model_type, variable, lower_lat, upp
 
     """For each model,"""
     for j in list_of_models:
+        if j == "bcc-csm1-1/":
+            j = "bcc-csm1-1_"
         for char in '/':
             j = j.replace(char,'')
 
@@ -112,8 +118,8 @@ def seasonal_cycle_ensemble(list_of_models, model_type, variable, lower_lat, upp
             cube_sensible = iris.load_cube(sensible_path, 'surface_upward_sensible_heat_flux')
             cube_sensible = constrain_year(cube_sensible, time_range)
 
-            latent_seasonal_cycle_array = extract_seasonal_cycle_data(cube_latent, latent_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
-            sensible_seasonal_cycle_array = extract_seasonal_cycle_data(cube_sensible, sensible_path[0], lower_lat, upper_lat, lower_lon, upper_lon)
+            latent_seasonal_cycle_array = extract_seasonal_cycle_data(cube_latent, lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            sensible_seasonal_cycle_array = extract_seasonal_cycle_data(cube_sensible, lower_lat, upper_lat, lower_lon, upper_lon, variable)
             data_array = latent_seasonal_cycle_array / (latent_seasonal_cycle_array + sensible_seasonal_cycle_array)
             ensemble_mean_array[model_number] = data_array
 
@@ -285,4 +291,4 @@ def constrain_year(cube, time_range):
         return cube
 
 
-#seasonal_cycle_ensemble(["IPSL-CM5B-LR"], "amip", "hfss", -10, 5, 5, 35)
+#seasonal_cycle_ensemble(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "evap_fraction", -10, 5, 5, 35)

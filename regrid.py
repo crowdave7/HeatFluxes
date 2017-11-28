@@ -19,6 +19,10 @@ def regrid(list_of_models, model_type, variable):
     if variable == 'pr':
         variable = 'pr_'
 
+    """If variable is evspsbl, distinguish between evspsbl and evspsblsoi to find model files."""
+    if variable == 'evspsbl':
+        variable = 'evspsbl_'
+
     """Find the paths to the directories containing the model data"""
     directory_paths = []
     for root, directories, files in os.walk(root_directory):
@@ -45,6 +49,10 @@ def regrid(list_of_models, model_type, variable):
     if variable == 'pr_':
         variable = 'pr'
 
+    """If variable is evspsbl_, convert variable back to evspsbl"""
+    if variable == 'evspsbl_':
+        variable = 'evspsbl'
+
     """Load the data from the model file paths into a cube."""
     if variable == 'hfls':
         name = 'surface_upward_latent_heat_flux'
@@ -58,10 +66,23 @@ def regrid(list_of_models, model_type, variable):
     if variable == 'mrsos':
         name = 'moisture_content_of_soil_layer'
         cubes = iris.load(model_file_paths, name)
+    if variable == 'tran':
+        name = 'transpiration_flux'
+        cubes = iris.load(model_file_paths, name)
+    if variable == 'evspsblsoi':
+        name = 'water_evaporation_flux_from_soil'
+        cubes = iris.load(model_file_paths, name)
+    if variable == 'evspsbl':
+        name = 'water_evaporation_flux'
+        cubes = iris.load(model_file_paths, name)
+    if variable == 'evspsblveg':
+        name = 'water_evaporation_flux_from_canopy'
+        cubes = iris.load(model_file_paths, name)
 
     """Define the reanalysis data to regrid onto."""
     reanalysis_data = iris.load_cube("/ouce-home/data_not_backed_up/analysis/erai/1.0x1.0/daily/precip/nc/erai.totprecip.dt.1979-2013.nc")
 
+    print cubes
     """For each cube,"""
     for cube in cubes:
 
@@ -87,5 +108,5 @@ def regrid(list_of_models, model_type, variable):
         print model_id+" regridding done"
 
 
-regrid(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "mrsos")
-#regrid(["IPSL-CM5B-LR", "MRI-AGCM3-2S"], "amip", "mrsos")
+#regrid(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "MIROC5", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "evspsbl_")
+regrid(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "evspsblveg")

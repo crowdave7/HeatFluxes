@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """Import necessary modules for this code."""
 import bowen_ratio_ensemble_cube
 import cartopy as cart
@@ -216,6 +218,9 @@ def plot_bowen(list_of_models, model_type, season_name):
         gridlines.xlocator = mticker.FixedLocator(np.arange(-40, 100, 20))
         gridlines.ylocator = mticker.FixedLocator(np.arange(-50, 70, 10))
 
+        if model_data.long_name == 'ACCESS1.3':
+            model_data.long_name = 'ACCESS1-3'
+
         """Add a title."""
         plt.title(model_data.long_name, fontsize=8)
 
@@ -237,10 +242,11 @@ def plot_bowen(list_of_models, model_type, season_name):
 
     """Save the figure, close the plot and print an end statement."""
     print "saving final figure"
-    fig.savefig("Evap_Frac_"+season_name+"_gridded.png", dpi=600, aspect='auto')
+    fig.savefig("Gridded_Evap_Frac_"+season_name+".png", dpi=600, aspect='auto')
     plt.close()
     print " plot done"
 
 #plot_bowen(["ACCESS1-3"], "amip", "SON")
 
-plot_bowen(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "SON")
+
+#plot_bowen(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "SON")

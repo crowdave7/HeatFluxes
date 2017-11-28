@@ -21,6 +21,8 @@ def bowen_ensemble(list_of_models, model_type, season_name):
             path = os.path.join(root, i)
             #print path
             for j in list_of_models:
+                if j == "bcc-csm1-1/":
+                    j = "bcc-csm1-1_"
                 for char in '/':
                     j = j.replace(char,'')
                 if j in path and model_type in path and ('hfss' in path or 'hfls' in path):
@@ -43,6 +45,8 @@ def bowen_ensemble(list_of_models, model_type, season_name):
 
     """ For each model compute the evaporative fraction in an iris cube and plot."""
     for j in list_of_models:
+        if j == "bcc-csm1-1/":
+            j = "bcc-csm1-1_"
         for char in '/':
             j = j.replace(char,'')
 
@@ -133,4 +137,4 @@ def bowen_ensemble(list_of_models, model_type, season_name):
     return ensemble_mean
 
 
-#bowen_ensemble(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CNRM-CM5/", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "MIROC5", "MPI-ESM-MR", "MRI-CGCM3", "NorESM1-M/"], "amip", "SON")
+#bowen_ensemble(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "SON")
