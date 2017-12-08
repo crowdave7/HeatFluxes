@@ -13,6 +13,7 @@ def regrid(list_of_models, model_type, variable):
 
     """Import the data."""
     root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
+    #root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1NetRadiationFiles"
     ensemble = "r1i1p1"
 
     """If variable is pr, distinguish between pr and precipitable water to find model files."""
@@ -41,9 +42,17 @@ def regrid(list_of_models, model_type, variable):
                 model_file_path = os.path.join(i, j)
                 model_file_paths = np.append(model_file_paths, model_file_path)
 
-    model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
+    # model_file_paths = []
+    # for root, directories, files in os.walk(root_directory):
+    #     for i in files:
+    #         path = os.path.join(root, i)
+    #         for j in list_of_models:
+    #             if j in path and model_type in path and ensemble in path:
+    #                 model_file_paths = np.append(model_file_paths, path)
 
+    model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
     print model_file_paths
+
 
     """If variable is pr_, convert variable back to pr"""
     if variable == 'pr_':
@@ -78,11 +87,20 @@ def regrid(list_of_models, model_type, variable):
     if variable == 'evspsblveg':
         name = 'water_evaporation_flux_from_canopy'
         cubes = iris.load(model_file_paths, name)
+    if variable == 'nrad':
+        cubes = iris.load(model_file_paths)
+    if variable == 'prveg':
+        cubes = iris.load(model_file_paths)
+    if variable == 'treeFrac':
+        cubes = iris.load(model_file_paths)
+    if variable == 'lai':
+        cubes = iris.load(model_file_paths, 'leaf_area_index')
 
     """Define the reanalysis data to regrid onto."""
     reanalysis_data = iris.load_cube("/ouce-home/data_not_backed_up/analysis/erai/1.0x1.0/daily/precip/nc/erai.totprecip.dt.1979-2013.nc")
 
     print cubes
+
     """For each cube,"""
     for cube in cubes:
 
@@ -91,6 +109,8 @@ def regrid(list_of_models, model_type, variable):
 
         """Slice the regridded cube down to the African domain."""
         regridded_model_data = regridded_model_data.intersection(latitude=(-40, 40), longitude=(-30, 70))
+        #
+        # model_id = regridded_model_data.long_name
 
         """Extract the model ID for naming the netCDF file."""
         model_id = regridded_model_data.attributes['model_id']
@@ -109,4 +129,9 @@ def regrid(list_of_models, model_type, variable):
 
 
 #regrid(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "MIROC5", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "evspsbl_")
-regrid(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "evspsblveg")
+#regrid(["ACCESS1-0", "ACCESS1-3", "bcc-csm1-1_", "bcc-csm1-1-m", "BNU-ESM", "CanAM4", "CNRM-CM5", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C180", "GFDL-HIRAM-C360", "GISS-E2-R", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2H", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M"], "amip", "nrad")
+#regrid(["bcc-csm1-1_"], "amip", "nrad")
+
+#regrid(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1_", "bcc-csm1-1-m", "BNU-ESM/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4", "IPSL-CM5A-LR", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M"], "amip", "lai")
+
+regrid(["GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/"], "amip", "lai")

@@ -23,6 +23,12 @@ def reanalysis(reanalysis_type, variable, season_name):
     if variable == 'evspsbl':
         variable = 'evspsbl_'
 
+    variable_original = []
+    
+    if variable == 'evapotranspiration':
+        variable = 'hfls'
+        variable_original = 'evapotranspiration'
+
     """Find the paths to the files containing the model data"""
     model_file_paths = []
     for root, directories, files in os.walk(root_directory):
@@ -78,6 +84,9 @@ def reanalysis(reanalysis_type, variable, season_name):
         """Reminder of time points."""
         time_points = cube.coord('time').points
         times = cube.coord('time').units.num2date(time_points)
+
+        if variable_original == 'evapotranspiration':
+            cube = iris.analysis.maths.divide(cubes[cube_id], 28)
 
         """Plot up a map for the file."""
 
@@ -147,4 +156,4 @@ def reanalysis(reanalysis_type, variable, season_name):
     return cubes[0]
 
 
-#reanalysis(["cfsr"], "evspsbl", "SON")
+#reanalysis(["cfsr"], "evapotranspiration", "SON")

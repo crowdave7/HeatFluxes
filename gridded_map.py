@@ -17,7 +17,7 @@ import numpy as np
 import os
 import reanalysis_cube
 
-# WHEN ADDING NEW VARIABLE, MODIFY THIS SCRIPT, REANALYSIS_CUBE AND ENSEMBLE_CUBE
+# WHEN ADDING NEW VARIABLE, MODIFY THIS SCRIPT, REANALYSIS_CUBE AND ENSEMBLE_CUBE AND REGRID NEW VARIABLES
 
 def map(list_of_models, model_type, variable, season_name):
     """Take the input variables, and find the paths to the relevant model files."""
@@ -25,7 +25,11 @@ def map(list_of_models, model_type, variable, season_name):
     """Central African domain."""
 
     """Import the data."""
-    root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
+
+    if variable == 'nrad':
+        root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1NetRadiationModelFiles"
+    else:
+        root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
     ensemble = "r1i1p1"
 
     """If variable is pr, distinguish between pr and precipitable water to find model files."""
@@ -36,23 +40,44 @@ def map(list_of_models, model_type, variable, season_name):
     if variable == 'evspsbl':
         variable = 'evspsbl_'
 
-    """Find the paths to the directories containing the model data"""
-    directory_paths = []
-    for root, directories, files in os.walk(root_directory):
-        for i in directories:
-            path = os.path.join(root, i)
-            for j in list_of_models:
-                if j in path and model_type in path and ensemble in path:
-                    directory_paths = np.append(directory_paths, path)
+    variable_original = []
 
-    """Find the model files and their absolute paths."""
-    model_file_paths = []
-    for i in directory_paths:
-        files = os.listdir(i)
-        for j in files:
-            if variable in j:
-                model_file_path = os.path.join(i, j)
-                model_file_paths = np.append(model_file_paths, model_file_path)
+    if variable == 'evapotranspiration':
+        variable = 'hfls'
+        variable_original = 'evapotranspiration'
+
+    if variable == 'nrad':
+        """Find the paths to the files containing the model data"""
+        model_file_paths = []
+        for root, directories, files in os.walk(root_directory):
+            for i in files:
+                path = os.path.join(root, i)
+                for j in list_of_models:
+                    if j == "bcc-csm1-1/":
+                        j = "bcc-csm1-1_"
+                    for char in '/':
+                        j = j.replace(char,'')
+                    if j in path and model_type in path and variable in path:
+                        model_file_paths = np.append(model_file_paths, path)
+    else:
+
+        """Find the paths to the directories containing the model data"""
+        directory_paths = []
+        for root, directories, files in os.walk(root_directory):
+            for i in directories:
+                path = os.path.join(root, i)
+                for j in list_of_models:
+                    if j in path and model_type in path and ensemble in path:
+                        directory_paths = np.append(directory_paths, path)
+
+        """Find the model files and their absolute paths."""
+        model_file_paths = []
+        for i in directory_paths:
+            files = os.listdir(i)
+            for j in files:
+                if variable in j:
+                    model_file_path = os.path.join(i, j)
+                    model_file_paths = np.append(model_file_paths, model_file_path)
 
     model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
     print model_file_paths
@@ -108,6 +133,25 @@ def map(list_of_models, model_type, variable, season_name):
                 variable_units = str(cubes[0].units)
                 print model_id
                 print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
+    if variable == 'nrad':
+        for i in model_file_paths:
+            cube = iris.load_cube(i)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = i.long_name
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print len(times)
+                print model_id
                 print times[0]
                 print times[-1]
                 count +=1
@@ -232,9 +276,44 @@ def map(list_of_models, model_type, variable, season_name):
                 print times[-1]
                 count +=1
 
+    if variable == 'treeFrac':
+        for i in model_file_paths:
+            cube = iris.load_cube(i)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                count +=1
+
+    if variable == 'lai':
+        for i in model_file_paths:
+            name = 'leaf_area_index'
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
     """Define the contour levels for the input variables."""
-    if variable == 'hfls':
+    if variable == 'hfls' and variable_original != 'evapotranspiration':
         contour_levels = np.arange(80, 145, 5)
+    if variable == 'hfls' and variable_original == 'evapotranspiration':
+        contour_levels = np.arange(2.5, 5.25, 0.25)
     if variable == 'hfss':
         contour_levels = np.arange(0, 65, 5)
     if variable == 'pr':
@@ -249,13 +328,23 @@ def map(list_of_models, model_type, variable, season_name):
         contour_levels = np.arange(2.0, 5.2, 0.2)
     if variable == 'evspsblveg':
         contour_levels = np.arange(0.2, 2.2, 0.2)
+    if variable == 'nrad':
+        contour_levels = np.arange(100, 185, 5)
+    if variable == 'treeFrac':
+        contour_levels = np.arange(0, 110, 10)
+    # if variable == 'lai':
+    #     contour_levels = np.arange(0, 20, 1)
 
     """Define the colour map and the projection."""
-    if variable == 'hfls':
+    if variable == 'hfls' and variable_original != 'evapotranspiration':
+        cmap = matplotlib.cm.get_cmap('YlGnBu')
+    if variable == 'hfls' and variable_original == 'evapotranspiration':
         cmap = matplotlib.cm.get_cmap('YlGnBu')
     if variable == 'hfss':
         cmap = matplotlib.cm.get_cmap('YlGnBu_r')
     if variable == 'pr':
+        cmap = matplotlib.cm.get_cmap('YlGnBu')
+    if variable == 'nrad':
         cmap = matplotlib.cm.get_cmap('YlGnBu')
     if variable == 'mrsos':
         cmap = matplotlib.cm.get_cmap('YlGnBu')
@@ -266,6 +355,10 @@ def map(list_of_models, model_type, variable, season_name):
     if variable == 'evspsbl':
         cmap = matplotlib.cm.get_cmap('YlGnBu')
     if variable == 'evspsblveg':
+        cmap = matplotlib.cm.get_cmap('YlGnBu')
+    if variable == 'treeFrac':
+        cmap = matplotlib.cm.get_cmap('YlGnBu')
+    if variable == 'lai':
         cmap = matplotlib.cm.get_cmap('YlGnBu')
 
     crs_latlon = ccrs.PlateCarree()
@@ -284,11 +377,18 @@ def map(list_of_models, model_type, variable, season_name):
     for model_data in cubes:
 
         """Select the model ID"""
-        model_id = cubes[model_number].attributes['model_id']
+        if variable == 'nrad':
+            model_id = model_data.long_name
+        else:
+            model_id = cubes[model_number].attributes['model_id']
 
-        """If the variable is precipitation, multiply model cubes by 86400"""
+        """If the variable is precipitation, or land surface quantity (kg m-2 s-1) multiply model cubes by 86400"""
         if variable == 'pr' or variable == 'tran' or variable == 'evspsblsoi' or variable == 'evspsbl' or variable == 'evspsblveg':
             model_data = iris.analysis.maths.multiply(cubes[model_number], 86400)
+
+        """if variable is evapotranspiration, divide by 28"""
+        if variable_original == 'evapotranspiration':
+            model_data = iris.analysis.maths.divide(cubes[model_number], 28)
 
         """Reassign a model ID to the new multiplied cube."""
         model_data.long_name = model_id
@@ -307,19 +407,24 @@ def map(list_of_models, model_type, variable, season_name):
         """ If the input month is defined as a season,"""
         if season_name in ['DJF', 'MAM', 'JJA', 'SON']:
 
-            """Create two coordinates on the cube to represent seasons and the season year."""
-            iris.coord_categorisation.add_season(model_data, 'time', name='clim_season')
-            iris.coord_categorisation.add_season_year(model_data, 'time', name='season_year')
+            if variable == 'treeFrac':
+                model_data = model_data.collapsed('time', iris.analysis.MEAN)
 
-            """Aggregate the data by season and season year."""
-            seasonal_means = model_data.aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
+            else:
 
-            """Constrain the data by the input season. Decapitalise the input variable."""
-            constraint = iris.Constraint(clim_season=season_name.lower())
-            model_data_season = seasonal_means.extract(constraint)
+                """Create two coordinates on the cube to represent seasons and the season year."""
+                iris.coord_categorisation.add_season(model_data, 'time', name='clim_season')
+                iris.coord_categorisation.add_season_year(model_data, 'time', name='season_year')
 
-            """Take the mean over the cube."""
-            model_data = model_data_season.collapsed('time', iris.analysis.MEAN)
+                """Aggregate the data by season and season year."""
+                seasonal_means = model_data.aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
+
+                """Constrain the data by the input season. Decapitalise the input variable."""
+                constraint = iris.Constraint(clim_season=season_name.lower())
+                model_data_season = seasonal_means.extract(constraint)
+
+                """Take the mean over the cube."""
+                model_data = model_data_season.collapsed('time', iris.analysis.MEAN)
 
             """Return this mean to the cubelist."""
             cubes[model_number] = model_data
@@ -328,13 +433,16 @@ def map(list_of_models, model_type, variable, season_name):
             """Add 1 to the model number to loop through the next model."""
             model_number +=1
 
+    if variable_original == 'evapotranspiration':
+        variable = 'evapotranspiration'
+
     """Add the ensemble mean to the cubelist."""
     ensemble_cube_data = ensemble_cube.ensemble(list_of_models, model_type, variable, season_name)
     cubes = np.append(cubes, ensemble_cube_data)
 
     """Ignore reanalysis if dealing with partitioned evapotranspiration variables."""
 
-    if variable == 'evspsbl' or variable == 'evspsblsoi' or variable == 'evspsblveg' or variable == 'tran':
+    if variable == 'evspsbl' or variable == 'evspsblsoi' or variable == 'evspsblveg' or variable == 'tran' or variable == 'nrad' or variable == 'treeFrac' or variable == 'lai':
         pass
 
     else:
@@ -355,6 +463,11 @@ def map(list_of_models, model_type, variable, season_name):
             cubes = np.append(cubes, gleam_cube_data)
 
         if variable == 'hfls':
+            """Add GLEAM data to the cubelist."""
+            gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
+            cubes = np.append(cubes, gleam_cube_data)
+
+        if variable == 'evapotranspiration':
             """Add GLEAM data to the cubelist."""
             gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
             cubes = np.append(cubes, gleam_cube_data)
@@ -395,7 +508,7 @@ def map(list_of_models, model_type, variable, season_name):
 
         ax = plt.subplot(6, 4, model_number+1, projection=crs_latlon)
         ax.set_extent([-22, 62, -24, 17], crs=crs_latlon)
-        contour_plot = iplt.contourf(model_data, contour_levels, cmap=cmap, extend='both')
+        contour_plot = iplt.contourf(model_data, cmap=cmap, extend='both')
 
         """Import coastlines and lake borders. Set the scale to 10m, 50m or 110m resolution for more detail."""
         coastline = cart.feature.NaturalEarthFeature(category='physical', name='coastline', scale='110m', facecolor='none')
@@ -445,15 +558,21 @@ def map(list_of_models, model_type, variable, season_name):
     colourbar_axis = fig.add_axes([0.20, 0.07, 0.60, 0.02])
     colour_bar = plt.colorbar(contour_plot, colourbar_axis, orientation='horizontal')
 
-    if variable == 'hfls':
+    if variable == 'hfls' and variable_original != 'evapotranspiration':
         colour_bar.set_ticks(np.arange(80, 145, 10))
         colour_bar.set_ticklabels(np.arange(80, 145, 10))
+    if variable == 'hfls' and variable_original == 'evapotranspiration':
+        colour_bar.set_ticks(np.arange(2.5, 5.25, 0.5))
+        colour_bar.set_ticklabels(np.arange(2.5, 5.25, 0.5))
     if variable == 'hfss':
         colour_bar.set_ticks(np.arange(0, 65, 10))
         colour_bar.set_ticklabels(np.arange(0, 65, 10))
     if variable == 'pr':
         colour_bar.set_ticks(np.arange(1, 12, 1))
         colour_bar.set_ticklabels(np.arange(1, 12, 1))
+    if variable == 'nrad':
+        colour_bar.set_ticks(np.arange(100, 185, 10))
+        colour_bar.set_ticklabels(np.arange(100, 185, 10))
     if variable == 'mrsos':
         colour_bar.set_ticks(np.arange(10, 55, 6))
         colour_bar.set_ticklabels(np.arange(10, 55, 6))
@@ -469,6 +588,9 @@ def map(list_of_models, model_type, variable, season_name):
     if variable == 'evspsveg':
         colour_bar.set_ticks(np.arange(0.2, 2.2, 0.2))
         colour_bar.set_ticklabels(np.arange(0.2, 2.2, 0.2))
+    if variable == 'evspsveg':
+        colour_bar.set_ticks(np.arange(0, 110, 10))
+        colour_bar.set_ticklabels(np.arange(0, 110, 10))
 
     colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
 
@@ -480,8 +602,15 @@ def map(list_of_models, model_type, variable, season_name):
     if variable_units == 'kg m-2 s-1':
         variable_units = "mm $\mathregular{day^{-1}}$"
     if variable == 'mrsos':
-        variable_name = "Volumetric Soil Moisture Content"
-        variable_units = "%"
+        variable_name = "Soil Moisture Content of Upper Layer"
+        variable_units = "mm"
+    if variable_original == 'evapotranspiration':
+        variable_name = 'Evapotranspiration'
+        variable_units = "mm $\mathregular{day^{-1}}$"
+    if variable == 'nrad':
+        variable_name = "Surface Net Radiation"
+        variable_units = "W $\mathregular{m^{-2}}$"
+
     colour_bar.set_label(variable_name+" ("+variable_units+")", fontsize=10)
 
     fig.subplots_adjust(left=0.125, right=0.9, bottom=0.14, top=0.93, wspace=0.4, hspace=0.9)
@@ -492,7 +621,13 @@ def map(list_of_models, model_type, variable, season_name):
     plt.close()
     print "plot done"
 
-# map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CCSM4/", "CESM1-CAM5/", "CMCC-CM/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "EC-EARTH/", "FGOALS-g2/", "FGOALS-s2/", "GFDL-CM3/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/"], "amip", "hfls", [1,2,12], "DJF")
+#map(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "mrsos", "SON")
+
+#map(["ACCESS1-0/", "ACCESS1-3/", "BNU-ESM/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "IPSL-CM5A-LR", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-LR", "MPI-ESM-MR"], "amip", "treeFrac", "SON")
+
+map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1_", "bcc-csm1-1-m", "BNU-ESM/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4", "IPSL-CM5A-LR", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M"], "amip", "lai", "SON")
+
+
 
 #map(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "mrsos", "SON")
 
@@ -501,6 +636,8 @@ def map(list_of_models, model_type, variable, season_name):
 #map(["bcc-csm1-1/", "BNU-ESM", "CanAM4", "GFDL-HIRAM-C360", "GISS-E2-R/", "inmcm4", "MIROC5", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "tran", "SON")
 
 
+#map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "nrad", "SON")
+
 #map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "mrsos", "SON")
 
-map(["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "tran", "SON")
+#map(["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "tran", "SON")

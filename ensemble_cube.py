@@ -23,6 +23,12 @@ def ensemble(list_of_models, model_type, variable, season_name):
     if variable == 'evspsbl':
         variable = 'evspsbl_'
 
+    variable_original = []
+
+    if variable == 'evapotranspiration':
+        variable = 'hfls'
+        variable_original = 'evapotranspiration'
+
     """Find the paths to the files containing the model data"""
     model_file_paths = []
     for root, directories, files in os.walk(root_directory):
@@ -112,6 +118,25 @@ def ensemble(list_of_models, model_type, variable, season_name):
                 variable_units = str(cubes[0].units)
                 print model_id
                 print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
+    if variable == 'nrad':
+        for i in model_file_paths:
+            cube = iris.load_cube(i)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = i.long_name
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print len(times)
+                print model_id
                 print times[0]
                 print times[-1]
                 count +=1
@@ -216,6 +241,40 @@ def ensemble(list_of_models, model_type, variable, season_name):
                 print times[-1]
                 count +=1
 
+    if variable == 'treeFrac':
+        name = 'area_fraction'
+        for i in model_file_paths:
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                count +=1
+
+    if variable == 'lai':
+        for i in model_file_paths:
+            name = 'leaf_area_index'
+            cube = iris.load_cube(i, name)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = cubes[count].attributes['model_id']
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print model_id
+                print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
     """Take the mean over time for each cube in the cubelist."""
     cube_id = 0
 
@@ -223,13 +282,19 @@ def ensemble(list_of_models, model_type, variable, season_name):
     for regridded_model_data in cubes:
 
         """Select the model ID"""
-        model_id = cubes[cube_id].attributes['model_id']
+        if variable == 'nrad':
+            model_id = regridded_model_data.long_name
+        else:
+            model_id = cubes[cube_id].attributes['model_id']
 
         print model_id
 
         """If the variable is precipitation, multiply model cubes by 86400"""
         if variable == 'pr' or variable == 'tran' or variable == 'evspsblsoi' or variable == 'evspsbl' or variable == 'evspsblveg':
             regridded_model_data = iris.analysis.maths.multiply(cubes[cube_id], 86400)
+
+        if variable_original == 'evapotranspiration':
+            regridded_model_data = iris.analysis.maths.divide(cubes[cube_id], 28)
 
         """Reassign a model ID to the new multiplied cube."""
         regridded_model_data.long_name = model_id
@@ -249,19 +314,25 @@ def ensemble(list_of_models, model_type, variable, season_name):
         """ If the input month is defined as a season,"""
         if season_name in ['DJF', 'MAM', 'JJA', 'SON']:
 
-            """Create two coordinates on the cube to represent seasons and the season year."""
-            iris.coord_categorisation.add_season(regridded_model_data, 'time', name='clim_season')
-            iris.coord_categorisation.add_season_year(regridded_model_data, 'time', name='season_year')
+            if variable == 'treeFrac':
+                model_data = regridded_model_data.collapsed('time', iris.analysis.MEAN)
 
-            """Aggregate the data by season and season year."""
-            seasonal_means = regridded_model_data.aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
+            else:
+                """Create two coordinates on the cube to represent seasons and the season year."""
+                iris.coord_categorisation.add_season(regridded_model_data, 'time', name='clim_season')
+                iris.coord_categorisation.add_season_year(regridded_model_data, 'time', name='season_year')
 
-            """Constrain the data by the input season. Decapitalise the input variable."""
-            constraint = iris.Constraint(clim_season=season_name.lower())
-            regridded_model_data_season = seasonal_means.extract(constraint)
+                """Aggregate the data by season and season year."""
+                seasonal_means = regridded_model_data.aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
 
-            """Take the mean over the cube."""
-            model_data = regridded_model_data_season.collapsed('time', iris.analysis.MEAN)
+                """Constrain the data by the input season. Decapitalise the input variable."""
+                constraint = iris.Constraint(clim_season=season_name.lower())
+                regridded_model_data_season = seasonal_means.extract(constraint)
+
+                print regridded_model_data_season
+
+                """Take the mean over the cube."""
+                model_data = regridded_model_data_season.collapsed('time', iris.analysis.MEAN)
 
             """Replace the cube in the cubelist with the new cube."""
             cubes[cube_id] = model_data
@@ -284,4 +355,4 @@ def ensemble(list_of_models, model_type, variable, season_name):
 
 #ensemble(["bcc-csm1-1/", "bcc-csm1-1-m/"], "amip", "hfls", "SON")
 
-#ensemble(["ACCESS1-3"], "amip", "mrsos", "SON")
+#ensemble(["ACCESS1-3", "GFDL-HIRAM-C360"], "amip", "lai", "SON")

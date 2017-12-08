@@ -209,10 +209,10 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
         plt.ylabel('Upward Evapotranspiration Flux (mm $\mathregular{day^{-1}}$)')
         plt.ylim((2.0, 4.5))
     if input_variable_x == 'mrsos':
-        plt.xlabel('Volumetric Soil Moisture Content (%)')
+        plt.xlabel('Soil Moisture Content of Upper Layer (mm)')
         plt.xlim(15, 35)
     if input_variable_y == 'mrsos':
-        plt.ylabel('Volumetric Soil Moisture Content (%)')
+        plt.ylabel('Soil Moisture Content of Upper Layer (mm)')
         plt.ylim(15, 35)
     if input_variable_x == 'evap_fraction':
         plt.xlabel('Evaporative Fraction')
@@ -222,20 +222,35 @@ def correlation(list_of_models, model_type, list_of_reanalysis, variable_x, seas
         plt.ylim(0.5, 0.9)
     if input_variable_x == 'tran':
         plt.xlabel('Upward Transpiration Flux (mm $\mathregular{day^{-1}}$)')
+        plt.xlim(0.0, 2.5)
     if input_variable_y == 'tran':
         plt.ylabel('Upward Transpiration Flux (mm $\mathregular{day^{-1}}$)')
+        plt.ylim(0.0, 2.5)
     if input_variable_x == 'evspsblsoi':
         plt.xlabel('Upward Bare Soil Evaporation Flux (mm $\mathregular{day^{-1}}$)')
+        plt.xlim(0.0, 1.4)
     if input_variable_y == 'evspsblsoi':
         plt.ylabel('Upward Bare Soil Evaporation Flux (mm $\mathregular{day^{-1}}$)')
+        plt.ylim(0.0, 1.4)
     if input_variable_x == 'evspsbl':
-        plt.xlabel('Upward Evaporation Flux (mm $\mathregular{day^{-1}}$)')
+        plt.xlabel('Evapotranspiration (mm $\mathregular{day^{-1}}$)')
+        plt.xlim(2.0, 4.5)
     if input_variable_y == 'evspsbl':
-        plt.ylabel('Upward Evaporation Flux (mm $\mathregular{day^{-1}}$)')
+        plt.ylabel('Evapotranspiration (mm $\mathregular{day^{-1}}$)')
+        plt.ylim(2.0, 4.5)
     if input_variable_x == 'evspsblveg':
-        plt.ylabel('Upward Evaporation Flux from Canopy (mm $\mathregular{day^{-1}}$)')
+        plt.xlabel('Upward Evaporation Flux from Canopy (mm $\mathregular{day^{-1}}$)')
+        plt.xlim(0.0, 3.0)
     if input_variable_y == 'evspsblveg':
         plt.ylabel('Upward Evaporation Flux from Canopy (mm $\mathregular{day^{-1}}$)')
+        plt.ylim(0.0, 3.0)
+    if input_variable_x == 'nrad':
+        plt.xlabel('Surface Net Downward Radiation (W $\mathregular{m^{-2}}$)')
+        plt.xlim(110, 180)
+    if input_variable_y == 'nrad':
+        plt.ylabel('Surface Net Downward Radiation (W $\mathregular{m^{-2}}$)')
+        plt.ylim(110, 180)
+
 
     """Save figure."""
     fig.savefig("Correlation_"+variable_x+"_"+variable_y+".png", bbox_extra_artists=(legend,), bbox_inches='tight', dpi=600)
@@ -341,7 +356,7 @@ def average_lat_lon(cubelist, lower_lat, upper_lat, lower_lon, upper_lon, variab
         count +=1
     return data_array
 
-correlation(["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], 'amip', [], 'mrsos', 'SON', 'evspsblveg', 'SON', -10, 5, 5, 35)
+correlation(["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], 'amip', [], 'nrad', 'SON', 'evap_fraction', 'SON', -10, 5, 5, 35)
 
 #correlation(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "MIROC5", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], 'amip', [], 'mrsos', 'SON', 'evspsbl', 'SON', -10, 5, 5, 35)
 

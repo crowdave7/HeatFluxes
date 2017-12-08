@@ -6,6 +6,9 @@ import netCDF4
 from netCDF4 import num2date, date2num
 import h5py
 import iris.coords as icoords
+import iris.quickplot as qplt
+import matplotlib.pyplot as plt
+import os
 
 #DOWNLOAD DATA
 
@@ -35,6 +38,119 @@ import iris.coords as icoords
 #     iris.save(cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/Rad_data/SW/srb_rel3.0_shortwave_monthly_utc_"+str(i)+".nc")
 #     print "done "+str(i)+""
 #
+
+list_of_models = ["bcc-csm1-1/"]
+
+#list_of_models = ["BNU-ESM", "CanAM4", "CNRM-CM5", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C180", "GFDL-HIRAM-C360", "GISS-E2-R", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2H", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M"]
+
+for i in list_of_models:
+
+    model_name = str(i)
+
+    """Import the data."""
+    root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
+    ensemble = "r1i1p1"
+    model_type = "amip"
+
+    """Find the paths to the directories containing the model data"""
+    directory_paths = []
+    for root, directories, files in os.walk(root_directory):
+        for i in directories:
+            path = os.path.join(root, i)
+            for j in list_of_models:
+                if j in path and model_type in path and ensemble in path:
+                    directory_paths = np.append(directory_paths, path)
+
+    print directory_paths
+
+    """Find the model files and their absolute paths."""
+    rlds_file_path = []
+    for i in directory_paths:
+        files = os.listdir(i)
+        for j in files:
+            if "rlds" in j:
+                model_file_path = os.path.join(i, j)
+                rlds_file_path = np.append(rlds_file_path, model_file_path)
+
+    rlds_file_path = sorted(rlds_file_path, key=lambda s: s.lower())
+    print rlds_file_path
+
+
+    """Find the model files and their absolute paths."""
+    rsds_file_path = []
+    for i in directory_paths:
+        files = os.listdir(i)
+        for j in files:
+            if "rsds" in j:
+                model_file_path = os.path.join(i, j)
+                rsds_file_path = np.append(rsds_file_path, model_file_path)
+
+    rsds_file_path = sorted(rsds_file_path, key=lambda s: s.lower())
+    print rsds_file_path
+
+    """Find the model files and their absolute paths."""
+    rlus_file_path = []
+    for i in directory_paths:
+        files = os.listdir(i)
+        for j in files:
+            if "rlus" in j:
+                model_file_path = os.path.join(i, j)
+                rlus_file_path = np.append(rlus_file_path, model_file_path)
+
+    rlus_file_path = sorted(rlus_file_path, key=lambda s: s.lower())
+    print rlus_file_path
+
+
+    """Find the model files and their absolute paths."""
+    rsus_file_path = []
+    for i in directory_paths:
+        files = os.listdir(i)
+        for j in files:
+            if "rsus" in j:
+                model_file_path = os.path.join(i, j)
+                rsus_file_path = np.append(rsus_file_path, model_file_path)
+
+    rsus_file_path = sorted(rsus_file_path, key=lambda s: s.lower())
+    print rsus_file_path
+
+    lw_cube_down = iris.load_cube(rlds_file_path, "surface_downwelling_longwave_flux_in_air")
+    sw_cube_down = iris.load_cube(rsds_file_path, "surface_downwelling_shortwave_flux_in_air")
+    lw_cube_up = iris.load_cube(rlus_file_path, "surface_upwelling_longwave_flux_in_air")
+    sw_cube_up = iris.load_cube(rsus_file_path, "surface_upwelling_shortwave_flux_in_air")
+
+    downwelling_cube = iris.analysis.maths.add(lw_cube_down, sw_cube_down)
+
+    print downwelling_cube.shape
+
+    upwelling_cube = iris.analysis.maths.add(lw_cube_up, sw_cube_up)
+
+    print upwelling_cube.shape
+
+    net_downward_rad_cube = iris.analysis.maths.subtract(downwelling_cube, upwelling_cube)
+
+    if str(i) == 'bcc-csm1-1/':
+        model_name = "bcc-csm1-1"
+
+    net_downward_rad_cube.long_name = model_name
+
+    print net_downward_rad_cube
+
+    iris.save(net_downward_rad_cube, "/ouce-home/students/kebl4396/Paper1/Paper1NetRadiationFiles/atlas_nrad_Amon_"+model_name+"_amip_r1i1p1_197901-200812.nc")
+
+    #"/ouce-home/students/kebl4396/Paper1/atlas_nrad_Amon_"+str(i)+"_amip_r1i1p1_197901-200812.nc"
+
+"""
+net_rad_cube = net_rad_cube.collapsed('time', iris.analysis.MEAN)
+
+qplt.contourf(net_rad_cube, 25)
+
+# Add coastlines to the map created by contourf.
+plt.gca().coastlines()
+
+plt.show()
+"""
+
+#iris.save(net_downward_rad_cube, "/ouce-home/data_not_backed_up/model/cmip5/ACCESS1-0/amip/mon/Amon/r1i1p1/atlas_nrad_Amon_ACCESS1-0_amip_r1i1p1_197901-200812.nc")
 
 # SAVE SW DOWNWELLING
 
@@ -184,11 +300,11 @@ import iris.coords as icoords
 # LOAD SENSIBLE CUBE
 # LOAD LATENT CUBE
 
-hfss_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/hfss_gleam.nc")
-hfls_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/hfls_gleam.nc")
+#hfss_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/hfss_gleam.nc")
+#hfls_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/hfls_gleam.nc")
 
-print hfss_cube
-print hfls_cube
+#print hfss_cube
+#print hfls_cube
 
 
 #gleam_cube.coord('time').points = gleam_times

@@ -23,6 +23,10 @@ def seasonal_cycle_ensemble(list_of_models, model_type, variable, lower_lat, upp
         if variable == 'pr':
             variable = 'pr_'
 
+        """If variable is evspsbl, distinguish between evspsbl and evspsblsoi to find model files."""
+        if variable == 'evspsbl':
+            variable = 'evspsbl_'
+
         """Find the paths to the files containing the model data"""
         model_file_paths = []
         for root, directories, files in os.walk(root_directory):
@@ -38,9 +42,15 @@ def seasonal_cycle_ensemble(list_of_models, model_type, variable, lower_lat, upp
 
         model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
+        print model_file_paths
+
         """If variable is pr_, convert variable back to pr"""
         if variable == 'pr_':
             variable = 'pr'
+
+        """If variable is evspsbl_, convert variable back to evspsbl"""
+        if variable == 'evspsbl_':
+            variable = 'evspsbl'
 
     if variable == "evap_fraction":
 
@@ -84,13 +94,31 @@ def seasonal_cycle_ensemble(list_of_models, model_type, variable, lower_lat, upp
         sensible_path = [k for k in paths_for_this_model if 'hfss' in k]
         precip_path = [k for k in paths_for_this_model if 'pr' in k]
         sm_path = [k for k in paths_for_this_model if 'mrsos' in k]
+        tran_path = [k for k in paths_for_this_model if 'tran' in k]
+        evspsbl_path = [k for k in paths_for_this_model if 'evspsbl' in k]
+        evspsblsoi_path = [k for k in paths_for_this_model if 'evspsblsoi' in k]
+        evspsblveg_path = [k for k in paths_for_this_model if 'evspsblveg' in k]
+        nrad_path = [k for k in paths_for_this_model if 'nrad' in k]
+        prveg_path = [k for k in paths_for_this_model if 'prveg' in k]
 
         """Load the cube for each variable, constrain the years and extract the seasonal cycle array."""
         """Append the seasonal cycle array to the ensemble mean array outside the loop."""
 
         if variable == 'pr':
             data_cube = iris.load_cube(precip_path, 'precipitation_flux')
-            data_cube = constrain_year(data_cube, time_range)
+            data_cube = constrain_year(data_cube, time_range, variable)
+            """Select the model ID"""
+            model_id = data_cube.attributes['model_id']
+            """Multiply precip data by 86400."""
+            data_cube = iris.analysis.maths.multiply(data_cube, 86400)
+            """Reassign a model ID to the new multiplied cube."""
+            data_cube.long_name = model_id
+            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            ensemble_mean_array[model_number] = data_array
+
+        if variable == 'prveg':
+            data_cube = iris.load_cube(prveg_path)
+            data_cube = constrain_year(data_cube, time_range, variable)
             """Select the model ID"""
             model_id = data_cube.attributes['model_id']
             """Multiply precip data by 86400."""
@@ -102,32 +130,88 @@ def seasonal_cycle_ensemble(list_of_models, model_type, variable, lower_lat, upp
 
         if variable == 'hfls':
             data_cube = iris.load_cube(latent_path, 'surface_upward_latent_heat_flux')
-            data_cube = constrain_year(data_cube, time_range)
+            data_cube = constrain_year(data_cube, time_range, variable)
             data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
             ensemble_mean_array[model_number] = data_array
 
         if variable == 'hfss':
             data_cube = iris.load_cube(sensible_path, 'surface_upward_sensible_heat_flux')
-            data_cube = constrain_year(data_cube, time_range)
+            data_cube = constrain_year(data_cube, time_range, variable)
             data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
             ensemble_mean_array[model_number] = data_array
 
         if variable == 'evap_fraction':
             cube_latent = iris.load_cube(latent_path, 'surface_upward_latent_heat_flux')
-            cube_latent = constrain_year(cube_latent, time_range)
+            cube_latent = constrain_year(cube_latent, time_range, variable)
             cube_sensible = iris.load_cube(sensible_path, 'surface_upward_sensible_heat_flux')
-            cube_sensible = constrain_year(cube_sensible, time_range)
+            cube_sensible = constrain_year(cube_sensible, time_range, variable)
 
             latent_seasonal_cycle_array = extract_seasonal_cycle_data(cube_latent, lower_lat, upper_lat, lower_lon, upper_lon, variable)
             sensible_seasonal_cycle_array = extract_seasonal_cycle_data(cube_sensible, lower_lat, upper_lat, lower_lon, upper_lon, variable)
             data_array = latent_seasonal_cycle_array / (latent_seasonal_cycle_array + sensible_seasonal_cycle_array)
             ensemble_mean_array[model_number] = data_array
 
-        if variable == 'mrsos':
-            data_cube = iris.load_cube(sm_path, 'moisture_content_of_soil_layer')
-            data_cube = constrain_year(data_cube, time_range)
+        if variable == 'nrad':
+            data_cube = iris.load_cube(nrad_path)
+            data_cube = constrain_year(data_cube, time_range, variable)
             data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
             ensemble_mean_array[model_number] = data_array
+
+        if variable == 'mrsos':
+            data_cube = iris.load_cube(sm_path, 'moisture_content_of_soil_layer')
+            data_cube = constrain_year(data_cube, time_range, variable)
+            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            ensemble_mean_array[model_number] = data_array
+
+        if variable == 'tran':
+            data_cube = iris.load_cube(tran_path, 'transpiration_flux')
+            data_cube = constrain_year(data_cube, time_range, variable)
+            """Select the model ID"""
+            model_id = data_cube.attributes['model_id']
+            """Multiply data by 86400."""
+            data_cube = iris.analysis.maths.multiply(data_cube, 86400)
+            """Reassign a model ID to the new multiplied cube."""
+            data_cube.long_name = model_id
+            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            ensemble_mean_array[model_number] = data_array
+
+        if variable == 'evspsbl':
+            data_cube = iris.load_cube(evspsbl_path, 'water_evaporation_flux')
+            data_cube = constrain_year(data_cube, time_range, variable)
+            """Select the model ID"""
+            model_id = data_cube.attributes['model_id']
+            """Multiply data by 86400."""
+            data_cube = iris.analysis.maths.multiply(data_cube, 86400)
+            """Reassign a model ID to the new multiplied cube."""
+            data_cube.long_name = model_id
+            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            ensemble_mean_array[model_number] = data_array
+
+        if variable == 'evspsblsoi':
+            data_cube = iris.load_cube(evspsblsoi_path, 'water_evaporation_flux_from_soil')
+            data_cube = constrain_year(data_cube, time_range, variable)
+            """Select the model ID"""
+            model_id = data_cube.attributes['model_id']
+            """Multiply data by 86400."""
+            data_cube = iris.analysis.maths.multiply(data_cube, 86400)
+            """Reassign a model ID to the new multiplied cube."""
+            data_cube.long_name = model_id
+            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            ensemble_mean_array[model_number] = data_array
+
+        if variable == 'evspsblveg':
+            data_cube = iris.load_cube(evspsblveg_path, 'water_evaporation_flux_from_canopy')
+            data_cube = constrain_year(data_cube, time_range, variable)
+            """Select the model ID"""
+            model_id = data_cube.attributes['model_id']
+            """Multiply data by 86400."""
+            data_cube = iris.analysis.maths.multiply(data_cube, 86400)
+            """Reassign a model ID to the new multiplied cube."""
+            data_cube.long_name = model_id
+            data_array = extract_seasonal_cycle_data(data_cube, lower_lat, upper_lat, lower_lon, upper_lon, variable)
+            ensemble_mean_array[model_number] = data_array
+
+
 
         """Add 1 to the model number to loop through the next model."""
         model_number +=1
@@ -277,13 +361,16 @@ def extract_seasonal_cycle_data(input_cube, lower_lat, upper_lat, lower_lon, upp
     return data_array
 
 
-def constrain_year(cube, time_range):
+def constrain_year(cube, time_range, variable):
     """Constrain the years. Print the model ID, length of time dimension, and first and last model dates."""
     with iris.FUTURE.context(cell_datetime_objects=True):
         cube = cube.extract(time_range)
         time_points = cube.coord('time').points
         times = cube.coord('time').units.num2date(time_points)
-        model_id = cube.attributes['model_id']
+        if variable == 'nrad':
+            model_id = cube.long_name
+        else:
+            model_id = cube.attributes['model_id']
         print model_id
         print len(times)
         print times[0]
@@ -291,4 +378,4 @@ def constrain_year(cube, time_range):
         return cube
 
 
-#seasonal_cycle_ensemble(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "evap_fraction", -10, 5, 5, 35)
+#seasonal_cycle_ensemble(["ACCESS1-3/"], "amip", "prveg", -10, 5, 5, 35)

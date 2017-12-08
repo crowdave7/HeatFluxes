@@ -13,7 +13,10 @@ def map_cube(list_of_models, model_type, variable, season_name):
     """Central African domain."""
 
     """Import the data."""
-    root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
+    if variable == 'nrad':
+        root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1NetRadiationModelFiles"
+    else:
+        root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
     ensemble = "r1i1p1"
 
     """If variable is pr, distinguish between pr and precipitable water to find model files."""
@@ -24,23 +27,39 @@ def map_cube(list_of_models, model_type, variable, season_name):
     if variable == 'evspsbl':
         variable = 'evspsbl_'
 
-    """Find the paths to the directories containing the model data"""
-    directory_paths = []
-    for root, directories, files in os.walk(root_directory):
-        for i in directories:
-            path = os.path.join(root, i)
-            for j in list_of_models:
-                if j in path and model_type in path and ensemble in path:
-                    directory_paths = np.append(directory_paths, path)
+    if variable == 'nrad':
+        """Find the paths to the files containing the model data"""
+        model_file_paths = []
+        for root, directories, files in os.walk(root_directory):
+            for i in files:
+                path = os.path.join(root, i)
+                for j in list_of_models:
+                    if j == "bcc-csm1-1/":
+                        j = "bcc-csm1-1_"
+                    for char in '/':
+                        j = j.replace(char,'')
+                    if j in path and model_type in path and variable in path:
+                        model_file_paths = np.append(model_file_paths, path)
 
-    """Find the model files and their absolute paths."""
-    model_file_paths = []
-    for i in directory_paths:
-        files = os.listdir(i)
-        for j in files:
-            if variable in j:
-                model_file_path = os.path.join(i, j)
-                model_file_paths = np.append(model_file_paths, model_file_path)
+    else:
+
+        """Find the paths to the directories containing the model data"""
+        directory_paths = []
+        for root, directories, files in os.walk(root_directory):
+            for i in directories:
+                path = os.path.join(root, i)
+                for j in list_of_models:
+                    if j in path and model_type in path and ensemble in path:
+                        directory_paths = np.append(directory_paths, path)
+
+        """Find the model files and their absolute paths."""
+        model_file_paths = []
+        for i in directory_paths:
+            files = os.listdir(i)
+            for j in files:
+                if variable in j:
+                    model_file_path = os.path.join(i, j)
+                    model_file_paths = np.append(model_file_paths, model_file_path)
 
     model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
 
@@ -117,6 +136,25 @@ def map_cube(list_of_models, model_type, variable, season_name):
                 variable_units = str(cubes[0].units)
                 print model_id
                 print len(times)
+                print times[0]
+                print times[-1]
+                count +=1
+
+    if variable == 'nrad':
+        for i in model_file_paths:
+            cube = iris.load_cube(i)
+            cubes = np.append(cubes, cube)
+        count = 0
+        for i in cubes:
+            with iris.FUTURE.context(cell_datetime_objects=True):
+                cubes[count] = i.extract(time_range)
+                time_points = cubes[count].coord('time').points
+                times = cubes[count].coord('time').units.num2date(time_points)
+                model_id = i.long_name
+                variable_name = str(cubes[0].long_name)
+                variable_units = str(cubes[0].units)
+                print len(times)
+                print model_id
                 print times[0]
                 print times[-1]
                 count +=1
@@ -228,7 +266,10 @@ def map_cube(list_of_models, model_type, variable, season_name):
     for regridded_model_data in cubes:
 
         """Select the model ID"""
-        model_id = cubes[cube_id].attributes['model_id']
+        if variable == 'nrad':
+            model_id = regridded_model_data.long_name
+        else:
+            model_id = cubes[cube_id].attributes['model_id']
 
         print model_id
 
@@ -280,6 +321,6 @@ def map_cube(list_of_models, model_type, variable, season_name):
     print "Model cubes done"
     return cubes
 
-map_cube(["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "evspsblveg", "SON")
+#map_cube(["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "evspsblveg", "SON")
 
-#map_cube(["ACCESS1-3"], "amip", "mrsos", "SON")
+#map_cube(["ACCESS1-3"], "amip", "nrad", "SON")
