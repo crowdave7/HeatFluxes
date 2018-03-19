@@ -18,6 +18,7 @@ import os
 import time
 
 
+
 def build_cubelist(i, array):
 
     cubes_in_file = iris.load(model_file_paths[i])
@@ -173,7 +174,8 @@ def build_cubelist_ensemble(i, array):
         if len(coord_names) == 3:
             array[i] = cube
 
-def model_file_paths_ensemble(list_of_models, model_type, variable):
+def model_file_paths_ensemble_func(list_of_models, model_type, variable):
+
         """Import the data."""
         root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles"
 
@@ -422,7 +424,7 @@ def run_cube_season_slicing_change_units_reanalysis(i, array):
 
     array[i] = cubelist_reanalysis[i]
 
-def contour_lev_colour_map(variable, lower_value, higher_value, interval, cmap):
+def contour_lev_colour_map(lower_value, higher_value, interval, cmap):
 
     contour_levels = np.arange(lower_value, higher_value, interval)
     cmap = matplotlib.cm.get_cmap(cmap)
@@ -436,7 +438,6 @@ def colour_bar_adjust_ticks(fig, contour_plot, colour_bar, lower_tick, upper_tic
 
     return colour_bar
 
-
 def plot_map(cube, variable, season_name, contour_levels, cmap, lower_tick, upper_tick, tick_interval):
 
     """Define variable name."""
@@ -449,7 +450,7 @@ def plot_map(cube, variable, season_name, contour_levels, cmap, lower_tick, uppe
     fig = plt.figure()
 
     ax = plt.subplot(111, projection=crs_latlon)
-    ax.set_extent([-22, 62, -22, 12], crs=crs_latlon)
+    #ax.set_extent([-22, 62, -22, 12], crs=crs_latlon)
 
     contour_plot = iplt.contourf(cube, contour_levels, cmap=cmap, extend='both')
 
@@ -470,7 +471,7 @@ def plot_map(cube, variable, season_name, contour_levels, cmap, lower_tick, uppe
     ax.add_feature(lake_borders, zorder=5, edgecolor='k', linewidth=1)
     for i in country_borders:
         ax.add_geometries(i.geometry, ccrs.PlateCarree(), edgecolor="black", facecolor="None")
-    ax.add_feature(cart.feature.OCEAN, zorder=1, facecolor="w")
+    #ax.add_feature(cart.feature.OCEAN, zorder=1, facecolor="w")
 
     """Define gridlines."""
     gridlines = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, color='black', linewidth=0.4, linestyle='--')
@@ -491,7 +492,7 @@ def plot_map(cube, variable, season_name, contour_levels, cmap, lower_tick, uppe
         cube.long_name = 'ACCESS1-3'
 
     """Add a title."""
-    plt.title(cube.long_name, fontsize=20)
+    plt.title(cube.long_name, fontsize=14)
 
     """Add a colour bar, with ticks and labels."""
     colour_bar = plt.colorbar(contour_plot, orientation='horizontal', pad=0.1, aspect=40)
@@ -521,12 +522,24 @@ def plot_map(cube, variable, season_name, contour_levels, cmap, lower_tick, uppe
         variable_units = "W $\mathregular{m^{-2}}$"
 
     colour_bar.set_label(variable_name+" ("+variable_units+")", fontsize=10)
-    if cube.long_name == "Composite":
+
+    cube_name = cube.long_name
+
+    if cube_name == "Composite":
         """Save the figure, close the plot and print an end statement."""
+        print "hi1"
         fig.savefig(variable+"_"+season_name+"_Composite.png")
         plt.close()
         print "composite plot done"
+
+    if cube_name == "Composite Difference":
+        """Save the figure, close the plot and print an end statement."""
+        fig.savefig(variable+"_"+season_name+"_Composite_Difference.png")
+        plt.close()
+        print "composite difference plot done"
+
     else:
+        print "hi3"
         fig.savefig(variable+"_"+season_name+"_"+cube.long_name+".png")
         plt.close()
         print cube.long_name+" plot done"
@@ -536,180 +549,418 @@ if __name__ == "__main__":
 
     # CANNOT PRINT COMPOSITE MAPS OF BOTH MODEL AND REANALYSIS AT ONCE.
     # CANNOT HAVE MORE THAN 1 REANALYSIS.
-    list_of_models = []
+    list_of_models = ['inmcm4/', 'MIROC5/', 'BNU-ESM/', 'ACCESS1-3/', 'GFDL-HIRAM-C360/']
+    #list_of_models = ['MRI-AGCM3-2H/', 'bcc-csm1-1/', 'CanAM4/', 'bcc-csm1-1-m/', 'MRI-CGCM3/']
+    #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     list_of_reanalysis = []
+
+    list_of_models_higher_composite = ['inmcm4/', 'MIROC5/', 'BNU-ESM/', 'ACCESS1-3/', 'GFDL-HIRAM-C360/']
+    list_of_models_lower_composite = ['MRI-AGCM3-2H/', 'bcc-csm1-1/', 'CanAM4/', 'bcc-csm1-1-m/', 'MRI-CGCM3/']
+
     #list_of_reanalysis = ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"]
     model_type = "amip"
     variable = "evapotranspiration"
     season_name = "SON"
     lower_year = 1979
     upper_year = 2008
+
     lower_value = 2.5
-    higher_value = 5.25
+    higher_value = 5.75
     value_interval = 0.25
     lower_tick = 2.5
-    upper_tick = 5.25
+    upper_tick = 5.75
     tick_interval = 0.5
-    cmap = "YlGnBu"
+
+    lower_value_diff = -2.0
+    higher_value_diff = 2.25
+    value_interval_diff = 0.25
+    lower_tick_diff = -2.0
+    upper_tick_diff = 2.25
+    tick_interval_diff = 0.5
+
+    composite_difference = "yes"
+
+    if composite_difference == "yes":
+        cmap = "bwr"
+    else:
+        cmap = "YlGnBu"
+
     time_range = iris.Constraint(time=lambda cell: lower_year <= cell.point.year <= upper_year)
 
-    # ------------------------------------------------------------------------------------------------------------------------------------------
-    # MODELS AND ENSEMBLE MEAN
 
-    if len(list_of_models) == 0:
-        pass
+    if composite_difference != "yes":
 
-    if len(list_of_models) == 1:
-        """Extract the model file paths."""
-        start_time = time.time()
-        model_file_paths = model_file_paths(list_of_models, model_type, variable)
-        print time.time() - start_time, "seconds"
+        # ------------------------------------------------------------------------------------------------------------------------------------------
+        # MODELS AND ENSEMBLE MEAN
 
-        """Build a list of cubes from the model file paths."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(model_file_paths)):
-            p = multiprocessing.Process(target=build_cubelist, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist = array.values()
+        if len(list_of_models) == 0:
+            pass
 
-        """Define original long name and original units for later."""
-        original_long_name = cubelist[0].long_name
-        original_unit = cubelist[0].units
+        if len(list_of_models) == 1:
+            """Extract the model file paths."""
+            start_time = time.time()
+            model_file_paths = model_file_paths(list_of_models, model_type, variable)
+            print time.time() - start_time, "seconds"
 
-        """Slice each cube by the time range."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(cubelist)):
-            p = multiprocessing.Process(target=run_cube_year_slicing, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist = array.values()
+            """Build a list of cubes from the model file paths."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(model_file_paths)):
+                p = multiprocessing.Process(target=build_cubelist, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist = array.values()
 
-        """Slice each cube by the season name, and change units if required."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(cubelist)):
-            p = multiprocessing.Process(target=run_cube_season_slicing_change_units, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist = array.values()
+            """Define original long name and original units for later."""
+            original_long_name = cubelist[0].long_name
+            original_unit = cubelist[0].units
 
-        model_cube = cubelist[0]
+            """Slice each cube by the time range."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist)):
+                p = multiprocessing.Process(target=run_cube_year_slicing, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist = array.values()
 
-        contour_levels = contour_lev_colour_map(variable, lower_value, higher_value, value_interval, cmap)[0]
-        cmap = contour_lev_colour_map(variable, lower_value, higher_value, value_interval, cmap)[1]
+            """Slice each cube by the season name, and change units if required."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist)):
+                p = multiprocessing.Process(target=run_cube_season_slicing_change_units, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist = array.values()
 
-        plot_map(model_cube, variable, season_name, contour_levels, cmap, lower_tick, upper_tick, tick_interval)
+            model_cube = cubelist[0]
 
-    if len(list_of_models) > 1:
+            contour_levels = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[0]
+            cmap = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[1]
 
-        """Extract the regridded model file paths for the ensemble mean."""
-        model_file_paths_ensemble = model_file_paths_ensemble(list_of_models, model_type, variable)
+            plot_map(model_cube, variable, season_name, contour_levels, cmap, lower_tick, upper_tick, tick_interval)
 
-        """Build a list of cubes from the regridded model file paths."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(model_file_paths_ensemble)):
-            p = multiprocessing.Process(target=build_cubelist_ensemble, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist_ensemble = array.values()
+        if len(list_of_models) > 1:
 
-        """Slice each cube by the time range."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(cubelist_ensemble)):
-            p = multiprocessing.Process(target=run_cube_year_slicing_ensemble, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist_ensemble = array.values()
+            """Extract the regridded model file paths for the ensemble mean."""
+            print list_of_models
+            model_file_paths_ensemble = model_file_paths_ensemble_func(list_of_models, model_type, variable)
 
-        """Slice each cube by the season name, and change units if required."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(cubelist_ensemble)):
-            p = multiprocessing.Process(target=run_cube_season_slicing_change_units_ensemble, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist_ensemble = array.values()
+            """Build a list of cubes from the regridded model file paths."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(model_file_paths_ensemble)):
+                p = multiprocessing.Process(target=build_cubelist_ensemble, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist_ensemble = array.values()
 
-        """Compute the ensemble mean cube."""
-        ensemble_mean_cube = sum(cubelist_ensemble) / float(len(cubelist_ensemble))
-        ensemble_mean_cube.long_name = "Composite"
+            """Slice each cube by the time range."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist_ensemble)):
+                p = multiprocessing.Process(target=run_cube_year_slicing_ensemble, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist_ensemble = array.values()
 
-        contour_levels = contour_lev_colour_map(variable, lower_value, higher_value, value_interval, cmap)[0]
-        cmap = contour_lev_colour_map(variable, lower_value, higher_value, value_interval, cmap)[1]
+            """Slice each cube by the season name, and change units if required."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist_ensemble)):
+                p = multiprocessing.Process(target=run_cube_season_slicing_change_units_ensemble, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist_ensemble = array.values()
 
-        plot_map(ensemble_mean_cube, variable, season_name, contour_levels, cmap, lower_tick, upper_tick, tick_interval)
+            """Compute the ensemble mean cube."""
+            ensemble_mean_cube = sum(cubelist_ensemble) / float(len(cubelist_ensemble))
+            ensemble_mean_cube.long_name = "Composite"
 
-    if len(list_of_reanalysis) == 0:
-        pass
+            contour_levels = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[0]
+            cmap = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[1]
 
-    if len(list_of_reanalysis) == 1:
+            plot_map(ensemble_mean_cube, variable, season_name, contour_levels, cmap, lower_tick, upper_tick, tick_interval)
 
-        """Build a list of cubes from the reanalysis file paths."""
-        reanalysis_file_paths = reanalysis_file_paths(list_of_reanalysis, variable)
-        """Load the cubes."""
+        if len(list_of_reanalysis) == 0:
+            pass
 
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(reanalysis_file_paths)):
-            p = multiprocessing.Process(target=build_cubelist_reanalysis, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist_reanalysis = array.values()
+        if len(list_of_reanalysis) == 1:
 
-        """Slice each cube by the time range."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(cubelist_reanalysis)):
-            p = multiprocessing.Process(target=run_cube_year_slicing_reanalysis, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist_reanalysis = array.values()
+            """Build a list of cubes from the reanalysis file paths."""
+            reanalysis_file_paths = reanalysis_file_paths(list_of_reanalysis, variable)
+            """Load the cubes."""
 
-        """Slice each cube by the season name, and change units if required."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(cubelist_reanalysis)):
-            p = multiprocessing.Process(target=run_cube_season_slicing_change_units_reanalysis, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist_reanalysis = array.values()
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(reanalysis_file_paths)):
+                p = multiprocessing.Process(target=build_cubelist_reanalysis, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist_reanalysis = array.values()
 
-        reanalysis_cube = cubelist_reanalysis[0]
+            """Slice each cube by the time range."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist_reanalysis)):
+                p = multiprocessing.Process(target=run_cube_year_slicing_reanalysis, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist_reanalysis = array.values()
 
-        contour_levels = contour_lev_colour_map(variable, lower_value, higher_value, value_interval, cmap)[0]
-        cmap = contour_lev_colour_map(variable, lower_value, higher_value, value_interval, cmap)[1]
+            """Slice each cube by the season name, and change units if required."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist_reanalysis)):
+                p = multiprocessing.Process(target=run_cube_season_slicing_change_units_reanalysis, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist_reanalysis = array.values()
 
-        plot_map(reanalysis_cube, variable, season_name, contour_levels, cmap, lower_tick, upper_tick, tick_interval)
+            reanalysis_cube = cubelist_reanalysis[0]
+
+            contour_levels = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[0]
+            cmap = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[1]
+
+            plot_map(reanalysis_cube, variable, season_name, contour_levels, cmap, lower_tick, upper_tick, tick_interval)
+
+    if composite_difference == "yes":
+
+        if len(list_of_models_higher_composite) == 0:
+            pass
+
+        if len(list_of_models_higher_composite) == 1:
+
+            """Extract the model file paths."""
+            start_time = time.time()
+            model_file_paths = model_file_paths(list_of_models_higher_composite, model_type, variable)
+            print time.time() - start_time, "seconds"
+
+            """Build a list of cubes from the model file paths."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(model_file_paths)):
+                p = multiprocessing.Process(target=build_cubelist, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist = array.values()
+
+            """Define original long name and original units for later."""
+            original_long_name = cubelist[0].long_name
+            original_unit = cubelist[0].units
+
+            """Slice each cube by the time range."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist)):
+                p = multiprocessing.Process(target=run_cube_year_slicing, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist = array.values()
+
+            """Slice each cube by the season name, and change units if required."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist)):
+                p = multiprocessing.Process(target=run_cube_season_slicing_change_units, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist = array.values()
+
+            higher_composite_cube = cubelist[0]
+
+        if len(list_of_models_higher_composite) > 1:
+
+            """Extract the regridded model file paths for the ensemble mean."""
+            model_file_paths_ensemble = model_file_paths_ensemble_func(list_of_models_higher_composite, model_type, variable)
+
+            print model_file_paths_ensemble
+
+            """Build a list of cubes from the regridded model file paths."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(model_file_paths_ensemble)):
+                p = multiprocessing.Process(target=build_cubelist_ensemble, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist_ensemble = array.values()
+
+            """Slice each cube by the time range."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist_ensemble)):
+                p = multiprocessing.Process(target=run_cube_year_slicing_ensemble, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist_ensemble = array.values()
+
+            """Slice each cube by the season name, and change units if required."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist_ensemble)):
+                p = multiprocessing.Process(target=run_cube_season_slicing_change_units_ensemble, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist_ensemble = array.values()
+
+            """Compute the ensemble mean cube."""
+            higher_composite_cube = sum(cubelist_ensemble) / float(len(cubelist_ensemble))
+            higher_composite_cube.long_name = "Strong Composite"
+
+            print higher_composite_cube
+
+        if len(list_of_models_lower_composite) == 0:
+            pass
+
+        if len(list_of_models_lower_composite) == 1:
+            """Extract the model file paths."""
+
+            start_time = time.time()
+            model_file_paths = model_file_paths(list_of_models_lower_composite, model_type, variable)
+            print time.time() - start_time, "seconds"
+
+            """Build a list of cubes from the model file paths."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(model_file_paths)):
+                p = multiprocessing.Process(target=build_cubelist, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist = array.values()
+
+            """Define original long name and original units for later."""
+            original_long_name = cubelist[0].long_name
+            original_unit = cubelist[0].units
+
+            """Slice each cube by the time range."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist)):
+                p = multiprocessing.Process(target=run_cube_year_slicing, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist = array.values()
+
+            """Slice each cube by the season name, and change units if required."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist)):
+                p = multiprocessing.Process(target=run_cube_season_slicing_change_units, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist = array.values()
+
+            lower_composite_cube = cubelist[0]
+
+        if len(list_of_models_lower_composite) > 1:
+
+            print list_of_models
+            print list_of_models_lower_composite
+
+            """Extract the regridded model file paths for the ensemble mean."""
+            model_file_paths_ensemble = model_file_paths_ensemble_func(list_of_models_lower_composite, model_type, variable)
+
+            """Build a list of cubes from the regridded model file paths."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(model_file_paths_ensemble)):
+                p = multiprocessing.Process(target=build_cubelist_ensemble, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist_ensemble = array.values()
+
+            """Slice each cube by the time range."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist_ensemble)):
+                p = multiprocessing.Process(target=run_cube_year_slicing_ensemble, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist_ensemble = array.values()
+
+            """Slice each cube by the season name, and change units if required."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist_ensemble)):
+                p = multiprocessing.Process(target=run_cube_season_slicing_change_units_ensemble, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist_ensemble = array.values()
+
+            """Compute the ensemble mean cube."""
+            lower_composite_cube = sum(cubelist_ensemble) / float(len(cubelist_ensemble))
+            lower_composite_cube.long_name = "Weak Composite"
+
+            print lower_composite_cube
+
+        composite_difference_cube = higher_composite_cube - lower_composite_cube
+        composite_difference_cube.long_name = "Composite Difference"
+
+        contour_levels = contour_lev_colour_map(lower_value_diff, higher_value_diff, value_interval_diff, cmap)[0]
+        cmap = contour_lev_colour_map(lower_value_diff, higher_value_diff, value_interval_diff, cmap)[1]
+
+        plot_map(composite_difference_cube, variable, season_name, contour_levels, cmap, lower_tick_diff, upper_tick_diff, tick_interval_diff)
