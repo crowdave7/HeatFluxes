@@ -179,7 +179,6 @@ def return_cube_transpose_two(i, array):
         array[i] = cubelist[i]
 
 def seasonal_cycle_calculations(i, array):
-
     """Constrain the data for each month only."""
     time_range = iris.Constraint(time=lambda cell: cell.point.month == i)
     data_unmasked = first_cube.extract(time_range)
@@ -239,9 +238,6 @@ def seasonal_cycle_calculations(i, array):
         """Calculate the mean of the data array (excluding nans in mask) for correlation plot."""
         data = np.nanmean(mdata)
 
-        print i
-        print data
-
         """Append the data to the array outside the loop to produce the data for the seasonal cycle."""
         array[i] = data
 
@@ -294,9 +290,6 @@ def seasonal_cycle_calculations(i, array):
 
         """Calculate the mean of the data array (excluding nans in mask) for correlation plot."""
         data = np.nanmean(mdata)
-
-        print i
-        print data
 
         """Append the data to the array outside the loop to produce the data for the seasonal cycle."""
         array[i] = data
@@ -679,9 +672,11 @@ if __name__ == "__main__":
 
     list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     #list_of_models = ["ACCESS1-0/", "GISS-E2-R/"]
+    #list_of_models = []
     model_type = "amip"
-    list_of_reanalysis = ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"]
-    #list_of_reanalysis = []
+    #list_of_reanalysis = ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"]
+    #list_of_reanalysis = ["cfsr", "erai"]
+    list_of_reanalysis = []
     variable = "evapotranspiration"
     lower_lat = -10
     upper_lat = 5
@@ -729,6 +724,8 @@ if __name__ == "__main__":
         for process in jobs:
             process.join()
         cubelist = array.values()
+
+        unit = cubelist[0].units
 
         """Slice each cube by the time range."""
         manager = multiprocessing.Manager()
@@ -878,6 +875,7 @@ if __name__ == "__main__":
 
             seasonal_cycle_ensemble_array = np.mean(seasonal_cycle_array_for_ensemble, axis = 0)
 
+
     # ------------------------------------------------------------------------------------------------------------------------------------------
     # REANALYSIS
 
@@ -965,16 +963,23 @@ if __name__ == "__main__":
                 reanalysis_strings_for_plot = np.append(reanalysis_strings_for_plot, reanalysis_id)
                 seasonal_cycle_reanalysis_array.append(cube_seasonal_cycle_reanalysis)
 
-    if len(list_of_models) > 0:
-        print np.shape(seasonal_cycle_models_array)
-    if ensemble == 'yes':
-        print np.shape(seasonal_cycle_ensemble_array)
-    if len(list_of_reanalysis) > 0:
-        print np.shape(seasonal_cycle_reanalysis_array)
+    # PLOT ------------------------------------------------------------------------------------------------------------------------------------------
+
+    # if len(list_of_models) > 0:
+    #     print np.shape(seasonal_cycle_models_array)
+    # if ensemble == 'yes':
+    #     print np.shape(seasonal_cycle_ensemble_array)
+    # if len(list_of_reanalysis) > 0:
+    #     print np.shape(seasonal_cycle_reanalysis_array)
+
+    print('')
+
     if len(list_of_models) > 0:
         print model_strings_for_plot
     if len(list_of_reanalysis) > 0:
         print reanalysis_strings_for_plot
+
+    print('')
 
     number_of_models = len(list_of_models)
     number_of_reanalysis = len(list_of_reanalysis)
@@ -984,17 +989,62 @@ if __name__ == "__main__":
         reanalysis_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap)[1]
         plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_array, seasonal_cycle_reanalysis_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim)
 
+    # VALUES ------------------------------------------------------------------------------------------------------------------------------------------
+
+    djf_values = []
+    mam_values = []
+    jja_values = []
+    son_values = []
+    list_all_datasets = []
+
+    list_all_datasets = np.append(list_all_datasets, list_of_models)
+    list_all_datasets = np.append(list_all_datasets, "Ensemble")
+    list_all_datasets = np.append(list_all_datasets, list_of_reanalysis)
+
     if len(list_of_models) > 0:
 
         for i in np.arange(0, len(seasonal_cycle_models_array)):
 
             model_id = model_strings_for_plot[i]
             print model_id
-            print seasonal_cycle_models_array[i]
+            model_seasonal_cycle = seasonal_cycle_models_array[i]
+
+            model_seasonal_cycle = [float('%.3f' % i) for i in model_seasonal_cycle]
+
+            print model_seasonal_cycle
+
+            djf_value = (model_seasonal_cycle[11] + model_seasonal_cycle[0] + model_seasonal_cycle[1])/float(3.0)
+            mam_value = (model_seasonal_cycle[2] + model_seasonal_cycle[3] + model_seasonal_cycle[4])/float(3.0)
+            jja_value = (model_seasonal_cycle[5] + model_seasonal_cycle[6] + model_seasonal_cycle[7])/float(3.0)
+            son_value = (model_seasonal_cycle[8] + model_seasonal_cycle[9] + model_seasonal_cycle[10])/float(3.0)
+
+            print "djf value = %.3f, mam_value = %.3f, jja_value = %.3f, son_value = %.3f" % (djf_value, mam_value, jja_value, son_value)
+
+            print('')
+
+            djf_values = np.append(djf_values, djf_value)
+            mam_values = np.append(mam_values, mam_value)
+            jja_values = np.append(jja_values, jja_value)
+            son_values = np.append(son_values, son_value)
 
         if ensemble == 'yes':
             print "Ensemble"
-            print seasonal_cycle_ensemble_array
+            ensemble_seasonal_cycle = [float('%.3f' % i) for i in seasonal_cycle_ensemble_array]
+            print ensemble_seasonal_cycle
+
+            djf_value = (ensemble_seasonal_cycle[11] + ensemble_seasonal_cycle[0] + ensemble_seasonal_cycle[1])/float(3.0)
+            mam_value = (ensemble_seasonal_cycle[2] + ensemble_seasonal_cycle[3] + ensemble_seasonal_cycle[4])/float(3.0)
+            jja_value = (ensemble_seasonal_cycle[5] + ensemble_seasonal_cycle[6] + ensemble_seasonal_cycle[7])/float(3.0)
+            son_value = (ensemble_seasonal_cycle[8] + ensemble_seasonal_cycle[9] + ensemble_seasonal_cycle[10])/float(3.0)
+
+            print "djf value = %.3f, mam_value = %.3f, jja_value = %.3f, son_value = %.3f" % (djf_value, mam_value, jja_value, son_value)
+
+            print('')
+
+            djf_values = np.append(djf_values, djf_value)
+            mam_values = np.append(mam_values, mam_value)
+            jja_values = np.append(jja_values, jja_value)
+            son_values = np.append(son_values, son_value)
 
     if len(list_of_reanalysis) > 0:
 
@@ -1002,4 +1052,65 @@ if __name__ == "__main__":
 
             reanalysis_id = reanalysis_strings_for_plot[i]
             print reanalysis_id
-            print seasonal_cycle_reanalysis_array[i]
+            reanalysis_seasonal_cycle = seasonal_cycle_reanalysis_array[i]
+            reanalysis_seasonal_cycle = [float('%.3f' % i) for i in reanalysis_seasonal_cycle]
+            print reanalysis_seasonal_cycle
+            djf_value = (reanalysis_seasonal_cycle[11] + reanalysis_seasonal_cycle[0] + reanalysis_seasonal_cycle[1])/float(3.0)
+            mam_value = (reanalysis_seasonal_cycle[2] + reanalysis_seasonal_cycle[3] + reanalysis_seasonal_cycle[4])/float(3.0)
+            jja_value = (reanalysis_seasonal_cycle[5] + reanalysis_seasonal_cycle[6] + reanalysis_seasonal_cycle[7])/float(3.0)
+            son_value = (reanalysis_seasonal_cycle[8] + reanalysis_seasonal_cycle[9] + reanalysis_seasonal_cycle[10])/float(3.0)
+
+            print "djf value = %.3f, mam_value = %.3f, jja_value = %.3f, son_value = %.3f" % (djf_value, mam_value, jja_value, son_value)
+
+            print('')
+
+            djf_values = np.append(djf_values, djf_value)
+            mam_values = np.append(mam_values, mam_value)
+            jja_values = np.append(jja_values, jja_value)
+            son_values = np.append(son_values, son_value)
+
+list_all_datasets_input = [str(i) for i in list_all_datasets]
+
+print "DJF VALUES"
+
+djf_values, list_all_datasets = (list(i) for i in zip(*sorted(zip(djf_values, list_all_datasets_input))))
+djf_values = [float('%.3f' % i) for i in djf_values]
+print djf_values[::-1]
+print list_all_datasets[::-1]
+
+print('')
+
+print "MAM VALUES"
+
+mam_values, list_all_datasets = (list(i) for i in zip(*sorted(zip(mam_values, list_all_datasets_input))))
+mam_values = [float('%.3f' % i) for i in mam_values]
+print mam_values[::-1]
+print list_all_datasets[::-1]
+
+print('')
+
+print "JJA VALUES"
+
+jja_values, list_all_datasets = (list(i) for i in zip(*sorted(zip(jja_values, list_all_datasets_input))))
+jja_values = [float('%.3f' % i) for i in jja_values]
+print jja_values[::-1]
+print list_all_datasets[::-1]
+
+print('')
+
+print "SON VALUES"
+
+son_values, list_all_datasets = (list(i) for i in zip(*sorted(zip(son_values, list_all_datasets_input))))
+son_values = [float('%.3f' % i) for i in son_values]
+print son_values[::-1]
+print list_all_datasets[::-1]
+
+print('')
+
+
+"""
+print mam_values
+print jja_values
+print son_values
+print list_all_datasets
+"""
