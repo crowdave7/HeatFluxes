@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """Import necessary modules for this code."""
 
 import iris
@@ -23,6 +25,14 @@ def regrid(list_of_models, model_type, variable):
     """If variable is evspsbl, distinguish between evspsbl and evspsblsoi to find model files."""
     if variable == 'evspsbl':
         variable = 'evspsbl_'
+
+    """If variable is mrso, distinguish between mrso and mrsos to find model files."""
+    if variable == 'mrso':
+        variable = 'mrso_'
+
+    """If variable is mrro, distinguish between mrro and mrros to find model files."""
+    if variable == 'mrro':
+        variable = 'mrro_'
 
     """Find the paths to the directories containing the model data"""
     directory_paths = []
@@ -53,7 +63,6 @@ def regrid(list_of_models, model_type, variable):
     model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
     print model_file_paths
 
-
     """If variable is pr_, convert variable back to pr"""
     if variable == 'pr_':
         variable = 'pr'
@@ -61,6 +70,14 @@ def regrid(list_of_models, model_type, variable):
     """If variable is evspsbl_, convert variable back to evspsbl"""
     if variable == 'evspsbl_':
         variable = 'evspsbl'
+
+    """If variable is mrso, convert variable back to mrso"""
+    if variable == 'mrso_':
+        variable = 'mrso'
+
+    """If variable is mrro, convert variable back to mrro"""
+    if variable == 'mrro_':
+        variable = 'mrro'
 
     """Load the data from the model file paths into a cube."""
     if variable == 'hfls':
@@ -95,6 +112,13 @@ def regrid(list_of_models, model_type, variable):
         cubes = iris.load(model_file_paths)
     if variable == 'lai':
         cubes = iris.load(model_file_paths, 'leaf_area_index')
+    if variable == 'mrros':
+        cubes = iris.load(model_file_paths, 'surface_runoff_flux')
+    if variable == 'mrro':
+        cubes = iris.load(model_file_paths, 'runoff_flux')
+        print "hi"
+    if variable == 'mrso':
+        cubes = iris.load(model_file_paths, 'soil_moisture_content')
 
     """Define the reanalysis data to regrid onto."""
     reanalysis_data = iris.load_cube("/ouce-home/data_not_backed_up/analysis/erai/1.0x1.0/daily/precip/nc/erai.totprecip.dt.1979-2013.nc")
@@ -128,10 +152,10 @@ def regrid(list_of_models, model_type, variable):
         print model_id+" regridding done"
 
 
-#regrid(["ACCESS1-3", "bcc-csm1-1/", "BNU-ESM", "CanAM4", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C360", "GISS-E2-R/", "HadGEM2-A", "inmcm4", "MIROC5", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M/"], "amip", "evspsbl_")
+regrid(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CCSM4/", "CESM1-CAM5/", "CMCC-CM/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "EC-EARTH/", "FGOALS-g2/", "FGOALS-s2/", "GFDL-CM3/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "hfls")
 #regrid(["ACCESS1-0", "ACCESS1-3", "bcc-csm1-1_", "bcc-csm1-1-m", "BNU-ESM", "CanAM4", "CNRM-CM5", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C180", "GFDL-HIRAM-C360", "GISS-E2-R", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2H", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M"], "amip", "nrad")
 #regrid(["bcc-csm1-1_"], "amip", "nrad")
 
 #regrid(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1_", "bcc-csm1-1-m", "BNU-ESM/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4", "IPSL-CM5A-LR", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M"], "amip", "lai")
 
-regrid(["GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/"], "amip", "lai")
+#regrid(["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5", "CSIRO-Mk3-6-0/", "EC-EARTH", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR", "IPSL-CM5A-MR/", "IPSL-CM5B-LR", "MIROC5/", "MPI-ESM-LR/", "MPI-ESM-MR/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "mrro")
