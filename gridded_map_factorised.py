@@ -25,8 +25,12 @@ def build_cubelist(i, array):
         coord_names = [coord.name() for coord in cube.coords()]
         if len(coord_names) == 3:
             array[i] = cube
+        if len(coord_names) == 4 and 'depth' in coord_names:
+            array[i] = cube
+        if len(coord_names) == 4 and 'Level' in coord_names:
+            array[i] = cube
 
-def model_file_paths(list_of_models, model_type, variable):
+def model_file_paths_func(list_of_models, model_type, variable):
 
     if variable == 'nrad':
         root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1NetRadiationModelFiles"
@@ -42,11 +46,20 @@ def model_file_paths(list_of_models, model_type, variable):
     if variable == 'evspsbl':
         variable = 'evspsbl_'
 
+    """If variable is mrso, distinguish between mrso and mrsos to find model files."""
+    if variable == 'mrso':
+        variable = 'mrso_'
+
+    """If variable is mrro, distinguish between mrro and mrros to find model files."""
+    if variable == 'mrro':
+        variable = 'mrro_'
+
+    if variable == 'evapotranspiration':
+        variable = 'hfls'
+
     """FIND MODEL PATHS."""
     print "finding model paths"
-    start_time = time.time()
     model_file_paths = find_model_file_paths(list_of_models, model_type, ensemble, variable, root_directory)
-    print time.time() - start_time, "seconds"
 
     """If variable is pr_, convert variable back to pr"""
     if variable == 'pr_':
@@ -56,13 +69,21 @@ def model_file_paths(list_of_models, model_type, variable):
     if variable == 'evspsbl_':
         variable = 'evspsbl'
 
+    """If variable is mrso, convert variable back to mrso"""
+    if variable == 'mrso_':
+        variable = 'mrso'
+
+    """If variable is mrro, convert variable back to mrro"""
+    if variable == 'mrro_':
+        variable = 'mrro'
+
+    if variable == 'hfls':
+        variable = 'evapotranspiration'
+
     return model_file_paths
 
 def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_directory):
     "model_file_paths"
-
-    if variable == 'evapotranspiration':
-        variable = 'hfls'
 
     if variable == 'nrad':
         """Find the paths to the files containing the model data"""
@@ -97,17 +118,23 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                     model_file_path = os.path.join(i, j)
                     model_file_paths = np.append(model_file_paths, model_file_path)
 
-    model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
+    model_file_paths_sorted = []
+
+    for i in list_of_models:
+        for j in model_file_paths:
+            if i in j:
+                model_file_paths_sorted = np.append(model_file_paths_sorted, j)
+
+    model_file_paths = model_file_paths_sorted
 
     print model_file_paths
     return model_file_paths
 
+def slicing(i, array):
 
-def run_cube_year_slicing(i, array):
-    print "cube_year_slicing"
     with iris.FUTURE.context(cell_datetime_objects=True):
         if variable != "treeFrac":
-            cubelist[i] = cubelist[i].extract(time_range)
+            cubelist[i] = cubelist[i].extract(time_range_year)
             time_points = cubelist[i].coord('time').points
             times = cubelist[i].coord('time').units.num2date(time_points)
         model_id = cubelist[i].attributes['model_id']
@@ -117,57 +144,71 @@ def run_cube_year_slicing(i, array):
             print times[0]
             print times[-1]
 
-    array[i] = cubelist[i]
+        """Slice the regridded cube down to the African domain."""
+        cubelist[i] = cubelist[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
 
-def run_cube_season_slicing_change_units(i, array):
-
-    """Slice the regridded cube down to the African domain."""
-    cubelist[i] = cubelist[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
-
-    """Select model ID."""
-    if variable == 'nrad':
-        model_id = cubelist[i].long_name
-    else:
-        model_id = cubelist[i].attributes['model_id']
-
-    if variable == 'pr' or variable == 'tran' or variable == 'evspsblsoi' or variable == 'evspsbl' or variable == 'evspsblveg':
-        cubelist[i] = iris.analysis.maths.multiply(cubelist[i], 86400)
-
-    """if variable is evapotranspiration, divide by 28"""
-    if variable == 'evapotranspiration':
-        cubelist[i] = iris.analysis.maths.divide(cubelist[i], 28)
-
-    """Reassign model ID."""
-    cubelist[i].long_name = model_id
-
-    """ If the input month is defined as the whole year,"""
-    if season_name == 'Climatology':
-
-        """Take the mean over the cube."""
-        cubelist[i] = cubelist[i].collapsed('time', iris.analysis.MEAN)
-
-    """ If the input month is defined as a season,"""
-    if season_name in ['DJF', 'MAM', 'JJA', 'SON']:
-
-        if variable == 'treeFrac':
-            cubelist[i] = cubelist[i].collapsed('time', iris.analysis.MEAN)
-
+        """Select model ID."""
+        if variable == 'nrad':
+            model_id = cubelist[i].long_name
         else:
-            """Create two coordinates on the cube to represent seasons and the season year."""
-            iris.coord_categorisation.add_season(cubelist[i], 'time', name='clim_season')
-            iris.coord_categorisation.add_season_year(cubelist[i], 'time', name='season_year')
+            model_id = cubelist[i].attributes['model_id']
 
-            """Aggregate the data by season and season year."""
-            seasonal_means = cubelist[i].aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
+        if variable == 'pr' or variable == 'tran' or variable == 'evspsblsoi' or variable == 'evspsbl' or variable == 'evspsblveg' or variable == 'mrro' or variable == 'mrros':
+            cubelist[i] = iris.analysis.maths.multiply(cubelist[i], 86400)
 
-            """Constrain the data by the input season. Decapitalise the input variable."""
-            constraint = iris.Constraint(clim_season=season_name.lower())
-            cube_season = seasonal_means.extract(constraint)
+        """if variable is evapotranspiration, divide by 28"""
+        if variable == 'evapotranspiration':
+            cubelist[i] = iris.analysis.maths.divide(cubelist[i], 28)
+
+        """Reassign model ID."""
+        cubelist[i].long_name = model_id
+
+        """ If the input month is defined as the whole year,"""
+        if input_time == 'Climatology':
 
             """Take the mean over the cube."""
-            cubelist[i] = cube_season.collapsed('time', iris.analysis.MEAN)
+            cubelist[i] = cubelist[i].collapsed('time', iris.analysis.MEAN)
+
+        """ If the input month is defined as a season,"""
+        if input_time in ['DJF', 'MAM', 'JJA', 'SON']:
+
+            if variable == 'treeFrac':
+                cubelist[i] = cubelist[i].collapsed('time', iris.analysis.MEAN)
+
+            else:
+                """Create two coordinates on the cube to represent seasons and the season year."""
+                iris.coord_categorisation.add_season(cubelist[i], 'time', name='clim_season')
+                iris.coord_categorisation.add_season_year(cubelist[i], 'time', name='season_year')
+                """Aggregate the data by season and season year."""
+                seasonal_means = cubelist[i].aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
+                """Constrain the data by the input season. Decapitalise the input variable."""
+                constraint = iris.Constraint(clim_season=input_time.lower())
+                cube_season = seasonal_means.extract(constraint)
+                """Take the mean over the cube."""
+                cubelist[i] = cube_season.collapsed('time', iris.analysis.MEAN)
+
+        """ If the input month is defined as a month,"""
+        if input_time in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']:
+
+            if variable == 'treeFrac':
+                cubelist[i] = cubelist[i].collapsed('time', iris.analysis.MEAN)
+
+            else:
+                """Create two coordinates on the cube to represent seasons and the season year."""
+                iris.coord_categorisation.add_month(cubelist[i], 'time', name='month')
+                iris.coord_categorisation.add_year(cubelist[i], 'time', name='year')
+
+                """Aggregate the data by month."""
+                monthly_means = cubelist[i].aggregated_by(['month', 'year'], iris.analysis.MEAN)
+
+                """Constrain the data by the provided month. Decapitalise the input variable."""
+                constraint = iris.Constraint(month=input_time)
+                cube_monthly = monthly_means.extract(constraint)
+
+                cubelist[i] = cube_monthly.collapsed('time', iris.analysis.MEAN)
 
     array[i] = cubelist[i]
+
 
 def build_cubelist_ensemble(i, array):
 
@@ -177,8 +218,12 @@ def build_cubelist_ensemble(i, array):
         coord_names = [coord.name() for coord in cube.coords()]
         if len(coord_names) == 3:
             array[i] = cube
+        if len(coord_names) == 4 and 'depth' in coord_names:
+            array[i] = cube
+        if len(coord_names) == 4 and 'Level' in coord_names:
+            array[i] = cube
 
-def model_file_paths_ensemble(list_of_models, model_type, variable):
+def model_file_paths_ensemble_func(list_of_models, model_type, variable):
         """Import the data."""
         root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles"
 
@@ -189,6 +234,14 @@ def model_file_paths_ensemble(list_of_models, model_type, variable):
         """If variable is evspsbl, distinguish between evspsbl and evspsblsoi to find model files."""
         if variable == 'evspsbl':
             variable = 'evspsbl_'
+
+        """If variable is mrso, distinguish between mrso and mrsos to find model files."""
+        if variable == 'mrso':
+            variable = 'mrso_'
+
+        """If variable is mrro, distinguish between mrro and mrros to find model files."""
+        if variable == 'mrro':
+            variable = 'mrro_'
 
         if variable == 'evapotranspiration':
             variable = 'hfls'
@@ -202,6 +255,14 @@ def model_file_paths_ensemble(list_of_models, model_type, variable):
         """If variable is evspsbl_, convert variable back to evspsbl"""
         if variable == 'evspsbl_':
             variable = 'evspsbl'
+
+        """If variable is mrso, convert variable back to mrso"""
+        if variable == 'mrso_':
+            variable = 'mrso'
+
+        """If variable is mrro, convert variable back to mrro"""
+        if variable == 'mrro_':
+            variable = 'mrro'
 
         if variable == 'hfls':
             variable = 'evapotranspiration'
@@ -227,11 +288,11 @@ def find_model_paths_ensemble(list_of_models, model_type, variable, root_directo
 
     return model_file_paths
 
-def run_cube_year_slicing_ensemble(i, array):
-    print "cube_year_slicing"
+def slicing_ensemble(i, array):
+
     with iris.FUTURE.context(cell_datetime_objects=True):
         if variable != "treeFrac":
-            cubelist_ensemble[i] = cubelist_ensemble[i].extract(time_range)
+            cubelist_ensemble[i] = cubelist_ensemble[i].extract(time_range_year)
             time_points = cubelist_ensemble[i].coord('time').points
             times = cubelist_ensemble[i].coord('time').units.num2date(time_points)
         model_id = cubelist_ensemble[i].attributes['model_id']
@@ -241,55 +302,72 @@ def run_cube_year_slicing_ensemble(i, array):
             print times[0]
             print times[-1]
 
-    array[i] = cubelist_ensemble[i]
+        """Slice the regridded cube down to the African domain."""
+        cubelist_ensemble[i] = cubelist_ensemble[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
 
-def run_cube_season_slicing_change_units_ensemble(i, array):
-
-    """Slice the regridded cube down to the African domain."""
-    cubelist_ensemble[i] = cubelist_ensemble[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
-
-    """Select model ID."""
-    if variable == 'nrad':
-        model_id = cubelist_ensemble[i].long_name
-    else:
-        model_id = cubelist_ensemble[i].attributes['model_id']
-
-    if variable == 'pr' or variable == 'tran' or variable == 'evspsblsoi' or variable == 'evspsbl' or variable == 'evspsblveg':
-        cubelist_ensemble[i] = iris.analysis.maths.multiply(cubelist_ensemble[i], 86400)
-
-    """if variable is evapotranspiration, divide by 28"""
-    if variable == 'evapotranspiration':
-        cubelist_ensemble[i] = iris.analysis.maths.divide(cubelist_ensemble[i], 28)
-
-    """Reassign model ID."""
-    cubelist_ensemble[i].long_name = model_id
-
-    """ If the input month is defined as the whole year,"""
-    if season_name == 'Climatology':
-
-        """Take the mean over the cube."""
-        cubelist_ensemble[i] = cubelist_ensemble[i].collapsed('time', iris.analysis.MEAN)
-
-    """ If the input month is defined as a season,"""
-    if season_name in ['DJF', 'MAM', 'JJA', 'SON']:
-
-        if variable == 'treeFrac':
-            cubelist_ensemble[i] = cubelist_ensemble[i].collapsed('time', iris.analysis.MEAN)
-
+        """Select model ID."""
+        if variable == 'nrad':
+            model_id = cubelist_ensemble[i].long_name
         else:
-            """Create two coordinates on the cube to represent seasons and the season year."""
-            iris.coord_categorisation.add_season(cubelist_ensemble[i], 'time', name='clim_season')
-            iris.coord_categorisation.add_season_year(cubelist_ensemble[i], 'time', name='season_year')
+            model_id = cubelist_ensemble[i].attributes['model_id']
 
-            """Aggregate the data by season and season year."""
-            seasonal_means = cubelist_ensemble[i].aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
+        if variable == 'pr' or variable == 'tran' or variable == 'evspsblsoi' or variable == 'evspsbl' or variable == 'evspsblveg' or variable == 'mrro' or variable == 'mrros' or variable == 'mrso':
+            cubelist_ensemble[i] = iris.analysis.maths.multiply(cubelist_ensemble[i], 86400)
 
-            """Constrain the data by the input season. Decapitalise the input variable."""
-            constraint = iris.Constraint(clim_season=season_name.lower())
-            cube_season = seasonal_means.extract(constraint)
+        """if variable is evapotranspiration, divide by 28"""
+        if variable == 'evapotranspiration':
+            cubelist_ensemble[i] = iris.analysis.maths.divide(cubelist_ensemble[i], 28)
+
+        """Reassign model ID."""
+        cubelist_ensemble[i].long_name = model_id
+
+
+        """ If the input month is defined as the whole year,"""
+        if input_time == 'Climatology':
 
             """Take the mean over the cube."""
-            cubelist_ensemble[i] = cube_season.collapsed('time', iris.analysis.MEAN)
+            cubelist_ensemble[i] = cubelist_ensemble[i].collapsed('time', iris.analysis.MEAN)
+
+        """ If the input month is defined as a season,"""
+        if input_time in ['DJF', 'MAM', 'JJA', 'SON']:
+
+            if variable == 'treeFrac':
+                cubelist_ensemble[i] = cubelist_ensemble[i].collapsed('time', iris.analysis.MEAN)
+
+            else:
+                """Create two coordinates on the cube to represent seasons and the season year."""
+                iris.coord_categorisation.add_season(cubelist_ensemble[i], 'time', name='clim_season')
+                iris.coord_categorisation.add_season_year(cubelist_ensemble[i], 'time', name='season_year')
+
+                """Aggregate the data by season and season year."""
+                seasonal_means = cubelist_ensemble[i].aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
+
+                """Constrain the data by the input season. Decapitalise the input variable."""
+                constraint = iris.Constraint(clim_season=input_time.lower())
+                cube_season = seasonal_means.extract(constraint)
+
+                """Take the mean over the cube."""
+                cubelist_ensemble[i] = cube_season.collapsed('time', iris.analysis.MEAN)
+
+        """ If the input month is defined as a month,"""
+        if input_time in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']:
+
+            if variable == 'treeFrac':
+                cubelist_ensemble[i] = cubelist_ensemble[i].collapsed('time', iris.analysis.MEAN)
+
+            else:
+                """Create two coordinates on the cube to represent seasons and the season year."""
+                iris.coord_categorisation.add_month(cubelist_ensemble[i], 'time', name='month')
+                iris.coord_categorisation.add_year(cubelist_ensemble[i], 'time', name='year')
+
+                """Aggregate the data by month."""
+                monthly_means = cubelist_ensemble[i].aggregated_by(['month', 'year'], iris.analysis.MEAN)
+
+                """Constrain the data by the provided month. Decapitalise the input variable."""
+                constraint = iris.Constraint(month=input_time)
+                cube_monthly = monthly_means.extract(constraint)
+
+                cubelist_ensemble[i] = cube_monthly.collapsed('time', iris.analysis.MEAN)
 
     array[i] = cubelist_ensemble[i]
 
@@ -301,8 +379,12 @@ def build_cubelist_reanalysis(i, array):
         coord_names = [coord.name() for coord in cube.coords()]
         if len(coord_names) == 3:
             array[i] = cube
+        if len(coord_names) == 4 and 'depth' in coord_names:
+            array[i] = cube
+        if len(coord_names) == 4 and 'Level' in coord_names:
+            array[i] = cube
 
-def reanalysis_file_paths(list_of_reanalysis, variable):
+def reanalysis_file_paths_func(list_of_reanalysis, variable):
     """Import the data."""
     root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles"
 
@@ -330,6 +412,7 @@ def reanalysis_file_paths(list_of_reanalysis, variable):
     if variable == 'hfls':
         variable = 'evapotranspiration'
 
+    print reanalysis_file_paths
     return reanalysis_file_paths
 
 def find_reanalysis_file_paths(list_of_reanalysis, variable, root_directory):
@@ -348,11 +431,11 @@ def find_reanalysis_file_paths(list_of_reanalysis, variable, root_directory):
     return reanalysis_file_paths
 
 
-def run_cube_year_slicing_reanalysis(i, array):
+def slicing_reanalysis(i, array):
 
     with iris.FUTURE.context(cell_datetime_objects=True):
         if variable != "treeFrac":
-            cubelist_reanalysis[i] = cubelist_reanalysis[i].extract(time_range)
+            cubelist_reanalysis[i] = cubelist_reanalysis[i].extract(time_range_year)
             time_points = cubelist_reanalysis[i].coord('time').points
             times = cubelist_reanalysis[i].coord('time').units.num2date(time_points)
         reanalysis_id = list_of_reanalysis[i]
@@ -362,40 +445,55 @@ def run_cube_year_slicing_reanalysis(i, array):
             print times[0]
             print times[-1]
 
-    array[i] = cubelist_reanalysis[i]
+        """Slice the regridded cube down to the African domain."""
+        cubelist_reanalysis[i] = cubelist_reanalysis[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
 
+        """if variable is evapotranspiration, divide by 28"""
+        if variable == 'evapotranspiration':
+            cubelist_reanalysis[i] = iris.analysis.maths.divide(cubelist_reanalysis[i], 28)
 
-def run_cube_season_slicing_change_units_reanalysis(i, array):
+        """ If the input month is defined as the whole year,"""
+        if input_time == 'Climatology':
 
-    """Slice the regridded cube down to the African domain."""
-    cubelist_reanalysis[i] = cubelist_reanalysis[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
+            """Take the mean over the cube."""
+            cubelist_reanalysis[i] = cubelist_reanalysis[i].collapsed('time', iris.analysis.MEAN)
 
-    """if variable is evapotranspiration, divide by 28"""
-    if variable == 'evapotranspiration':
-        cubelist_reanalysis[i] = iris.analysis.maths.divide(cubelist_reanalysis[i], 28)
+        """ If the input month is defined as a season,"""
+        if input_time in ['DJF', 'MAM', 'JJA', 'SON']:
 
-    """ If the input month is defined as the whole year,"""
-    if season_name == 'Climatology':
+            """Create two coordinates on the cube to represent seasons and the season year."""
+            iris.coord_categorisation.add_season(cubelist_reanalysis[i], 'time', name='clim_season')
+            iris.coord_categorisation.add_season_year(cubelist_reanalysis[i], 'time', name='season_year')
 
-        """Take the mean over the cube."""
-        cubelist_reanalysis[i] = cubelist_reanalysis[i].collapsed('time', iris.analysis.MEAN)
+            """Aggregate the data by season and season year."""
+            seasonal_means = cubelist_reanalysis[i].aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
 
-    """ If the input month is defined as a season,"""
-    if season_name in ['DJF', 'MAM', 'JJA', 'SON']:
+            """Constrain the data by the input season. Decapitalise the input variable."""
+            constraint = iris.Constraint(clim_season=input_time.lower())
+            reanalysis_data_season = seasonal_means.extract(constraint)
 
-        """Create two coordinates on the cube to represent seasons and the season year."""
-        iris.coord_categorisation.add_season(cubelist_reanalysis[i], 'time', name='clim_season')
-        iris.coord_categorisation.add_season_year(cubelist_reanalysis[i], 'time', name='season_year')
+            """Take the mean over the cube."""
+            cubelist_reanalysis[i] = reanalysis_data_season.collapsed('time', iris.analysis.MEAN)
 
-        """Aggregate the data by season and season year."""
-        seasonal_means = cubelist_reanalysis[i].aggregated_by(['clim_season', 'season_year'], iris.analysis.MEAN)
+        """ If the input month is defined as a month,"""
+        if input_time in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']:
 
-        """Constrain the data by the input season. Decapitalise the input variable."""
-        constraint = iris.Constraint(clim_season=season_name.lower())
-        reanalysis_data_season = seasonal_means.extract(constraint)
+            if variable == 'treeFrac':
+                cubelist_reanalysis[i] = cubelist_reanalysis[i].collapsed('time', iris.analysis.MEAN)
 
-        """Take the mean over the cube."""
-        cubelist_reanalysis[i] = reanalysis_data_season.collapsed('time', iris.analysis.MEAN)
+            else:
+                """Create two coordinates on the cube to represent seasons and the season year."""
+                iris.coord_categorisation.add_month(cubelist_reanalysis[i], 'time', name='month')
+                iris.coord_categorisation.add_year(cubelist_reanalysis[i], 'time', name='year')
+
+                """Aggregate the data by month."""
+                monthly_means = cubelist_reanalysis[i].aggregated_by(['month', 'year'], iris.analysis.MEAN)
+
+                """Constrain the data by the provided month. Decapitalise the input variable."""
+                constraint = iris.Constraint(month=input_time)
+                cube_monthly = monthly_means.extract(constraint)
+
+                cubelist_reanalysis[i] = cube_monthly.collapsed('time', iris.analysis.MEAN)
 
         """Select the reanalysis ID."""
         reanalysis_id = list_of_reanalysis[i]
@@ -428,7 +526,7 @@ def run_cube_season_slicing_change_units_reanalysis(i, array):
     array[i] = cubelist_reanalysis[i]
 
 
-def contour_lev_colour_map(variable, lower_value, higher_value, interval, cmap):
+def contour_lev_colour_map(lower_value, higher_value, interval, cmap):
 
     contour_levels = np.arange(lower_value, higher_value, interval)
     cmap = matplotlib.cm.get_cmap(cmap)
@@ -437,19 +535,13 @@ def contour_lev_colour_map(variable, lower_value, higher_value, interval, cmap):
 
 def colour_bar_adjust_ticks(fig, contour_plot, colour_bar, lower_tick, upper_tick, interval):
 
-    colourbar_axis = fig.add_axes([0.20, 0.07, 0.60, 0.02])
-    colour_bar = plt.colorbar(contour_plot, colourbar_axis, orientation='horizontal')
     colour_bar.set_ticks(np.arange(lower_tick, upper_tick, interval))
     colour_bar.set_ticklabels(np.arange(lower_tick, upper_tick, interval))
     colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
 
     return colour_bar
 
-def plot_map(cubelist, variable, season_name, contour_levels, cmap, lower_tick, upper_tick, tick_interval):
-
-    """Define variable name."""
-    original_long_name = cubelist[0].long_name
-    original_units = cubelist[0].units
+def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, upper_tick, tick_interval):
 
     crs_latlon = ccrs.PlateCarree()
 
@@ -509,40 +601,69 @@ def plot_map(cubelist, variable, season_name, contour_levels, cmap, lower_tick, 
         print cube_number
 
     """Add colour bar."""
-    colourbar_axis = fig.add_axes([0.20, 0.07, 0.60, 0.02])
+    if len(cubelist) > 20:
+        colourbar_axis = fig.add_axes([0.20, 0.07, 0.60, 0.02])
+    if len(cubelist) <=20:
+        colourbar_axis = fig.add_axes([0.20, 0.21, 0.60, 0.02])
+
     colour_bar = plt.colorbar(contour_plot, colourbar_axis, orientation='horizontal')
 
     """Adjust ticks."""
     colour_bar = colour_bar_adjust_ticks(fig, contour_plot, colour_bar, lower_tick, upper_tick, tick_interval)
 
-    """Redefine variable name."""
-    variable_name = str(original_long_name)
-    variable_units = str(original_units)
-
-    if variable_units == "W m-2":
-        variable_units = "W $\mathregular{m^{-2}}$"
-    if variable_units == 'kg m-2 s-1':
-        variable_units = "mm $\mathregular{day^{-1}}$"
-    if variable == 'mrsos':
-        variable_name = "Soil Moisture Content of Upper Layer"
-        variable_units = "mm"
-    if variable == 'nrad':
-        variable_name = "Surface Net Radiation"
-        variable_units = "W $\mathregular{m^{-2}}$"
+    if variable == 'pr':
+        label = 'Precipitation (mm $\mathregular{day^{-1}}$)'
+    if variable == 'hfls':
+        label = 'Surface Upward Latent Heat Flux (W $\mathregular{m^{-2}}$)'
     if variable == 'evapotranspiration':
-        variable_name = 'Evapotranspiration'
-        variable_units = "mm $\mathregular{day^{-1}}$"
+        label = 'Evapotranspiration (mm $\mathregular{day^{-1}}$)'
+    if variable == 'hfss':
+        label = 'Surface Upward Sensible Heat Flux (W $\mathregular{m^{-2}}$)'
+    if variable == 'evap_fraction':
+        label = 'Evaporative Fraction'
     if variable == 'nrad':
-        variable_name = "Surface Net Radiation"
-        variable_units = "W $\mathregular{m^{-2}}$"
+        label = 'Surface Net Radiation (W $\mathregular{m^{-2}}$)'
+    if variable == 'mrsos':
+        label = 'Soil Moisture Content of Upper Layer (mm)'
+    if variable == 'mrso':
+        label = 'Soil Moisture Content (mm)'
+    if variable == 'mrso_':
+        label = 'Total Soil Moisture Content (mm)'
+    if variable == 'tran':
+        label = 'Transpiration (mm $\mathregular{day^{-1}}$)'
+    if variable == 'evspsbl':
+        label = 'Evaporation (mm $\mathregular{day^{-1}}$)'
+    if variable == 'evspsblsoi':
+        label = 'Bare Soil Evaporation (mm $\mathregular{day^{-1}}$)'
+    if variable == 'evspsblveg':
+        label = 'Evaporation from Canopy (mm $\mathregular{day^{-1}}$)'
+    if variable == 'prveg':
+        label = 'Precipitation Intercepted by Canopy (mm $\mathregular{day^{-1}}$)'
+    if variable == 'mrros':
+        label = 'Surface Runoff Flux (mm $\mathregular{day^{-1}}$)'
+    if variable == 'lai':
+        label = 'Leaf Area Index'
+    if variable == 'mrro':
+        label = 'Total Runoff Flux (mm $\mathregular{day^{-1}}$)'
+    if variable == 'treeFrac':
+        label = 'Tree Cover Fraction (%)'
 
-    colour_bar.set_label(variable_name+" ("+variable_units+")", fontsize=10)
+    if variable == 'treeFrac':
+        colour_bar.set_label(label, fontsize=10)
+    if variable != 'treeFrac':
+        colour_bar.set_label(input_time+" "+label, fontsize=10)
 
     fig.subplots_adjust(left=0.125, right=0.9, bottom=0.14, top=0.93, wspace=0.4, hspace=0.9)
-
+    print variable
     """Save the figure, close the plot and print an end statement."""
-    print "saving final figure"
-    fig.savefig("Gridded_"+variable+"_"+season_name+".png", dpi=600)
+    if input_time in ['DJF', 'MAM', 'JJA', 'SON']:
+        print season_index
+        print "saving final figure"
+        fig.savefig("Gridded_"+variable+"_"+str(season_index)+".png")
+    if input_time in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']:
+        print month_index
+        print "saving final figure"
+        fig.savefig("Gridded_"+variable+"_"+str(month_index)+".png")
     plt.close()
     print "plot done"
 
@@ -552,178 +673,190 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------------------------------------------------------------------
     # LIST OF INPUTS
 
-    list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
-    model_type = "amip"
+    list_of_models = ['inmcm4/', 'MIROC5/', 'BNU-ESM/', 'ACCESS1-3/', 'GFDL-HIRAM-C360/', 'ACCESS1-0/', 'GFDL-HIRAM-C180/', 'HadGEM2-A/', 'NorESM1-M/', 'GISS-E2-R/', 'CSIRO-Mk3-6-0/', 'MRI-AGCM3-2S/', 'MRI-AGCM3-2H/', 'bcc-csm1-1/', 'CanAM4/', 'bcc-csm1-1-m/', 'MRI-CGCM3/']
     list_of_reanalysis = ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"]
+    #list_of_times = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'DJF', 'MAM', 'JJA', 'SON']
+    #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CMCC-CM", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    model_type = "amip"
+
+
+    list_of_times = ['SON']
+    #list_of_times = ['DJF', 'MAM', 'JJA', 'SON']
+
     variable = "evapotranspiration"
-    season_name = "SON"
     lower_year = 1979
     upper_year = 2008
     lower_value = 2.5
-    higher_value = 5.25
+    higher_value = 5.75
     value_interval = 0.25
     lower_tick = 2.5
-    upper_tick = 5.25
+    upper_tick = 6
     tick_interval = 0.5
+    ensemble = "yes"
     cmap = "YlGnBu"
-    time_range = iris.Constraint(time=lambda cell: lower_year <= cell.point.year <= upper_year)
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
-    # MODELS AND ENSEMBLE MEAN
 
-    if len(list_of_models) == 0:
-        pass
-    else:
+    time_range_year = iris.Constraint(time=lambda cell: lower_year <= cell.point.year <= upper_year)
 
-        """Extract the model file paths."""
-        model_file_paths = model_file_paths(list_of_models, model_type, variable)
+    # ------------------------------------------------------------------------------------------------------------------------------------------
+    # Loop through list of times
+
+    for i in np.arange(0, len(list_of_times)):
+
+        input_time = list_of_times[i]
+
+        if input_time in ['DJF', 'MAM', 'JJA', 'SON']:
+
+            if input_time == "DJF":
+                season_index = "S1"
+            if input_time == "MAM":
+                season_index = "S2"
+            if input_time == "JJA":
+                season_index = "S3"
+            if input_time == "SON":
+                season_index = "S4"
+
+            print input_time
+
+        if input_time in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']:
+
+            month_index = i+1
+
+            print input_time
+
+            print month_index
+
+    # ------------------------------------------------------------------------------------------------------------------------------------------
+
+        """MODELS."""
+
+        if len(list_of_models) == 0:
+            pass
+        else:
+
+            """Extract the model file paths."""
+            start_time = time.time()
+            print list_of_models
+            print model_type
+            print variable
+            model_file_paths = model_file_paths_func(list_of_models, model_type, variable)
+            print time.time() - start_time, "seconds"
+
+            """Build a list of cubes from the model file paths."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(model_file_paths)):
+                p = multiprocessing.Process(target=build_cubelist, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist = array.values()
+
+            """Slice each cube by year, month and spatial dimension."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist)):
+                p = multiprocessing.Process(target=slicing, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist = array.values()
+
+    # ------------------------------------------------------------------------------------------------------------------------------------------
+            """ENSEMBLE MEAN."""
+
+            if ensemble == "yes":
+
+                """Extract the regridded model file paths for the ensemble mean."""
+                model_file_paths_ensemble = model_file_paths_ensemble_func(list_of_models, model_type, variable)
+
+                """Build a list of cubes from the regridded model file paths."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(model_file_paths_ensemble)):
+                    p = multiprocessing.Process(target=build_cubelist_ensemble, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist_ensemble = array.values()
+
+                """Slice each cube by year, month and spatial dimension."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(cubelist_ensemble)):
+                    p = multiprocessing.Process(target=slicing_ensemble, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist_ensemble = array.values()
+
+                """Compute the ensemble mean cube."""
+                ensemble_mean_cube = sum(cubelist_ensemble) / float(len(cubelist_ensemble))
+                ensemble_mean_cube.long_name = "Ensemble"
+
+                """Append ensemble mean to the cubelist."""
+                cubelist = np.append(cubelist, ensemble_mean_cube)
+
+        # ------------------------------------------------------------------------------------------------------------------------------------------
+
+        """REANALYSES."""
+
+        if len(list_of_reanalysis) == 0:
+            pass
+
+        else:
+
+            list_of_reanalysis.sort()
+            """Build a list of cubes from the reanalysis file paths."""
+            reanalysis_file_paths = reanalysis_file_paths_func(list_of_reanalysis, variable)
+
+            """Load the cubes."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(reanalysis_file_paths)):
+                p = multiprocessing.Process(target=build_cubelist_reanalysis, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist_reanalysis = array.values()
+
+            """Slice each cube by year, month and spatial dimension."""
+            manager = multiprocessing.Manager()
+            array = manager.dict()
+            jobs = []
+            for i in np.arange(0, len(cubelist_reanalysis)):
+                p = multiprocessing.Process(target=slicing_reanalysis, args=(i, array))
+                jobs.append(p)
+                p.start()
+            for process in jobs:
+                process.join()
+            cubelist_reanalysis = array.values()
+
+            """Append reanalysis cubes to the cubelist."""
+            cubelist = np.append(cubelist, cubelist_reanalysis)
+
+            print cubelist
+
+    #------------------------------------------------------------------------------------------------------------------------------------------
+
+        """PLOT MAP."""
 
         start_time = time.time()
+        """Define the contour levels and colour map for the plot."""
+        contour_levels = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[0]
+        cmap = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[1]
 
-        """Build a list of cubes from the model file paths."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(model_file_paths)):
-            p = multiprocessing.Process(target=build_cubelist, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist = array.values()
-
-        """Define original long name and original units for later."""
-        original_long_name = cubelist[0].long_name
-        original_unit = cubelist[0].units
-
-        """Slice each cube by the time range."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(cubelist)):
-            p = multiprocessing.Process(target=run_cube_year_slicing, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist = array.values()
-
-        """Slice each cube by the season name, and change units if required."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(cubelist)):
-            p = multiprocessing.Process(target=run_cube_season_slicing_change_units, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist = array.values()
-
-        """Extract the regridded model file paths for the ensemble mean."""
-        model_file_paths_ensemble = model_file_paths_ensemble(list_of_models, model_type, variable)
-
-        """Build a list of cubes from the regridded model file paths."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(model_file_paths_ensemble)):
-            p = multiprocessing.Process(target=build_cubelist_ensemble, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist_ensemble = array.values()
-
-        """Slice each cube by the time range."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(cubelist_ensemble)):
-            p = multiprocessing.Process(target=run_cube_year_slicing_ensemble, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist_ensemble = array.values()
-
-        """Slice each cube by the season name, and change units if required."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(cubelist_ensemble)):
-            p = multiprocessing.Process(target=run_cube_season_slicing_change_units_ensemble, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist_ensemble = array.values()
-
-        """Compute the ensemble mean cube."""
-        ensemble_mean_cube = sum(cubelist_ensemble) / float(len(cubelist_ensemble))
-        ensemble_mean_cube.long_name = "Ensemble"
-
-        """Append ensemble mean to the cubelist."""
-        cubelist = np.append(cubelist, ensemble_mean_cube)
-
-    # ------------------------------------------------------------------------------------------------------------------------------------------
-    # REANALYSIS
-
-    if len(list_of_reanalysis) == 0:
-        pass
-
-    else:
-
-        """Build a list of cubes from the reanalysis file paths."""
-        reanalysis_file_paths = reanalysis_file_paths(list_of_reanalysis, variable)
-
-        """Load the cubes."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(reanalysis_file_paths)):
-            p = multiprocessing.Process(target=build_cubelist_reanalysis, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist_reanalysis = array.values()
-
-        """Slice each cube by the time range."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(cubelist_reanalysis)):
-            p = multiprocessing.Process(target=run_cube_year_slicing_reanalysis, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist_reanalysis = array.values()
-
-        """Slice each cube by the season name, and change units if required."""
-        manager = multiprocessing.Manager()
-        array = manager.dict()
-        jobs = []
-        for i in np.arange(0, len(cubelist_reanalysis)):
-            p = multiprocessing.Process(target=run_cube_season_slicing_change_units_reanalysis, args=(i, array))
-            jobs.append(p)
-            p.start()
-        for process in jobs:
-            process.join()
-        cubelist_reanalysis = array.values()
-
-        """Append reanalysis cubes to the cubelist."""
-        cubelist = np.append(cubelist, cubelist_reanalysis)
-
-    print cubelist
-
-    # ------------------------------------------------------------------------------------------------------------------------------------------
-    # PLOTTING
-
-    """Define the contour levels and colour map for the plot."""
-    contour_levels = contour_lev_colour_map(variable, lower_value, higher_value, value_interval, cmap)[0]
-    cmap = contour_lev_colour_map(variable, lower_value, higher_value, value_interval, cmap)[1]
-
-    """Produce the plot."""
-    plot_map(cubelist, variable, season_name, contour_levels, cmap, lower_tick, upper_tick, tick_interval)
+        """Produce the plot."""
+        plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, upper_tick, tick_interval)
+        print time.time() - start_time, "seconds"
