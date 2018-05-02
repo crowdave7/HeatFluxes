@@ -134,22 +134,6 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                     model_file_path = os.path.join(i, j)
                     model_file_paths = np.append(model_file_paths, model_file_path)
 
-        count = 0
-        for i in model_file_paths:
-            if "GISS-E2-R" in i:
-                if "evspsblsoi" in i:
-                    model_file_paths[count] = "/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/atlas_evspsblsoi_Lmon_GISS-E2-R_amip_r1i1p1_188001-201012_correct.nc"
-                    print model_file_paths[count]
-            count +=1
-
-        count = 0
-        for i in model_file_paths:
-            if "BNU-ESM" in i:
-                if "evspsblveg" in i:
-                    model_file_paths[count] = '/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/atlas_evspsblveg_Lmon_BNU-ESM_amip_r1i1p1_197901-200812_correct.nc'
-                    print model_file_paths[count]
-            count +=1
-
         model_file_paths_sorted = []
 
         for i in list_of_models:
@@ -157,6 +141,26 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                 if i in j:
                     model_file_paths_sorted = np.append(model_file_paths_sorted, j)
 
+        print model_file_paths_sorted
+
+        count = 0
+        for i in model_file_paths_sorted:
+            if "GISS-E2-R" in i:
+                if "evspsblsoi" in i:
+                    model_file_paths_sorted[count] = "/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/atlas_evspsblsoi_Lmon_GISS-E2-R_amip_r1i1p1_188001-201012_correct.nc"
+                    print model_file_paths_sorted[count]
+            count +=1
+
+        count = 0
+        for i in model_file_paths_sorted:
+            if "BNU-ESM" in i:
+                if "evspsblveg" in i:
+                    model_file_paths_sorted[count] = '/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/atlas_evspsblveg_Lmon_BNU-ESM_amip_r1i1p1_197901-200812_correct.nc'
+                    print model_file_paths_sorted[count]
+            count +=1
+
+
+        print model_file_paths_sorted
         model_file_paths = model_file_paths_sorted
 
     print "hi2"
@@ -741,8 +745,6 @@ def plot_bar(barchart_array, number_of_models, number_of_variables, list_of_vari
         variable_data_2 = barchart_array[1,:]
         variable_data_3 = barchart_array[2,:]
 
-        print variable_data_3
-
         if ensemble == 'yes':
             number_of_models = number_of_models+1
 
@@ -831,14 +833,14 @@ def plot_bar(barchart_array, number_of_models, number_of_variables, list_of_vari
 
     if number_of_variables == 4:
 
+        print number_of_variables
+
         fig = plt.figure()
 
         variable_data_1 = barchart_array[0,:]
         variable_data_2 = barchart_array[1,:]
         variable_data_3 = barchart_array[2,:]
         variable_data_4 = barchart_array[3,:]
-
-        print variable_data_4
 
         if ensemble == 'yes':
             number_of_models = number_of_models+1
@@ -861,6 +863,11 @@ def plot_bar(barchart_array, number_of_models, number_of_variables, list_of_vari
             error_bar_array_3 = np.zeros(number_of_models)
 
         number_of_bars = np.arange(number_of_models)
+
+        print variable_data_1
+        print variable_data_2
+        print variable_data_3
+        print variable_data_4
 
         p1 = plt.bar(number_of_bars, variable_data_1, bar_width, color=bar_colours[0])
 
@@ -945,14 +952,15 @@ if __name__ == "__main__":
     #list_of_models = ["CMCC-CM/"]
     #all for barchart
     list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #list_of_models = ["GISS-E2-R/"]
     #list_of_reanalysis = []
     #list_of_reanalysis = ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"]
     list_of_reanalysis = []
 
     model_type = "amip"
 
-    list_of_variables = ["hfls", "hfss", "nrad"]
-    #list_of_variables = ["evspsblsoi"]
+    list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evapotranspiration"]
+    #list_of_variables = ["evspsblveg"]
 
     lower_lat = -10
     upper_lat = 5
@@ -961,14 +969,14 @@ if __name__ == "__main__":
     lower_year = 1979
     upper_year = 2008
     lower_y_lim = 0.0
-    upper_y_lim = 250.0
+    upper_y_lim = 7.0
     cmap = 'rainbow'
-    ensemble = 'yes'
+    ensemble = 'no'
     plot = 'no'
     bar_plot = 'yes'
-    bar_seasons = ['DJF']
-    bar_y_axis_title = 'Irradiance (W $\mathregular{m^{-2}}$)'
-    bar_colours = ['lightseagreen', 'darkorange']
+    bar_seasons = ['JJA']
+    bar_y_axis_title = ('Evaporation (mm $\mathregular{day^{-1}}$)')
+    bar_colours = ['saddlebrown', 'dodgerblue', 'forestgreen']
     bar_width = 0.5
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
