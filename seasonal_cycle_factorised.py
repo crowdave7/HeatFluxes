@@ -89,6 +89,7 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
         for root, directories, files in os.walk(root_directory):
             for i in files:
                 path = os.path.join(root, i)
+                print path
                 for j in list_of_models:
                     if j == "bcc-csm1-1/":
                         j = "bcc-csm1-1_"
@@ -133,15 +134,32 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                     model_file_path = os.path.join(i, j)
                     model_file_paths = np.append(model_file_paths, model_file_path)
 
-    model_file_paths_sorted = []
+        count = 0
+        for i in model_file_paths:
+            if "GISS-E2-R" in i:
+                if "evspsblsoi" in i:
+                    model_file_paths[count] = "/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/atlas_evspsblsoi_Lmon_GISS-E2-R_amip_r1i1p1_188001-201012_correct.nc"
+                    print model_file_paths[count]
+            count +=1
 
-    for i in list_of_models:
-        for j in model_file_paths:
-            if i in j:
-                model_file_paths_sorted = np.append(model_file_paths_sorted, j)
+        count = 0
+        for i in model_file_paths:
+            if "BNU-ESM" in i:
+                if "evspsblveg" in i:
+                    model_file_paths[count] = '/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/atlas_evspsblveg_Lmon_BNU-ESM_amip_r1i1p1_197901-200812_correct.nc'
+                    print model_file_paths[count]
+            count +=1
 
-    model_file_paths = model_file_paths_sorted
+        model_file_paths_sorted = []
 
+        for i in list_of_models:
+            for j in model_file_paths:
+                if i in j:
+                    model_file_paths_sorted = np.append(model_file_paths_sorted, j)
+
+        model_file_paths = model_file_paths_sorted
+
+    print "hi2"
     print model_file_paths
     return model_file_paths
 
@@ -152,7 +170,10 @@ def slicing(i, array):
             cubelist[i] = cubelist[i].extract(time_range)
             time_points = cubelist[i].coord('time').points
             times = cubelist[i].coord('time').units.num2date(time_points)
-        model_id = cubelist[i].attributes['model_id']
+        if variable == 'nrad':
+            model_id = cubelist[i].long_name
+        else:
+            model_id = cubelist[i].attributes['model_id']
         print model_id
         if variable != "treeFrac":
             print len(times)
@@ -177,6 +198,13 @@ def slicing(i, array):
     """if variable is evapotranspiration, divide by 28"""
     if variable == 'evapotranspiration':
         cubelist[i] = iris.analysis.maths.divide(cubelist[i], 28)
+
+    print model_id
+
+    """if variable is bare soil evap, canopy evap or transpiration and model is IPSL-CM5B-LR:"""
+    if variable == 'evspsblsoi' or variable == "evspsblveg" or variable == 'tran':
+        if model_id == "IPSL-CM5B-LR":
+            cubelist[i] = iris.analysis.maths.multiply(cubelist[i], 4)
 
     """Reassign model ID."""
     cubelist[i].long_name = model_id
@@ -214,7 +242,6 @@ def seasonal_cycle_calculations(i, array):
         x2 = np.linspace(x[0][0],x[0][-1],x.shape[1]*5)
         y2 = np.linspace(y[0][0],y[-1][0],y.shape[0]*5)
         x2, y2 = np.meshgrid(x2, y2)
-
 
         """Transpose the data to set lat first rather than lon."""
         data_unmasked = np.transpose(data_unmasked.data, (1, 0))
@@ -395,7 +422,10 @@ def slicing_ensemble(i, array):
             cubelist_ensemble[i] = cubelist_ensemble[i].extract(time_range)
             time_points = cubelist_ensemble[i].coord('time').points
             times = cubelist_ensemble[i].coord('time').units.num2date(time_points)
-        model_id = cubelist_ensemble[i].attributes['model_id']
+        if variable == 'nrad':
+            model_id = cubelist_ensemble[i].long_name
+        else:
+            model_id = cubelist_ensemble[i].attributes['model_id']
         print model_id
         if variable != "treeFrac":
             print len(times)
@@ -417,6 +447,10 @@ def slicing_ensemble(i, array):
     """if variable is evapotranspiration, divide by 28"""
     if variable == 'evapotranspiration':
         cubelist_ensemble[i] = iris.analysis.maths.divide(cubelist_ensemble[i], 28)
+
+    if variable == 'evspsblsoi' or variable == "evspsblveg" or variable == 'tran':
+        if model_id == "IPSL-CM5B-LR":
+            cubelist_ensemble[i] = iris.analysis.maths.multiply(cubelist_ensemble[i], 4)
 
     """Reassign model ID."""
     cubelist_ensemble[i].long_name = model_id
@@ -663,9 +697,9 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
     if variable == 'hfls':
         plt.ylabel('Surface Upward Latent Heat Flux (W $\mathregular{m^{-2}}$)')
     if variable == 'evapotranspiration':
-        plt.ylabel('Evapotranspiration (mm $\mathregular{day^{-1}}$)')
+        plt.ylabel('Evaporation (mm $\mathregular{day^{-1}}$)')
     if variable == 'hfss':
-        plt.ylabel('Surface Upward Sensible Heat Flux (W $\mathregular{m^{-2}}$)')
+        plt.ylabel('Surface Upward Sensible Heat Flux (W $\mathregular{m^{-2}}$)', fontsize=10)
     if variable == 'evap_fraction':
         plt.ylabel('Evaporative Fraction')
     if variable == 'nrad':
@@ -699,85 +733,197 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
 def plot_bar(barchart_array, number_of_models, number_of_variables, list_of_variables, model_strings_for_plot, ensemble, bar_y_axis_title, bar_colours, lower_y_lim, upper_y_lim, bar_season, bar_width):
 
-    fig = plt.figure()
+    if number_of_variables == 3:
 
-    variable_data_1 = barchart_array[0,:]
-    variable_data_2 = barchart_array[1,:]
-    variable_data_3 = barchart_array[2,:]
-    variable_data_4 = barchart_array[3,:]
+        fig = plt.figure()
 
-    print variable_data_4
+        variable_data_1 = barchart_array[0,:]
+        variable_data_2 = barchart_array[1,:]
+        variable_data_3 = barchart_array[2,:]
 
-    if ensemble == 'yes':
-        number_of_models = number_of_models+1
+        print variable_data_3
 
-        error_bar_array_1 = np.zeros(number_of_models)
-        standard_dev_var_1 = np.std(variable_data_1)
-        error_bar_array_1[-1] = standard_dev_var_1
+        if ensemble == 'yes':
+            number_of_models = number_of_models+1
 
-        error_bar_array_2 = np.zeros(number_of_models)
-        standard_dev_var_2 = np.std(variable_data_2)
-        error_bar_array_2[-1] = standard_dev_var_2
+            error_bar_array_1 = np.zeros(number_of_models)
+            standard_dev_var_1 = np.std(variable_data_1)
+            error_bar_array_1[-1] = standard_dev_var_1
 
-        error_bar_array_3 = np.zeros(number_of_models)
-        standard_dev_var_3 = np.std(variable_data_3)
-        error_bar_array_3[-1] = standard_dev_var_3
+            error_bar_array_2 = np.zeros(number_of_models)
+            standard_dev_var_2 = np.std(variable_data_2)
+            error_bar_array_2[-1] = standard_dev_var_2
 
-        capsize_array = np.zeros(number_of_models)
-        capsize_array[-1] = 5
+            error_bar_array_3 = np.zeros(number_of_models)
+            standard_dev_var_3 = np.std(variable_data_3)
+            error_bar_array_3[-1] = standard_dev_var_3
 
-    if ensemble != 'yes':
-        error_bar_array_1 = np.zeros(number_of_models)
-        error_bar_array_2 = np.zeros(number_of_models)
-        error_bar_array_3 = np.zeros(number_of_models)
-        capsize_array = np.zeros(number_of_models)
+        if ensemble != 'yes':
+            error_bar_array_1 = np.zeros(number_of_models)
+            error_bar_array_2 = np.zeros(number_of_models)
+            error_bar_array_3 = np.zeros(number_of_models)
 
-    number_of_bars = np.arange(number_of_models)
+        number_of_bars = np.arange(number_of_models)
 
-    p4 = plt.bar(number_of_bars, variable_data_4, bar_width, color='r')
+        p1 = plt.bar(number_of_bars, variable_data_1, bar_width, color=bar_colours[0])
 
-    p1 = plt.bar(number_of_bars, variable_data_1, bar_width, color=bar_colours[0])
+        for bar in p1:
+            bar.set_edgecolor("black")
+            bar.set_linewidth(0.5)
+            bar.set_linestyle("-")
 
-    plt.errorbar(number_of_bars-0.05, variable_data_1, yerr=error_bar_array_1, fmt='none', ecolor='black')
+        #plt.errorbar(number_of_bars-0.07, variable_data_1, yerr=error_bar_array_1, fmt='none', ecolor='black')
 
-    p2 = plt.bar(number_of_bars, variable_data_2, bar_width, bottom=variable_data_1, color=bar_colours[1])
+        p2 = plt.bar(number_of_bars, variable_data_2, bar_width, bottom=variable_data_1, color=bar_colours[1])
 
-    plt.errorbar(number_of_bars, variable_data_1 + variable_data_2, yerr=error_bar_array_2, fmt='none', ecolor='black')
+        for bar in p2:
+            bar.set_edgecolor("black")
+            bar.set_linewidth(0.5)
+            bar.set_linestyle("-")
 
-    p3 = plt.bar(number_of_bars, variable_data_3, bar_width, bottom=np.array(variable_data_1)+np.array(variable_data_2), color=bar_colours[2])
+        #plt.errorbar(number_of_bars, variable_data_1 + variable_data_2, yerr=error_bar_array_2, fmt='none', ecolor='black')
 
-    plt.errorbar(number_of_bars+0.15, variable_data_1 + variable_data_2 + variable_data_3, yerr=error_bar_array_3, fmt='none', ecolor='black')
+        p3 = plt.bar(number_of_bars, variable_data_3, bar_width, hatch="///")
 
-    if ensemble == 'yes':
-        model_strings_for_plot = np.append(model_strings_for_plot, "Ensemble")
+        matplotlib.rcParams['hatch.linewidth'] = 0.4
 
-    plt.ylabel(bar_season+" "+bar_y_axis_title, fontsize=9)
-    plt.xticks(number_of_bars, model_strings_for_plot, rotation=45, ha='right', fontsize=9)
-    plt.ylim(lower_y_lim, upper_y_lim)
+        for bar in p3:
+            bar.set_edgecolor("black")
+            bar.set_facecolor("None")
+            bar.set_linewidth(0.5)
+            bar.set_linestyle("-")
 
-    print list_of_variables
+        if ensemble == 'yes':
+            model_strings_for_plot = np.append(model_strings_for_plot, "Ensemble")
 
-    for i in list_of_variables:
-        if i == 'tran':
-            i.replace("tran", "Transpiration")
-    for i in list_of_variables:
-        if i == 'evspsblsoi':
-            list_of_variables = [i.replace('evspsblsoi', 'Bare Soil Evaporation') for i in list_of_variables]
-    for i in list_of_variables:
-        if i == 'evspsblveg':
-            list_of_variables = [i.replace('evspsblveg', 'Evaporation from Canopy') for i in list_of_variables]
-    for i in list_of_variables:
-        if i == 'evapotranspiration':
-            list_of_variables = [i.replace('evapotranspiration', 'Evapotranspiration Error') for i in list_of_variables]
+        plt.ylabel(bar_season+" "+bar_y_axis_title, fontsize=9)
+        plt.xticks(number_of_bars, model_strings_for_plot, rotation=45, ha='right', fontsize=9)
+        plt.ylim(lower_y_lim, upper_y_lim)
 
-    print list_of_variables
+        for i in list_of_variables:
+            if i == 'tran':
+                list_of_variables = [i.replace('tran', 'Transpiration') for i in list_of_variables]
+        for i in list_of_variables:
+            if i == 'evspsblsoi':
+                list_of_variables = [i.replace('evspsblsoi', 'Bare Soil Evaporation') for i in list_of_variables]
+        for i in list_of_variables:
+            if i == 'evspsblveg':
+                list_of_variables = [i.replace('evspsblveg', 'Evaporation from Canopy') for i in list_of_variables]
+        for i in list_of_variables:
+            if i == 'evapoTranspirationspiration':
+                list_of_variables = [i.replace('evapoTranspirationspiration', 'Evaporation') for i in list_of_variables]
+        for i in list_of_variables:
+            if i == 'nrad':
+                list_of_variables = [i.replace('nrad', 'Surface Net Downward Radiation') for i in list_of_variables]
+        for i in list_of_variables:
+            if i == 'hfls':
+                list_of_variables = [i.replace('hfls', 'Surface Upward Latent Heat Flux') for i in list_of_variables]
+        for i in list_of_variables:
+            if i == 'hfss':
+                list_of_variables = [i.replace('hfss', 'Surface Upward Sensible Heat Flux') for i in list_of_variables]
 
-    plt.legend((p4[0], p3[0], p2[0], p1[0]), list_of_variables[::-1], fontsize=9)
+        plt.legend((p3[0], p2[0], p1[0]), list_of_variables[::-1], fontsize=9)
 
-    plt.gcf().subplots_adjust(bottom=0.3)
-    plt.show()
-    print "Saving figure"
-    fig.savefig("Bar_Graph_"+bar_season, bbox_inches='tight')
+        plt.gcf().subplots_adjust(bottom=0.3)
+        print "Saving figure"
+        fig.savefig("Bar_Graph_"+bar_season, bbox_inches='tight')
+
+
+    if number_of_variables == 4:
+
+        fig = plt.figure()
+
+        variable_data_1 = barchart_array[0,:]
+        variable_data_2 = barchart_array[1,:]
+        variable_data_3 = barchart_array[2,:]
+        variable_data_4 = barchart_array[3,:]
+
+        print variable_data_4
+
+        if ensemble == 'yes':
+            number_of_models = number_of_models+1
+
+            error_bar_array_1 = np.zeros(number_of_models)
+            standard_dev_var_1 = np.std(variable_data_1)
+            error_bar_array_1[-1] = standard_dev_var_1
+
+            error_bar_array_2 = np.zeros(number_of_models)
+            standard_dev_var_2 = np.std(variable_data_2)
+            error_bar_array_2[-1] = standard_dev_var_2
+
+            error_bar_array_3 = np.zeros(number_of_models)
+            standard_dev_var_3 = np.std(variable_data_3)
+            error_bar_array_3[-1] = standard_dev_var_3
+
+        if ensemble != 'yes':
+            error_bar_array_1 = np.zeros(number_of_models)
+            error_bar_array_2 = np.zeros(number_of_models)
+            error_bar_array_3 = np.zeros(number_of_models)
+
+        number_of_bars = np.arange(number_of_models)
+
+        p1 = plt.bar(number_of_bars, variable_data_1, bar_width, color=bar_colours[0])
+
+        for bar in p1:
+            bar.set_edgecolor("black")
+            bar.set_linewidth(0.5)
+            bar.set_linestyle("-")
+
+        #plt.errorbar(number_of_bars-0.07, variable_data_1, yerr=error_bar_array_1, fmt='none', ecolor='black')
+
+        p2 = plt.bar(number_of_bars, variable_data_2, bar_width, bottom=variable_data_1, color=bar_colours[1])
+
+        for bar in p2:
+            bar.set_edgecolor("black")
+            bar.set_linewidth(0.5)
+            bar.set_linestyle("-")
+
+        #plt.errorbar(number_of_bars, variable_data_1 + variable_data_2, yerr=error_bar_array_2, fmt='none', ecolor='black')
+
+        p3 = plt.bar(number_of_bars, variable_data_3, bar_width, bottom=np.array(variable_data_1)+np.array(variable_data_2), color=bar_colours[2])
+
+        for bar in p3:
+            bar.set_edgecolor("black")
+            bar.set_linewidth(0.5)
+            bar.set_linestyle("-")
+
+        #plt.errorbar(number_of_bars+0.13, variable_data_1 + variable_data_2 + variable_data_3, yerr=error_bar_array_3, fmt='none', ecolor='black')
+
+        p4 = plt.bar(number_of_bars, variable_data_4, bar_width, hatch="///")
+
+        matplotlib.rcParams['hatch.linewidth'] = 0.4
+
+        for bar in p4:
+            bar.set_edgecolor("black")
+            bar.set_facecolor("None")
+            bar.set_linewidth(0.5)
+            bar.set_linestyle("-")
+
+        if ensemble == 'yes':
+            model_strings_for_plot = np.append(model_strings_for_plot, "Ensemble")
+
+        plt.ylabel(bar_season+" "+bar_y_axis_title, fontsize=9)
+        plt.xticks(number_of_bars, model_strings_for_plot, rotation=45, ha='right', fontsize=9)
+        plt.ylim(lower_y_lim, upper_y_lim)
+
+        for i in list_of_variables:
+            if i == 'tran':
+                list_of_variables = [i.replace('tran', 'Transpiration') for i in list_of_variables]
+        for i in list_of_variables:
+            if i == 'evspsblsoi':
+                list_of_variables = [i.replace('evspsblsoi', 'Bare Soil Evaporation') for i in list_of_variables]
+        for i in list_of_variables:
+            if i == 'evspsblveg':
+                list_of_variables = [i.replace('evspsblveg', 'Evaporation from Canopy') for i in list_of_variables]
+        for i in list_of_variables:
+            if i == 'evapoTranspirationspiration':
+                list_of_variables = [i.replace('evapoTranspirationspiration', 'Evaporation') for i in list_of_variables]
+
+        plt.legend((p4[0], p3[0], p2[0], p1[0]), list_of_variables[::-1], fontsize=9)
+
+        plt.gcf().subplots_adjust(bottom=0.3)
+        print "Saving figure"
+        fig.savefig("Bar_Graph_"+bar_season, bbox_inches='tight')
 
 
 if __name__ == "__main__":
@@ -787,18 +933,26 @@ if __name__ == "__main__":
 
     #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CCSM4/", "CESM1-CAM5/", "CMCC-CM/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "EC-EARTH/", "FGOALS-g2/", "FGOALS-s2/", "GFDL-CM3/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/",  "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #list_of_models = ["ACCESS1-0/"]
     #transpiration
-    #list_of_models = ["ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "CanAM4/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "NorESM1-M/"]
-    #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
-    list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/"]
+    #list_of_models = []
     #evap from canopy
+    #list_of_models = ["ACCESS1-0/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #transpiration
+    #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MPI-ESM-LR/", "MPI-ESM-MR/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #bare soil evaporation
+    #list_of_models = ["ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #list_of_models = ["CMCC-CM/"]
+    #all for barchart
+    list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #list_of_reanalysis = []
     #list_of_reanalysis = ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"]
     list_of_reanalysis = []
 
     model_type = "amip"
 
-    #list_of_variables = ["evapotranspiration"]
-    list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evapotranspiration"]
+    list_of_variables = ["hfls", "hfss", "nrad"]
+    #list_of_variables = ["evspsblsoi"]
 
     lower_lat = -10
     upper_lat = 5
@@ -806,15 +960,15 @@ if __name__ == "__main__":
     upper_lon = 35
     lower_year = 1979
     upper_year = 2008
-    lower_y_lim = 0
-    upper_y_lim = 7.0
+    lower_y_lim = 0.0
+    upper_y_lim = 250.0
     cmap = 'rainbow'
     ensemble = 'yes'
     plot = 'no'
     bar_plot = 'yes'
-    bar_seasons = ['JJA']
-    bar_y_axis_title = 'Evapotranspiration (mm $\mathregular{day^{-1}}$)'
-    bar_colours = ['saddlebrown', 'dodgerblue', 'forestgreen']
+    bar_seasons = ['DJF']
+    bar_y_axis_title = 'Irradiance (W $\mathregular{m^{-2}}$)'
+    bar_colours = ['lightseagreen', 'darkorange']
     bar_width = 0.5
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
@@ -1042,6 +1196,7 @@ if __name__ == "__main__":
 
                 seasonal_cycle_ensemble_array = np.mean(seasonal_cycle_array_for_ensemble, axis = 0)
 
+
                 ensemble_string_for_plot = np.append(ensemble_string_for_plot, "Ensemble")
 
         # ------------------------------------------------------------------------------------------------------------------------------------------
@@ -1183,8 +1338,8 @@ if __name__ == "__main__":
         list_all_datasets = []
 
         list_all_datasets = np.append(list_all_datasets, list_of_models)
-        #list_all_datasets = np.append(list_all_datasets, "Ensemble")
-        #list_all_datasets = np.append(list_all_datasets, list_of_reanalysis)
+        list_all_datasets = np.append(list_all_datasets, "Ensemble")
+        list_all_datasets = np.append(list_all_datasets, list_of_reanalysis)
 
         if len(list_of_models) > 0:
 
@@ -1205,7 +1360,7 @@ if __name__ == "__main__":
                 jja_value = (model_seasonal_cycle[5] + model_seasonal_cycle[6] + model_seasonal_cycle[7])/float(3.0)
                 son_value = (model_seasonal_cycle[8] + model_seasonal_cycle[9] + model_seasonal_cycle[10])/float(3.0)
 
-                print "djf value = %.3f, mam_value = %.3f, jja_value = %.3f, son_value = %.3f" % (djf_value, mam_value, jja_value, son_value)
+                print "%.3f, %.3f, %.3f, %.3f" % (djf_value, mam_value, jja_value, son_value)
 
                 print('')
 
@@ -1231,7 +1386,7 @@ if __name__ == "__main__":
             jja_value = (ensemble_seasonal_cycle[5] + ensemble_seasonal_cycle[6] + ensemble_seasonal_cycle[7])/float(3.0)
             son_value = (ensemble_seasonal_cycle[8] + ensemble_seasonal_cycle[9] + ensemble_seasonal_cycle[10])/float(3.0)
 
-            print "djf value = %.3f, mam_value = %.3f, jja_value = %.3f, son_value = %.3f" % (djf_value, mam_value, jja_value, son_value)
+            print "%.3f, %.3f, %.3f, %.3f" % (djf_value, mam_value, jja_value, son_value)
 
             print('')
 
@@ -1247,32 +1402,34 @@ if __name__ == "__main__":
             barchart_array_jja[variable_number, model_number] = jja_value
             barchart_array_son[variable_number, model_number] = son_value
 
-        # if len(list_of_reanalysis) > 0:
-        #
-        #     for i in np.arange(0, len(seasonal_cycle_reanalysis_array)):
-        #
-        #         reanalysis_id = reanalysis_strings_for_plot[i]
-        #         print reanalysis_id
-        #         reanalysis_seasonal_cycle = seasonal_cycle_reanalysis_array[i]
-        #         reanalysis_seasonal_cycle = [float('%.3f' % i) for i in reanalysis_seasonal_cycle]
-        #         print reanalysis_seasonal_cycle
-        #         djf_value = (reanalysis_seasonal_cycle[11] + reanalysis_seasonal_cycle[0] + reanalysis_seasonal_cycle[1])/float(3.0)
-        #         mam_value = (reanalysis_seasonal_cycle[2] + reanalysis_seasonal_cycle[3] + reanalysis_seasonal_cycle[4])/float(3.0)
-        #         jja_value = (reanalysis_seasonal_cycle[5] + reanalysis_seasonal_cycle[6] + reanalysis_seasonal_cycle[7])/float(3.0)
-        #         son_value = (reanalysis_seasonal_cycle[8] + reanalysis_seasonal_cycle[9] + reanalysis_seasonal_cycle[10])/float(3.0)
-        #
-        #         print "djf value = %.3f, mam_value = %.3f, jja_value = %.3f, son_value = %.3f" % (djf_value, mam_value, jja_value, son_value)
-        #
-        #         print('')
-        #
-        #         djf_values = np.append(djf_values, djf_value)
-        #         mam_values = np.append(mam_values, mam_value)
-        #         jja_values = np.append(jja_values, jja_value)
-        #         son_values = np.append(son_values, son_value)
+        if len(list_of_reanalysis) > 0:
+
+            for i in np.arange(0, len(seasonal_cycle_reanalysis_array)):
+
+                reanalysis_id = reanalysis_strings_for_plot[i]
+                print reanalysis_id
+                reanalysis_seasonal_cycle = seasonal_cycle_reanalysis_array[i]
+                reanalysis_seasonal_cycle = [float('%.3f' % i) for i in reanalysis_seasonal_cycle]
+                print reanalysis_seasonal_cycle
+                djf_value = (reanalysis_seasonal_cycle[11] + reanalysis_seasonal_cycle[0] + reanalysis_seasonal_cycle[1])/float(3.0)
+                mam_value = (reanalysis_seasonal_cycle[2] + reanalysis_seasonal_cycle[3] + reanalysis_seasonal_cycle[4])/float(3.0)
+                jja_value = (reanalysis_seasonal_cycle[5] + reanalysis_seasonal_cycle[6] + reanalysis_seasonal_cycle[7])/float(3.0)
+                son_value = (reanalysis_seasonal_cycle[8] + reanalysis_seasonal_cycle[9] + reanalysis_seasonal_cycle[10])/float(3.0)
+
+                print "%.3f, %.3f, %.3f, %.3f" % (djf_value, mam_value, jja_value, son_value)
+
+                print('')
+
+                djf_values = np.append(djf_values, djf_value)
+                mam_values = np.append(mam_values, mam_value)
+                jja_values = np.append(jja_values, jja_value)
+                son_values = np.append(son_values, son_value)
 
         list_all_datasets_input = [str(i) for i in list_all_datasets]
 
         print "DJF VALUES"
+
+        print djf_values
 
         djf_values, list_all_datasets = (list(i) for i in zip(*sorted(zip(djf_values, list_all_datasets_input))))
         djf_values = [float('%.3f' % i) for i in djf_values]
@@ -1284,6 +1441,7 @@ if __name__ == "__main__":
 
         print "MAM VALUES"
 
+        print mam_values
         mam_values, list_all_datasets = (list(i) for i in zip(*sorted(zip(mam_values, list_all_datasets_input))))
         mam_values = [float('%.3f' % i) for i in mam_values]
         print mam_values[::-1]
@@ -1292,6 +1450,8 @@ if __name__ == "__main__":
         print('')
 
         print "JJA VALUES"
+
+        print jja_values
 
         jja_values, list_all_datasets = (list(i) for i in zip(*sorted(zip(jja_values, list_all_datasets_input))))
         jja_values = [float('%.3f' % i) for i in jja_values]
@@ -1302,6 +1462,7 @@ if __name__ == "__main__":
 
         print "SON VALUES"
 
+        print son_values
         son_values, list_all_datasets = (list(i) for i in zip(*sorted(zip(son_values, list_all_datasets_input))))
         son_values = [float('%.3f' % i) for i in son_values]
         print son_values[::-1]
@@ -1319,14 +1480,6 @@ if __name__ == "__main__":
 
         variable_number +=1
 
-    print barchart_array_djf
-
-    print barchart_array_mam
-
-    print barchart_array_jja
-
-    print barchart_array_son
-
     if bar_plot == 'yes':
 
         if 'DJF' in bar_seasons:
@@ -1337,6 +1490,7 @@ if __name__ == "__main__":
             plot_bar(barchart_array_mam, number_of_models, number_of_variables, list_of_variables, model_strings_for_plot, ensemble, bar_y_axis_title, bar_colours, lower_y_lim, upper_y_lim, 'MAM', bar_width)
         if 'JJA' in bar_seasons:
             print "hi3"
+            print barchart_array_jja
             plot_bar(barchart_array_jja, number_of_models, number_of_variables, list_of_variables, model_strings_for_plot, ensemble, bar_y_axis_title, bar_colours, lower_y_lim, upper_y_lim, 'JJA', bar_width)
         if 'SON' in bar_seasons:
             print "hi4"
