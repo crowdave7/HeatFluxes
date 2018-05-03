@@ -134,14 +134,27 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                     model_file_path = os.path.join(i, j)
                     model_file_paths = np.append(model_file_paths, model_file_path)
 
+        #file_names = [os.path.basename(i) for i in model_file_paths]
+
+        #model_file_paths_sorted = sorted(model_file_paths, key=lambda i: os.path.basename(i)[0])
+
+        for i in list_of_models:
+            if "CCSM4" in i:
+                if variable == "evspsblveg":
+                    model_file_paths = np.append(model_file_paths, "/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/CCSM4/atlas_evspsblveg_Lmon_CCSM4_amip_r1i1p1_197901-201012.nc")
+                if variable == "evspsblsoi":
+                    model_file_paths = np.append(model_file_paths, "/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/CCSM4/atlas_evspsblsoi_Lmon_CCSM4_amip_r1i1p1_197901-201012.nc")
+                if variable == "tran":
+                    model_file_paths = np.append(model_file_paths, "/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/CCSM4/atlas_tran_Lmon_CCSM4_amip_r1i1p1_197901-201012.nc")
+
         model_file_paths_sorted = []
 
         for i in list_of_models:
             for j in model_file_paths:
                 if i in j:
+                    print i
+                    print j
                     model_file_paths_sorted = np.append(model_file_paths_sorted, j)
-
-        print model_file_paths_sorted
 
         count = 0
         for i in model_file_paths_sorted:
@@ -159,8 +172,6 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                     print model_file_paths_sorted[count]
             count +=1
 
-
-        print model_file_paths_sorted
         model_file_paths = model_file_paths_sorted
 
     print "hi2"
