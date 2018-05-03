@@ -91,6 +91,7 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
         for root, directories, files in os.walk(root_directory):
             for i in files:
                 path = os.path.join(root, i)
+                print path
                 for j in list_of_models:
                     if j == "bcc-csm1-1/":
                         j = "bcc-csm1-1_"
@@ -98,7 +99,23 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                         j = j.replace(char,'')
                     if j in path and model_type in path and variable in path:
                         model_file_paths = np.append(model_file_paths, path)
-    else:
+
+        model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
+
+    if variable == "evap_fraction":
+
+        """Find the paths to the files containing the model data"""
+        model_file_paths = []
+        for root, directories, files in os.walk(root_directory):
+            for i in files:
+                path = os.path.join(root, i)
+                for j in list_of_models:
+                    if j in path and model_type in path and ensemble in path and ('hfss' in path or 'hfls' in path):
+                        model_file_paths = np.append(model_file_paths, path)
+
+        model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
+
+    if variable not in ["nrad", "evap_fraction"]:
 
         """Find the paths to the directories containing the model data"""
         directory_paths = []
@@ -107,6 +124,7 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                 path = os.path.join(root, i)
                 for j in list_of_models:
                     if j in path and model_type in path and ensemble in path:
+                        print path
                         directory_paths = np.append(directory_paths, path)
 
         """Find the model files and their absolute paths."""
@@ -118,15 +136,45 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                     model_file_path = os.path.join(i, j)
                     model_file_paths = np.append(model_file_paths, model_file_path)
 
-    model_file_paths_sorted = []
+        #file_names = [os.path.basename(i) for i in model_file_paths]
 
-    for i in list_of_models:
-        for j in model_file_paths:
-            if i in j:
-                model_file_paths_sorted = np.append(model_file_paths_sorted, j)
+        #model_file_paths_sorted = sorted(model_file_paths, key=lambda i: os.path.basename(i)[0])
 
-    model_file_paths = model_file_paths_sorted
+        for i in list_of_models:
+            if "CCSM4" in i:
+                if variable == "evspsblveg":
+                    model_file_paths = np.append(model_file_paths, "/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/CCSM4/atlas_evspsblveg_Lmon_CCSM4_amip_r1i1p1_197901-201012.nc")
+                if variable == "evspsblsoi":
+                    model_file_paths = np.append(model_file_paths, "/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/CCSM4/atlas_evspsblsoi_Lmon_CCSM4_amip_r1i1p1_197901-201012.nc")
+                if variable == "tran":
+                    model_file_paths = np.append(model_file_paths, "/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/CCSM4/atlas_tran_Lmon_CCSM4_amip_r1i1p1_197901-201012.nc")
 
+        model_file_paths_sorted = []
+
+        for i in list_of_models:
+            for j in model_file_paths:
+                if i in j:
+                    model_file_paths_sorted = np.append(model_file_paths_sorted, j)
+
+        count = 0
+        for i in model_file_paths_sorted:
+            if "GISS-E2-R" in i:
+                if "evspsblsoi" in i:
+                    model_file_paths_sorted[count] = "/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/atlas_evspsblsoi_Lmon_GISS-E2-R_amip_r1i1p1_188001-201012_correct.nc"
+                    print model_file_paths_sorted[count]
+            count +=1
+
+        count = 0
+        for i in model_file_paths_sorted:
+            if "BNU-ESM" in i:
+                if "evspsblveg" in i:
+                    model_file_paths_sorted[count] = '/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/atlas_evspsblveg_Lmon_BNU-ESM_amip_r1i1p1_197901-200812_correct.nc'
+                    print model_file_paths_sorted[count]
+            count +=1
+
+        model_file_paths = model_file_paths_sorted
+
+    print "hi2"
     print model_file_paths
     return model_file_paths
 
@@ -159,6 +207,11 @@ def slicing(i, array):
         """if variable is evapotranspiration, divide by 28"""
         if variable == 'evapotranspiration':
             cubelist[i] = iris.analysis.maths.divide(cubelist[i], 28)
+
+        """if variable is bare soil evap, canopy evap or transpiration and model is IPSL-CM5B-LR:"""
+        if variable == 'evspsblsoi' or variable == "evspsblveg" or variable == 'tran':
+            if model_id == "IPSL-CM5B-LR":
+                cubelist[i] = iris.analysis.maths.multiply(cubelist[i], 4)
 
         """Reassign model ID."""
         cubelist[i].long_name = model_id
@@ -318,9 +371,12 @@ def slicing_ensemble(i, array):
         if variable == 'evapotranspiration':
             cubelist_ensemble[i] = iris.analysis.maths.divide(cubelist_ensemble[i], 28)
 
+        if variable == 'evspsblsoi' or variable == "evspsblveg" or variable == 'tran':
+            if model_id == "IPSL-CM5B-LR":
+                cubelist_ensemble[i] = iris.analysis.maths.multiply(cubelist_ensemble[i], 4)
+
         """Reassign model ID."""
         cubelist_ensemble[i].long_name = model_id
-
 
         """ If the input month is defined as the whole year,"""
         if input_time == 'Climatology':
@@ -537,11 +593,11 @@ def colour_bar_adjust_ticks(fig, contour_plot, colour_bar, lower_tick, upper_tic
 
     colour_bar.set_ticks(np.arange(lower_tick, upper_tick, interval))
     colour_bar.set_ticklabels(np.arange(lower_tick, upper_tick, interval))
-    colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0)
+    colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0, labelsize=8)
 
     return colour_bar
 
-def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, upper_tick, tick_interval):
+def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, upper_tick, tick_interval, subplot_columns, subplot_rows):
 
     crs_latlon = ccrs.PlateCarree()
 
@@ -551,7 +607,7 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
 
     for i in cubelist:
         long_name = i.long_name
-        ax = plt.subplot(6, 4, cube_number+1, projection=crs_latlon)
+        ax = plt.subplot(subplot_columns, subplot_rows, cube_number+1, projection=crs_latlon)
         ax.set_extent([-22, 62, -24, 17], crs=crs_latlon)
 
         contour_plot = iplt.contourf(i, contour_levels, cmap=cmap, extend='both')
@@ -594,7 +650,7 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
             long_name = 'ACCESS1-3'
 
         """Add a title."""
-        plt.title(long_name, fontsize=8)
+        plt.title(long_name, fontsize=7)
 
         """Add 1 to the model number to loop through the next model."""
         cube_number +=1
@@ -604,7 +660,7 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
     if len(cubelist) > 20:
         colourbar_axis = fig.add_axes([0.20, 0.07, 0.60, 0.02])
     if len(cubelist) <=20:
-        colourbar_axis = fig.add_axes([0.20, 0.21, 0.60, 0.02])
+        colourbar_axis = fig.add_axes([0.24, 0.42, 0.55, 0.015])
 
     colour_bar = plt.colorbar(contour_plot, colourbar_axis, orientation='horizontal')
 
@@ -616,7 +672,7 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
     if variable == 'hfls':
         label = 'Surface Upward Latent Heat Flux (W $\mathregular{m^{-2}}$)'
     if variable == 'evapotranspiration':
-        label = 'Evapotranspiration (mm $\mathregular{day^{-1}}$)'
+        label = 'Evaporation (mm $\mathregular{day^{-1}}$)'
     if variable == 'hfss':
         label = 'Surface Upward Sensible Heat Flux (W $\mathregular{m^{-2}}$)'
     if variable == 'evap_fraction':
@@ -649,21 +705,21 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
         label = 'Tree Cover Fraction (%)'
 
     if variable == 'treeFrac':
-        colour_bar.set_label(label, fontsize=10)
+        colour_bar.set_label(label, fontsize=8)
     if variable != 'treeFrac':
-        colour_bar.set_label(input_time+" "+label, fontsize=10)
+        colour_bar.set_label(input_time+" "+label, fontsize=9)
 
-    fig.subplots_adjust(left=0.125, right=0.9, bottom=0.14, top=0.93, wspace=0.4, hspace=0.9)
+    fig.subplots_adjust(left=0.05, right=0.98, bottom=0.47, top=0.95, wspace=0.45, hspace=0.5)
     print variable
     """Save the figure, close the plot and print an end statement."""
     if input_time in ['DJF', 'MAM', 'JJA', 'SON']:
         print season_index
         print "saving final figure"
-        fig.savefig("Gridded_"+variable+"_"+str(season_index)+".png")
+        fig.savefig("Gridded_"+variable+"_"+str(season_index)+".png", bbox_inches='tight')
     if input_time in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']:
         print month_index
         print "saving final figure"
-        fig.savefig("Gridded_"+variable+"_"+str(month_index)+".png")
+        fig.savefig("Gridded_"+variable+"_"+str(month_index)+".png", bbox_inches='tight')
     plt.close()
     print "plot done"
 
@@ -673,27 +729,29 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------------------------------------------------------------------
     # LIST OF INPUTS
 
-    list_of_models = ['inmcm4/', 'MIROC5/', 'BNU-ESM/', 'ACCESS1-3/', 'GFDL-HIRAM-C360/', 'ACCESS1-0/', 'GFDL-HIRAM-C180/', 'HadGEM2-A/', 'NorESM1-M/', 'GISS-E2-R/', 'CSIRO-Mk3-6-0/', 'MRI-AGCM3-2S/', 'MRI-AGCM3-2H/', 'bcc-csm1-1/', 'CanAM4/', 'bcc-csm1-1-m/', 'MRI-CGCM3/']
-    list_of_reanalysis = ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"]
+    list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    list_of_reanalysis = ["gleam", "merra2"]
     #list_of_times = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'DJF', 'MAM', 'JJA', 'SON']
     #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CMCC-CM", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     model_type = "amip"
 
 
-    list_of_times = ['SON']
+    list_of_times = ['MAM']
     #list_of_times = ['DJF', 'MAM', 'JJA', 'SON']
 
-    variable = "evapotranspiration"
+    variable = "hfls"
     lower_year = 1979
     upper_year = 2008
-    lower_value = 2.5
-    higher_value = 5.75
-    value_interval = 0.25
-    lower_tick = 2.5
-    upper_tick = 6
-    tick_interval = 0.5
+    lower_value = 80
+    higher_value = 155
+    value_interval = 5
+    lower_tick = 80
+    upper_tick = 160
+    tick_interval = 10
     ensemble = "yes"
     cmap = "YlGnBu"
+    subplot_columns = 4
+    subplot_rows = 5
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -858,5 +916,5 @@ if __name__ == "__main__":
         cmap = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[1]
 
         """Produce the plot."""
-        plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, upper_tick, tick_interval)
+        plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, upper_tick, tick_interval, subplot_columns, subplot_rows)
         print time.time() - start_time, "seconds"
