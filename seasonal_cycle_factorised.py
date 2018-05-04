@@ -608,6 +608,9 @@ def slicing_reanalysis(i, array):
     if reanalysis_id == "ncep-doe":
         cubelist_reanalysis[i].long_name = "NCEP DOE-2"
         cubelist_reanalysis[i].rename("NCEP DOE-2")
+    if reanalysis_id == 'gewex':
+        cubelist_reanalysis[i].long_name = "SRB GEWEX"
+        cubelist_reanalysis[i].rename("SRB GEWEX")
 
     array[i] = cubelist_reanalysis[i]
 
@@ -632,7 +635,7 @@ def line_colours(number_of_models, number_of_reanalysis, cmap):
     return model_line_colours, reanalysis_line_colours
 
 
-def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_array, seasonal_cycle_reanalysis_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim):
+def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_array, seasonal_cycle_reanalysis_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval):
 
     """Before looping through all the models, set up the figure to plot to."""
 
@@ -706,6 +709,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
     """Add lower and upper y limits."""
     plt.ylim(lower_y_lim, upper_y_lim)
+    plt.yticks(np.arange(lower_y_lim, upper_y_lim+y_tick_interval, y_tick_interval))
 
     if variable == 'pr':
         plt.ylabel('Precipitation (mm $\mathregular{day^{-1}}$)')
@@ -718,7 +722,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
     if variable == 'evap_fraction':
         plt.ylabel('Evaporative Fraction')
     if variable == 'nrad':
-        plt.ylabel('Surface Net Radiation (W $\mathregular{m^{-2}}$)')
+        plt.ylabel('Surface Net Downward Radiation (W $\mathregular{m^{-2}}$)')
     if variable == 'mrsos':
         plt.ylabel('Soil Moisture Content of Upper Layer (mm)')
     if variable == 'mrso':
@@ -966,12 +970,13 @@ if __name__ == "__main__":
     #list_of_models = ["GISS-E2-R/"]
     #list_of_reanalysis = []
     #list_of_reanalysis = ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"]
-    list_of_reanalysis = []
+    #list_of_reanalysis = ['gewex', 'merra2']
+    list_of_reanalysis = ['gleam', 'merra2']
 
     model_type = "amip"
 
-    list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evapotranspiration"]
-    #list_of_variables = ["evspsblveg"]
+    #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evapotranspiration"]
+    list_of_variables = ["evapotranspiration"]
 
     lower_lat = -10
     upper_lat = 5
@@ -979,12 +984,13 @@ if __name__ == "__main__":
     upper_lon = 35
     lower_year = 1979
     upper_year = 2008
-    lower_y_lim = 0.0
-    upper_y_lim = 7.0
+    lower_y_lim = 1
+    upper_y_lim = 5
+    y_tick_interval = 1
     cmap = 'rainbow'
-    ensemble = 'no'
-    plot = 'no'
-    bar_plot = 'yes'
+    ensemble = 'yes'
+    plot = 'yes'
+    bar_plot = 'no'
     bar_seasons = ['JJA']
     bar_y_axis_title = ('Evaporation (mm $\mathregular{day^{-1}}$)')
     bar_colours = ['saddlebrown', 'dodgerblue', 'forestgreen']
@@ -1343,7 +1349,7 @@ if __name__ == "__main__":
         if plot == 'yes':
             model_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap)[0]
             reanalysis_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap)[1]
-            plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_array, seasonal_cycle_reanalysis_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim)
+            plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_array, seasonal_cycle_reanalysis_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval)
             print('')
 
     #------------------------------------------------------------------------------------------------------------------------------------------

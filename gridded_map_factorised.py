@@ -185,7 +185,10 @@ def slicing(i, array):
             cubelist[i] = cubelist[i].extract(time_range_year)
             time_points = cubelist[i].coord('time').points
             times = cubelist[i].coord('time').units.num2date(time_points)
-        model_id = cubelist[i].attributes['model_id']
+        if variable == 'nrad':
+            model_id = cubelist[i].long_name
+        else:
+            model_id = cubelist[i].attributes['model_id']
         print model_id
         if variable != "treeFrac":
             print len(times)
@@ -348,7 +351,10 @@ def slicing_ensemble(i, array):
             cubelist_ensemble[i] = cubelist_ensemble[i].extract(time_range_year)
             time_points = cubelist_ensemble[i].coord('time').points
             times = cubelist_ensemble[i].coord('time').units.num2date(time_points)
-        model_id = cubelist_ensemble[i].attributes['model_id']
+        if variable == 'nrad':
+            model_id = cubelist[i].long_name
+        else:
+            model_id = cubelist[i].attributes['model_id']
         print model_id
         if variable != "treeFrac":
             print len(times)
@@ -494,6 +500,7 @@ def slicing_reanalysis(i, array):
             cubelist_reanalysis[i] = cubelist_reanalysis[i].extract(time_range_year)
             time_points = cubelist_reanalysis[i].coord('time').points
             times = cubelist_reanalysis[i].coord('time').units.num2date(time_points)
+        print list_of_reanalysis
         reanalysis_id = list_of_reanalysis[i]
         print reanalysis_id
         if variable != "treeFrac":
@@ -560,6 +567,9 @@ def slicing_reanalysis(i, array):
         if reanalysis_id == "erai":
             cubelist_reanalysis[i].long_name = "ERA-Interim"
             cubelist_reanalysis[i].rename("ERA-Interim")
+        if reanalysis_id == 'gewex':
+            cubelist_reanalysis[i].long_name = "SRB GEWEX"
+            cubelist_reanalysis[i].rename("SRB GEWEX")
         if reanalysis_id == "gleam":
             cubelist_reanalysis[i].long_name = "GLEAM-LE"
             cubelist_reanalysis[i].rename("GLEAM-LE")
@@ -584,15 +594,15 @@ def slicing_reanalysis(i, array):
 
 def contour_lev_colour_map(lower_value, higher_value, interval, cmap):
 
-    contour_levels = np.arange(lower_value, higher_value, interval)
+    contour_levels = np.arange(lower_value, higher_value+interval, interval)
     cmap = matplotlib.cm.get_cmap(cmap)
     return contour_levels, cmap
 
 
 def colour_bar_adjust_ticks(fig, contour_plot, colour_bar, lower_tick, upper_tick, interval):
 
-    colour_bar.set_ticks(np.arange(lower_tick, upper_tick, interval))
-    colour_bar.set_ticklabels(np.arange(lower_tick, upper_tick, interval))
+    colour_bar.set_ticks(np.arange(lower_tick, upper_tick+interval, interval))
+    colour_bar.set_ticklabels(np.arange(lower_tick, upper_tick+interval, interval))
     colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0, labelsize=8)
 
     return colour_bar
@@ -678,7 +688,7 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
     if variable == 'evap_fraction':
         label = 'Evaporative Fraction'
     if variable == 'nrad':
-        label = 'Surface Net Radiation (W $\mathregular{m^{-2}}$)'
+        label = 'Surface Net Downward Radiation (W $\mathregular{m^{-2}}$)'
     if variable == 'mrsos':
         label = 'Soil Moisture Content of Upper Layer (mm)'
     if variable == 'mrso':
@@ -731,22 +741,23 @@ if __name__ == "__main__":
 
     list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     list_of_reanalysis = ["gleam", "merra2"]
-    #list_of_times = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'DJF', 'MAM', 'JJA', 'SON']
+    list_of_times = ['DJF', 'MAM', 'JJA', 'SON', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    #list_of_times = ['DJF']
     #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CMCC-CM", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     model_type = "amip"
 
 
-    list_of_times = ['MAM']
+    #list_of_times = ['MAM']
     #list_of_times = ['DJF', 'MAM', 'JJA', 'SON']
 
     variable = "hfls"
     lower_year = 1979
     upper_year = 2008
-    lower_value = 80
-    higher_value = 155
-    value_interval = 5
-    lower_tick = 80
-    upper_tick = 160
+    lower_value = 30
+    higher_value = 150
+    value_interval = 10
+    lower_tick = 30
+    upper_tick = 150
     tick_interval = 10
     ensemble = "yes"
     cmap = "YlGnBu"
@@ -893,6 +904,9 @@ if __name__ == "__main__":
             manager = multiprocessing.Manager()
             array = manager.dict()
             jobs = []
+            print cubelist_reanalysis
+            print len(cubelist_reanalysis)
+            print np.arange(0, len(cubelist_reanalysis))
             for i in np.arange(0, len(cubelist_reanalysis)):
                 p = multiprocessing.Process(target=slicing_reanalysis, args=(i, array))
                 jobs.append(p)
