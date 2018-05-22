@@ -54,7 +54,7 @@ def model_file_paths_func(list_of_models, model_type, variable):
     if variable == 'mrro':
         variable = 'mrro_'
 
-    if variable == 'evapotranspiration':
+    if variable == 'evaporation':
         variable = 'hfls'
 
     """FIND MODEL PATHS."""
@@ -78,7 +78,7 @@ def model_file_paths_func(list_of_models, model_type, variable):
         variable = 'mrro'
 
     if variable == 'hfls':
-        variable = 'evapotranspiration'
+        variable = 'evaporation'
 
     return model_file_paths
 
@@ -91,16 +91,27 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
         for root, directories, files in os.walk(root_directory):
             for i in files:
                 path = os.path.join(root, i)
-                print path
+                list_of_models = [i.replace("bcc-csm1-1/", "bcc-csm1-1_") for i in list_of_models]
+                list_of_models = [i.replace('/', '') for i in list_of_models]
                 for j in list_of_models:
-                    if j == "bcc-csm1-1/":
-                        j = "bcc-csm1-1_"
-                    for char in '/':
-                        j = j.replace(char,'')
                     if j in path and model_type in path and variable in path:
                         model_file_paths = np.append(model_file_paths, path)
 
-        model_file_paths = sorted(model_file_paths, key=lambda s: s.lower())
+        model_file_paths_nrad_sorted = []
+
+        for i in list_of_models:
+            print "hi8"
+            print i
+            for j in model_file_paths:
+                if i in j:
+                    print "hi3"
+                    print i
+                    print j
+                    print "hi4"
+                    model_file_paths_nrad_sorted = np.append(model_file_paths_nrad_sorted, j)
+
+        print model_file_paths_nrad_sorted
+        model_file_paths = model_file_paths_nrad_sorted
 
     if variable == "evap_fraction":
 
@@ -207,14 +218,16 @@ def slicing(i, array):
         if variable == 'pr' or variable == 'tran' or variable == 'evspsblsoi' or variable == 'evspsbl' or variable == 'evspsblveg' or variable == 'mrro' or variable == 'mrros':
             cubelist[i] = iris.analysis.maths.multiply(cubelist[i], 86400)
 
-        """if variable is evapotranspiration, divide by 28"""
-        if variable == 'evapotranspiration':
+        """if variable is evaporation, divide by 28"""
+        if variable == 'evaporation':
             cubelist[i] = iris.analysis.maths.divide(cubelist[i], 28)
 
         """if variable is bare soil evap, canopy evap or transpiration and model is IPSL-CM5B-LR:"""
         if variable == 'evspsblsoi' or variable == "evspsblveg" or variable == 'tran':
             if model_id == "IPSL-CM5B-LR":
                 cubelist[i] = iris.analysis.maths.multiply(cubelist[i], 4)
+            if unit_plot == 'W m-2':
+                cubelist[i] = iris.analysis.maths.multiply(cubelist[i], 28)
 
         """Reassign model ID."""
         cubelist[i].long_name = model_id
@@ -299,7 +312,7 @@ def model_file_paths_ensemble_func(list_of_models, model_type, variable):
         if variable == 'mrro':
             variable = 'mrro_'
 
-        if variable == 'evapotranspiration':
+        if variable == 'evaporation':
             variable = 'hfls'
 
         model_file_paths = find_model_paths_ensemble(list_of_models, model_type, variable, root_directory)
@@ -321,7 +334,7 @@ def model_file_paths_ensemble_func(list_of_models, model_type, variable):
             variable = 'mrro'
 
         if variable == 'hfls':
-            variable = 'evapotranspiration'
+            variable = 'evaporation'
 
         return model_file_paths
 
@@ -352,9 +365,9 @@ def slicing_ensemble(i, array):
             time_points = cubelist_ensemble[i].coord('time').points
             times = cubelist_ensemble[i].coord('time').units.num2date(time_points)
         if variable == 'nrad':
-            model_id = cubelist[i].long_name
+            model_id = cubelist_ensemble[i].long_name
         else:
-            model_id = cubelist[i].attributes['model_id']
+            model_id = cubelist_ensemble[i].attributes['model_id']
         print model_id
         if variable != "treeFrac":
             print len(times)
@@ -373,13 +386,16 @@ def slicing_ensemble(i, array):
         if variable == 'pr' or variable == 'tran' or variable == 'evspsblsoi' or variable == 'evspsbl' or variable == 'evspsblveg' or variable == 'mrro' or variable == 'mrros' or variable == 'mrso':
             cubelist_ensemble[i] = iris.analysis.maths.multiply(cubelist_ensemble[i], 86400)
 
-        """if variable is evapotranspiration, divide by 28"""
-        if variable == 'evapotranspiration':
+        """if variable is evaporation, divide by 28"""
+        if variable == 'evaporation':
             cubelist_ensemble[i] = iris.analysis.maths.divide(cubelist_ensemble[i], 28)
 
         if variable == 'evspsblsoi' or variable == "evspsblveg" or variable == 'tran':
             if model_id == "IPSL-CM5B-LR":
                 cubelist_ensemble[i] = iris.analysis.maths.multiply(cubelist_ensemble[i], 4)
+            if unit_plot == 'W m-2':
+                cubelist_ensemble[i] = iris.analysis.maths.multiply(cubelist_ensemble[i], 28)
+
 
         """Reassign model ID."""
         cubelist_ensemble[i].long_name = model_id
@@ -458,7 +474,7 @@ def reanalysis_file_paths_func(list_of_reanalysis, variable):
     if variable == 'evspsbl':
         variable = 'evspsbl_'
 
-    if variable == 'evapotranspiration':
+    if variable == 'evaporation':
         variable = 'hfls'
 
     reanalysis_file_paths = find_reanalysis_file_paths(list_of_reanalysis, variable, root_directory)
@@ -472,7 +488,7 @@ def reanalysis_file_paths_func(list_of_reanalysis, variable):
         variable = 'evspsbl'
 
     if variable == 'hfls':
-        variable = 'evapotranspiration'
+        variable = 'evaporation'
 
     print reanalysis_file_paths
     return reanalysis_file_paths
@@ -497,12 +513,18 @@ def slicing_reanalysis(i, array):
 
     with iris.FUTURE.context(cell_datetime_objects=True):
         if variable != "treeFrac":
-            cubelist_reanalysis[i] = cubelist_reanalysis[i].extract(time_range_year)
+
+            reanalysis_id = list_of_reanalysis[i]
+            print reanalysis_id
+
+            if reanalysis_id != "era5":
+                cubelist_reanalysis[i] = cubelist_reanalysis[i].extract(time_range_year)
+            if reanalysis_id == "era5":
+                cubelist_reanalysis[i] = cubelist_reanalysis[i].extract(iris.Constraint(time=lambda cell: 2010 <= cell.point.year <= 2017))
+
             time_points = cubelist_reanalysis[i].coord('time').points
             times = cubelist_reanalysis[i].coord('time').units.num2date(time_points)
-        print list_of_reanalysis
-        reanalysis_id = list_of_reanalysis[i]
-        print reanalysis_id
+
         if variable != "treeFrac":
             print len(times)
             print times[0]
@@ -511,9 +533,14 @@ def slicing_reanalysis(i, array):
         """Slice the regridded cube down to the African domain."""
         cubelist_reanalysis[i] = cubelist_reanalysis[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
 
-        """if variable is evapotranspiration, divide by 28"""
-        if variable == 'evapotranspiration':
+        """if variable is evaporation, divide by 28"""
+        if variable == 'evaporation':
             cubelist_reanalysis[i] = iris.analysis.maths.divide(cubelist_reanalysis[i], 28)
+
+        if variable == 'evspsblsoi' or variable == "evspsblveg" or variable == 'tran':
+            if unit_plot == 'W m-2':
+                cubelist_reanalysis[i] = iris.analysis.maths.multiply(cubelist_reanalysis[i], 28)
+
 
         """ If the input month is defined as the whole year,"""
         if input_time == 'Climatology':
@@ -564,12 +591,15 @@ def slicing_reanalysis(i, array):
         if reanalysis_id == "cfsr":
             cubelist_reanalysis[i].long_name = "CFSR"
             cubelist_reanalysis[i].rename("CFSR")
+        if reanalysis_id == 'era5':
+            cubelist_reanalysis[i].long_name = "ERA-5"
+            cubelist_reanalysis[i].rename("ERA-5")
         if reanalysis_id == "erai":
             cubelist_reanalysis[i].long_name = "ERA-Interim"
             cubelist_reanalysis[i].rename("ERA-Interim")
         if reanalysis_id == 'gewex':
-            cubelist_reanalysis[i].long_name = "SRB GEWEX"
-            cubelist_reanalysis[i].rename("SRB GEWEX")
+            cubelist_reanalysis[i].long_name = "GEWEX"
+            cubelist_reanalysis[i].rename("GEWEX")
         if reanalysis_id == "gleam":
             cubelist_reanalysis[i].long_name = "GLEAM-LE"
             cubelist_reanalysis[i].rename("GLEAM-LE")
@@ -580,8 +610,8 @@ def slicing_reanalysis(i, array):
             cubelist_reanalysis[i].long_name = "MERRA-2"
             cubelist_reanalysis[i].rename("MERRA-2")
         if reanalysis_id == "mswep":
-            cubelist_reanalysis[i].long_name = "GLEAM (MSWEP)"
-            cubelist_reanalysis[i].rename("GLEAM (MSWEP)")
+            cubelist_reanalysis[i].long_name = "MSWEP"
+            cubelist_reanalysis[i].rename("MSWEP")
         if reanalysis_id == "ncep-ncar":
             cubelist_reanalysis[i].long_name = "NCEP/NCAR"
             cubelist_reanalysis[i].rename("NCEP/NCAR")
@@ -611,13 +641,20 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
 
     crs_latlon = ccrs.PlateCarree()
 
-    fig = plt.figure(figsize=(8, 8))
+    if subplot_columns == 5 and subplot_rows == 4:
+        fig = plt.figure(figsize=(8, 8))
+    if subplot_columns == 6 and subplot_rows == 4:
+        fig = plt.figure(figsize=(10, 10))
+    if subplot_columns == 4 and subplot_rows == 6:
+        fig = plt.figure(figsize=(7, 10))
+    if subplot_columns == 5 and subplot_rows == 5:
+        fig = plt.figure(figsize=(8, 8))
 
     cube_number = 0
 
     for i in cubelist:
         long_name = i.long_name
-        ax = plt.subplot(subplot_columns, subplot_rows, cube_number+1, projection=crs_latlon)
+        ax = plt.subplot(subplot_rows, subplot_columns, cube_number+1, projection=crs_latlon)
         ax.set_extent([-22, 62, -24, 17], crs=crs_latlon)
 
         contour_plot = iplt.contourf(i, contour_levels, cmap=cmap, extend='both')
@@ -667,10 +704,22 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
         print cube_number
 
     """Add colour bar."""
-    if len(cubelist) > 20:
-        colourbar_axis = fig.add_axes([0.20, 0.07, 0.60, 0.02])
-    if len(cubelist) <=20:
+
+    if subplot_columns == 5 and subplot_rows == 4:
         colourbar_axis = fig.add_axes([0.24, 0.42, 0.55, 0.015])
+        #[left, bottom, width, height]
+
+    if subplot_columns == 6 and subplot_rows == 4:
+        #colourbar_axis = fig.add_axes([0.20, 0.07, 0.60, 0.02])
+        colourbar_axis = fig.add_axes([0.24, 0.51, 0.55, 0.015])
+
+    if subplot_columns == 4 and subplot_rows == 6:
+        #colourbar_axis = fig.add_axes([0.20, 0.07, 0.60, 0.02])
+        colourbar_axis = fig.add_axes([0.21, 0.31, 0.60, 0.015])
+
+    if subplot_columns == 5 and subplot_rows == 5:
+        #colourbar_axis = fig.add_axes([0.20, 0.07, 0.60, 0.02])
+        colourbar_axis = fig.add_axes([0.21, 0.31, 0.60, 0.015])
 
     colour_bar = plt.colorbar(contour_plot, colourbar_axis, orientation='horizontal')
 
@@ -681,7 +730,7 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
         label = 'Precipitation (mm $\mathregular{day^{-1}}$)'
     if variable == 'hfls':
         label = 'Surface Upward Latent Heat Flux (W $\mathregular{m^{-2}}$)'
-    if variable == 'evapotranspiration':
+    if variable == 'evaporation':
         label = 'Evaporation (mm $\mathregular{day^{-1}}$)'
     if variable == 'hfss':
         label = 'Surface Upward Sensible Heat Flux (W $\mathregular{m^{-2}}$)'
@@ -693,16 +742,26 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
         label = 'Soil Moisture Content of Upper Layer (mm)'
     if variable == 'mrso':
         label = 'Soil Moisture Content (mm)'
-    if variable == 'mrso_':
-        label = 'Total Soil Moisture Content (mm)'
     if variable == 'tran':
-        label = 'Transpiration (mm $\mathregular{day^{-1}}$)'
+        if unit_plot == 'mm day-1':
+            label = 'Transpiration (mm $\mathregular{day^{-1}}$)'
+        if unit_plot == 'W m-2':
+            label = 'Transpiration (W $\mathregular{m^{-2}}$)'
     if variable == 'evspsbl':
-        label = 'Evaporation (mm $\mathregular{day^{-1}}$)'
+        if unit_plot == 'mm day-1':
+            label = 'Evaporation (mm $\mathregular{day^{-1}}$)'
+        if unit_plot == 'W m-2':
+            label = 'Evaporation (W $\mathregular{m^{-2}}$)'
     if variable == 'evspsblsoi':
-        label = 'Bare Soil Evaporation (mm $\mathregular{day^{-1}}$)'
+        if unit_plot == 'mm day-1':
+            label = 'Bare Soil Evaporation (mm $\mathregular{day^{-1}}$)'
+        if unit_plot == 'W m-2':
+            label = 'Bare Soil Evaporation (W $\mathregular{m^{-2}}$)'
     if variable == 'evspsblveg':
-        label = 'Evaporation from Canopy (mm $\mathregular{day^{-1}}$)'
+        if unit_plot == 'mm day-1':
+            label = 'Evaporation from Canopy (mm $\mathregular{day^{-1}}$)'
+        if unit_plot == 'W m-2':
+            label = 'Evaporation from Canopy (W $\mathregular{m^{-2}}$)'
     if variable == 'prveg':
         label = 'Precipitation Intercepted by Canopy (mm $\mathregular{day^{-1}}$)'
     if variable == 'mrros':
@@ -711,6 +770,7 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
         label = 'Leaf Area Index'
     if variable == 'mrro':
         label = 'Total Runoff Flux (mm $\mathregular{day^{-1}}$)'
+
     if variable == 'treeFrac':
         label = 'Tree Cover Fraction (%)'
 
@@ -719,8 +779,15 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
     if variable != 'treeFrac':
         colour_bar.set_label(input_time+" "+label, fontsize=9)
 
-    fig.subplots_adjust(left=0.05, right=0.98, bottom=0.47, top=0.95, wspace=0.45, hspace=0.5)
-    print variable
+    if subplot_columns == 5 and subplot_rows == 4:
+        fig.subplots_adjust(left=0.05, right=0.98, bottom=0.47, top=0.95, wspace=0.45, hspace=0.5)
+    if subplot_columns == 6 and subplot_rows == 4:
+        fig.subplots_adjust(left=0.05, right=0.98, bottom=0.56, top=0.95, wspace=0.4, hspace=0.5)
+    if subplot_columns == 4 and subplot_rows == 6:
+        fig.subplots_adjust(left=0.05, right=0.98, bottom=0.36, top=0.96, wspace=0.4, hspace=0.55)
+    if subplot_columns == 5 and subplot_rows == 5:
+        fig.subplots_adjust(left=0.05, right=0.98, bottom=0.36, top=0.96, wspace=0.4, hspace=0.55)
+
     """Save the figure, close the plot and print an end statement."""
     if input_time in ['DJF', 'MAM', 'JJA', 'SON']:
         print season_index
@@ -740,29 +807,34 @@ if __name__ == "__main__":
     # LIST OF INPUTS
 
     list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
-    list_of_reanalysis = ["gleam", "merra2"]
-    list_of_times = ['DJF', 'MAM', 'JJA', 'SON', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    #list_of_reanalysis = ['cfsr', 'era5', 'erai', 'gleam', 'jra', 'merra2', 'ncep-doe']
+    list_of_reanalysis = ['gleam', 'merra2']
+    #list_of_times = ['DJF', 'MAM', 'JJA', 'SON', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    list_of_times = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     #list_of_times = ['DJF']
+    #list_of_times = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    #list_of_times = ['DJF', 'MAM', 'JJA', 'SON']
     #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CMCC-CM", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     model_type = "amip"
 
 
-    #list_of_times = ['MAM']
+    #list_of_times = ['DJF']
     #list_of_times = ['DJF', 'MAM', 'JJA', 'SON']
 
-    variable = "hfls"
+    variable = "evspsblveg"
     lower_year = 1979
     upper_year = 2008
-    lower_value = 30
-    higher_value = 150
+    lower_value = 0
+    higher_value = 90
     value_interval = 10
-    lower_tick = 30
-    upper_tick = 150
+    lower_tick = 0
+    upper_tick = 90
     tick_interval = 10
     ensemble = "yes"
     cmap = "YlGnBu"
-    subplot_columns = 4
-    subplot_rows = 5
+    unit_plot = "W m-2"
+    subplot_columns = 5
+    subplot_rows = 4
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -786,11 +858,32 @@ if __name__ == "__main__":
             if input_time == "SON":
                 season_index = "S4"
 
-            print input_time
-
         if input_time in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']:
 
-            month_index = i+1
+            if input_time == 'Jan':
+                month_index = 1
+            if input_time == 'Feb':
+                month_index = 2
+            if input_time == 'Mar':
+                month_index = 3
+            if input_time == 'Apr':
+                month_index = 4
+            if input_time == 'May':
+                month_index = 5
+            if input_time == 'Jun':
+                month_index = 6
+            if input_time == 'Jul':
+                month_index = 7
+            if input_time == 'Aug':
+                month_index = 8
+            if input_time == 'Sep':
+                month_index = 9
+            if input_time == 'Oct':
+                month_index = 10
+            if input_time == 'Nov':
+                month_index = 11
+            if input_time == 'Dec':
+                month_index = 12
 
             print input_time
 
