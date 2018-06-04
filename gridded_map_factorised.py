@@ -806,12 +806,12 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------------------------------------------------------------------
     # LIST OF INPUTS
 
-    list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
-    #list_of_reanalysis = ['cfsr', 'era5', 'erai', 'gleam', 'jra', 'merra2', 'ncep-doe']
-    list_of_reanalysis = ['gleam', 'merra2']
+    list_of_models = ['BNU-ESM/', 'MIROC5/', 'IPSL-CM5A-MR/', 'NorESM1-M/', 'IPSL-CM5A-LR/', 'GFDL-HIRAM-C360/', 'GFDL-HIRAM-C180/', 'CanAM4/', 'inmcm4/', 'MRI-AGCM3-2H/', 'MRI-AGCM3-2S/', 'bcc-csm1-1/', 'bcc-csm1-1-m/', 'GISS-E2-R/', 'MRI-CGCM3/', 'IPSL-CM5B-LR/', 'CNRM-CM5/']
+    list_of_reanalysis = ['cfsr', 'era5', 'erai', 'gleam', 'jra', 'merra2', 'ncep-doe']
+    #list_of_reanalysis = ['gleam', 'merra2']
     #list_of_times = ['DJF', 'MAM', 'JJA', 'SON', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    list_of_times = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    #list_of_times = ['DJF']
+    #list_of_times = ['Jun', 'Oct', 'Nov', 'Dec']
+    list_of_times = ['SON']
     #list_of_times = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     #list_of_times = ['DJF', 'MAM', 'JJA', 'SON']
     #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CMCC-CM", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
@@ -821,20 +821,20 @@ if __name__ == "__main__":
     #list_of_times = ['DJF']
     #list_of_times = ['DJF', 'MAM', 'JJA', 'SON']
 
-    variable = "evspsblveg"
+    variable = "evaporation"
     lower_year = 1979
     upper_year = 2008
-    lower_value = 0
-    higher_value = 90
-    value_interval = 10
-    lower_tick = 0
-    upper_tick = 90
-    tick_interval = 10
+    lower_value = 1.0
+    higher_value = 6.0
+    value_interval = 0.5
+    lower_tick = 1.0
+    upper_tick = 6.0
+    tick_interval = 0.5
     ensemble = "yes"
     cmap = "YlGnBu"
-    unit_plot = "W m-2"
+    unit_plot = "mm day-1"
     subplot_columns = 5
-    subplot_rows = 4
+    subplot_rows = 5
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
 
