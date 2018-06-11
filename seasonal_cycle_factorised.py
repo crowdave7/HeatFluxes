@@ -788,9 +788,9 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                     plt.ylabel('Bare Soil Evaporation (W $\mathregular{m^{-2}}$)')
         if variable == 'evspsblveg':
             if unit_plot == 'mm day-1':
-                plt.ylabel('Evaporation from Canopy (mm $\mathregular{day^{-1}}$)')
+                plt.ylabel('Canopy Evaporation (mm $\mathregular{day^{-1}}$)')
             if unit_plot == 'W m-2':
-                plt.ylabel('Evaporation from Canopy (W $\mathregular{m^{-2}}$)')
+                plt.ylabel('Canopy Evaporation (W $\mathregular{m^{-2}}$)')
         if variable == 'prveg':
             plt.ylabel('Precipitation Intercepted by Canopy (mm $\mathregular{day^{-1}}$)')
         if variable == 'mrros':
@@ -818,6 +818,233 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
         """Print the model ID, length of time dimension, and first and last model dates."""
 
         """Plot model seasonal cycles."""
+
+        if len(reanalysis_strings_for_plot) > 0:
+
+            variable_number = 0
+            line_number = 0
+            line_count = 0
+
+            fill_between_lines_data = seasonal_cycle_to_add = np.zeros((2, 12))
+
+            for i in np.arange(0, len(seasonal_cycle_reanalysis_array)):
+                print "hi9"
+                seasonal_cycle_reanalysis_variable_data = seasonal_cycle_reanalysis_array[variable_number]
+
+                name_of_variable = list_of_variables[variable_number]
+
+                #['saddlebrown', 'dodgerblue', 'forestgreen']
+
+                if name_of_variable == 'evaporation':
+                    reanalysis_string = 'Evaporation'
+                    color = 'black'
+                    zorder = 2
+
+                if name_of_variable == 'pr':
+                    reanalysis_string = 'Precipitation'
+                    color = 'blue'
+                    zorder = 3
+
+                if name_of_variable == 'mrros':
+                    reanalysis_string = 'Surface Runoff'
+                    color = 'green'
+                    zorder = 1
+
+                if name_of_variable == 'mrro':
+                    reanalysis_string = 'Runoff'
+                    color = 'green'
+                    zorder = 1
+
+                if name_of_variable == 'tran':
+                    reanalysis_string = 'Transpiration'
+                    color = 'dodgerblue'
+                    zorder = 1
+
+                if name_of_variable == 'evspsblsoi':
+                    reanalysis_string = 'Bare Soil Evaporation'
+                    color = 'saddlebrown'
+                    zorder = 1
+
+                if name_of_variable == 'evspsblveg':
+                    reanalysis_string = 'Canopy Evaporation'
+                    color = 'forestgreen'
+                    zorder = 1
+
+                line = ax1.plot(x_pos, seasonal_cycle_reanalysis_variable_data, zorder=zorder, linestyle='-', linewidth=2.0, color=color, label = reanalysis_string)
+                handles, labels = ax1.get_legend_handles_labels()
+                handles[-1].set_linestyle("-")
+
+                if legend_in_plot != 'yes':
+                    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+                if legend_in_plot == 'yes':
+                    legend = plt.legend(handles, labels, fontsize=9, handlelength=2.5)
+
+                variable_number +=1
+                line_number +=1
+
+                if len(fill_between_lines) > 0:
+
+                    if line_number in fill_between_lines:
+                        fill_between_lines_data[line_count] = seasonal_cycle_reanalysis_variable_data
+                        line_count +=1
+
+                    if line_number not in fill_between_lines:
+                        line[0].remove()
+
+            if len(variables_to_add) > 0:
+
+                indices_to_slice_seasonal_cycle = np.zeros((len(variables_to_add), 2))
+                variables_to_add_count = 0
+                for i in variables_to_add:
+                    print i
+
+                    if i == ['pr', 'evaporation']:
+                        reanalysis_string = 'AMIP Precipitation + Evaporation'
+                        color = 'green'
+                    if i == ['evaporation', 'mrros']:
+                        reanalysis_string = 'Evaporation + Surface Runoff'
+                        color = 'red'
+                    if i == ['evaporation', 'mrro']:
+                        reanalysis_string = 'Evaporation + Runoff'
+                        color = 'red'
+
+                    indices = []
+
+                    for j in i:
+                        indices = np.append(indices, list_of_variables.index(j))
+                    print indices
+                    indices_to_slice_seasonal_cycle[variables_to_add_count] = indices
+                print indices_to_slice_seasonal_cycle
+
+                for i in indices_to_slice_seasonal_cycle:
+                    print i
+                    seasonal_cycle_to_add = np.zeros((len(i), 12))
+                    print seasonal_cycle_to_add.shape
+                    count = 0
+                    for j in i:
+                        seasonal_cycle_to_add_data = seasonal_cycle_reanalysis_array[int(j)]
+                        seasonal_cycle_to_add[count] = seasonal_cycle_to_add_data
+                        count +=1
+                    print seasonal_cycle_to_add
+
+                    seasonal_cycle_added = seasonal_cycle_to_add.sum(axis = 0)
+
+                    line = ax1.plot(x_pos, seasonal_cycle_added, zorder=2, linestyle='-', linewidth=2.0, color=color, label = reanalysis_string)
+                    handles, labels = ax1.get_legend_handles_labels()
+                    handles[-1].set_linestyle("-")
+
+                    if legend_in_plot != 'yes':
+                        legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+                    if legend_in_plot == 'yes':
+                        legend = plt.legend(handles, labels, fontsize=9, handlelength=2.5)
+
+                    if len(fill_between_lines) > 0:
+
+                        if line_number in fill_between_lines:
+                            fill_between_lines_data[line_count] = seasonal_cycle_added
+                            line_count +=1
+
+                        if line_number not in fill_between_lines:
+                            line[0].remove()
+
+            if len(variables_to_subtract) > 0:
+                print variables_to_subtract
+
+
+                variables_to_subtract_count = 0
+                for i in variables_to_subtract:
+                    print i
+
+                    if i == ['pr', 'evspsblsoi', 'evspsblveg', 'mrro']:
+                        reanalysis_string = 'Precipitation Available For Plant Uptake'
+                        color = 'blue'
+
+                    if i == ['evaporation', 'tran', 'evspsblveg', 'evspsblsoi']:
+                        reanalysis_string = 'Residual Evaporation'
+                        color = 'red'
+
+                    if i == ['pr', 'tran', 'evspsblveg', 'mrro']:
+                        reanalysis_string = 'Preciptiation Available for Bare Soil Evaporation'
+                        color = 'blue'
+
+                    indices_to_slice_seasonal_cycle = np.zeros((1, len(i)))
+
+                    indices = []
+                    for j in i:
+                        print j
+                        print list_of_variables.index(j)
+                        indices = np.append(indices, list_of_variables.index(j))
+
+                    print indices_to_slice_seasonal_cycle.shape
+                    print variables_to_subtract_count
+
+                    indices_to_slice_seasonal_cycle[variables_to_subtract_count] = indices
+
+                print indices_to_slice_seasonal_cycle
+
+                for i in indices_to_slice_seasonal_cycle:
+                    print i
+                    seasonal_cycle_to_subtract = np.zeros((len(i), 12))
+                    print seasonal_cycle_to_subtract.shape
+                    count = 0
+                    for j in i:
+                        seasonal_cycle_to_subtract_data = seasonal_cycle_reanalysis_array[int(j)]
+                        seasonal_cycle_to_subtract[count] = seasonal_cycle_to_subtract_data
+                        count +=1
+                    print seasonal_cycle_to_subtract
+
+                    if len(i) == 4:
+
+                        s1 = np.subtract(seasonal_cycle_to_subtract[0], seasonal_cycle_to_subtract[1])
+                        s2 = np.subtract(s1, seasonal_cycle_to_subtract[2])
+                        seasonal_cycle_subtracted = np.subtract(s2, seasonal_cycle_to_subtract[3])
+
+                        print seasonal_cycle_subtracted
+
+                    line = ax1.plot(x_pos, seasonal_cycle_subtracted, zorder=2, linestyle='-', linewidth=2.0, color=color, label = reanalysis_string)
+                    handles, labels = ax1.get_legend_handles_labels()
+                    handles[-1].set_linestyle("-")
+
+                    if legend_in_plot != 'yes':
+                        legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+                    if legend_in_plot == 'yes':
+                        legend = plt.legend(handles, labels, fontsize=9, handlelength=2.5)
+
+                    line_number +=1
+
+                    if len(fill_between_lines) > 0:
+
+                        if line_number in fill_between_lines:
+                            fill_between_lines_data[line_count] = seasonal_cycle_subtracted
+                            line_count +=1
+
+                        if line_number not in fill_between_lines:
+                            line[0].remove()
+
+            if len(fill_between_lines) > 0:
+
+                print fill_between_lines_data
+
+                y1 = fill_between_lines_data[0]
+                y2 = fill_between_lines_data[1]
+
+                ax1.fill_between(x_pos, y1, y2, where=y2 <= y1, facecolor='lightseagreen', interpolate=True, label = 'Soil Moisture Accumulation')
+                handles, labels = ax1.get_legend_handles_labels()
+                handles[-1].set_linestyle("-")
+
+                if legend_in_plot != 'yes':
+                    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+                if legend_in_plot == 'yes':
+                    legend = plt.legend(handles, labels, fontsize=9, handlelength=2.5)
+
+                ax1.fill_between(x_pos, y1, y2, where=y2 >= y1, facecolor='saddlebrown', interpolate=True, label = 'Soil Moisture Depletion')
+                handles, labels = ax1.get_legend_handles_labels()
+                handles[-1].set_linestyle("-")
+
+                if legend_in_plot != 'yes':
+                    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+                if legend_in_plot == 'yes':
+                    legend = plt.legend(handles, labels, fontsize=9, handlelength=2.5)
 
         if len(ensemble_string_for_plot) > 0:
 
@@ -879,9 +1106,6 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 if legend_in_plot == 'yes':
                     legend = plt.legend(handles, labels, fontsize=9, handlelength=2.5)
 
-                variable_number +=1
-                line_number +=1
-
                 if len(fill_between_lines) > 0:
 
                     if line_number in fill_between_lines:
@@ -890,6 +1114,9 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
                     if line_number not in fill_between_lines:
                         line[0].remove()
+
+                variable_number +=1
+                line_number +=1
 
             if len(variables_to_add) > 0:
 
@@ -902,10 +1129,10 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                         ensemble_string = 'AMIP Precipitation + Evaporation'
                         color = 'green'
                     if i == ['evaporation', 'mrros']:
-                        ensemble_string = 'AMIP Mean Evaporation + AMIP Mean Surface Runoff'
+                        ensemble_string = 'Evaporation + Surface Runoff'
                         color = 'red'
                     if i == ['evaporation', 'mrro']:
-                        ensemble_string = 'AMIP Mean Evaporation + AMIP Mean Runoff'
+                        ensemble_string = 'Evaporation + Runoff'
                         color = 'red'
 
                     indices = []
@@ -1022,10 +1249,16 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                             line[0].remove()
 
             if len(fill_between_lines) > 0:
-                y1 = fill_between_lines_data[1]
-                y2 = fill_between_lines_data[0]
 
-                ax1.fill_between(x_pos, y1, y2, where=y2 <= y1, facecolor='lightseagreen', interpolate=True, label = 'AMIP Mean Soil Moisture Accumulation')
+                y1 = fill_between_lines_data[0]
+                y2 = fill_between_lines_data[1]
+
+                print "y1"
+                print y1
+                print "y2"
+                print y2
+
+                ax1.fill_between(x_pos, y1, y2, where=y2 <= y1, facecolor='lightseagreen', interpolate=True, label = 'Soil Moisture Accumulation')
                 handles, labels = ax1.get_legend_handles_labels()
                 handles[-1].set_linestyle("-")
 
@@ -1034,7 +1267,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 if legend_in_plot == 'yes':
                     legend = plt.legend(handles, labels, fontsize=9, handlelength=2.5)
 
-                ax1.fill_between(x_pos, y1, y2, where=y2 >= y1, facecolor='saddlebrown', interpolate=True, label = 'AMIP Mean Soil Moisture Depletion')
+                ax1.fill_between(x_pos, y1, y2, where=y2 >= y1, facecolor='saddlebrown', interpolate=True, label = 'Soil Moisture Depletion')
                 handles, labels = ax1.get_legend_handles_labels()
                 handles[-1].set_linestyle("-")
 
@@ -1052,7 +1285,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
         plt.yticks(np.arange(lower_y_lim, upper_y_lim+y_tick_interval, y_tick_interval))
 
         if list_of_variables[0] == 'pr' or list_of_variables[0] == 'evaporation':
-            plt.ylabel('Evaporation (mm $\mathregular{day^{-1}}$)')
+            plt.ylabel('Precipitation (mm $\mathregular{day^{-1}}$)')
 
         """Save the figure."""
         print "Saving figure"
@@ -1148,7 +1381,7 @@ def plot_bar(barchart_array, number_of_models, number_of_reanalysis, number_of_v
                 list_of_variables = [i.replace('evspsblsoi', 'Bare Soil Evaporation') for i in list_of_variables]
         for i in list_of_variables:
             if i == 'evspsblveg':
-                list_of_variables = [i.replace('evspsblveg', 'Evaporation from Canopy') for i in list_of_variables]
+                list_of_variables = [i.replace('evspsblveg', 'Canopy Evaporation') for i in list_of_variables]
         for i in list_of_variables:
             if i == 'evaporation':
                 list_of_variables = [i.replace('evaporation', 'Evaporation') for i in list_of_variables]
@@ -1264,7 +1497,7 @@ def plot_bar(barchart_array, number_of_models, number_of_reanalysis, number_of_v
             for i in variables_to_subtract:
 
                 if i == ['pr', 'evspsblsoi', 'evspsblveg', 'mrro']:
-                    string = 'AMIP Mean Precipitation Available For Plant Uptake'
+                    string = 'Precipitation Available For Plant Uptake'
                     color = 'blue'
 
                 if i == ['evaporation', 'tran', 'evspsblveg', 'evspsblsoi']:
@@ -1339,7 +1572,7 @@ def plot_bar(barchart_array, number_of_models, number_of_reanalysis, number_of_v
                 list_of_variables = [i.replace('evspsblsoi', 'Bare Soil Evaporation') for i in list_of_variables]
         for i in list_of_variables:
             if i == 'evspsblveg':
-                list_of_variables = [i.replace('evspsblveg', 'Evaporation from Canopy') for i in list_of_variables]
+                list_of_variables = [i.replace('evspsblveg', 'Canopy Evaporation') for i in list_of_variables]
         for i in list_of_variables:
             if i == 'evaporation':
                 list_of_variables = [i.replace('evaporation', 'Evaporation') for i in list_of_variables]
@@ -1400,10 +1633,13 @@ if __name__ == "__main__":
     #list_of_models = []
 
     list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
-    #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/"]
+    #list_of_models = ["CNRM-CM5/", "BNU-ESM/"]
+    #list_of_models = ["bcc-csm1-1/"]
+    #list_of_models = []
+    list_of_reanalysis = []
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/"]
     #list_of_reanalysis = ['cfsr', 'era5', 'erai', 'gleam', 'jra', 'merra2', 'ncep-doe']
-    list_of_reanalysis = []
+    #list_of_reanalysis = ['gleam']
     #list_of_reanalysis = ["cfsr", "era5", "erai", "gleam", "jra", "merra2", "ncep-doe"]
     #list_of_reanalysis = ['gleam', 'merra2']
     #list_of_reanalysis = ['gewex', 'merra2']
@@ -1414,20 +1650,21 @@ if __name__ == "__main__":
     model_type = "amip"
 
     #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evaporation"]
-    list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi"]
+    #list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi"]
     #list_of_variables = ["hfls", "hfss", "nrad"]
     #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "hfls"]
     #list_of_variables = ['pr']
     #list_of_variables = ['pr']
     #list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
     #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evaporation"]
+    list_of_variables = ['pr', 'evaporation', 'mrro']
 
-    variables_to_add = []
+    variables_to_add = [['evaporation', 'mrro']]
     #variables_to_subtract = [['pr', 'tran', 'evspsblveg', 'mrro']]
-    variables_to_subtract = [['evaporation', 'tran', 'evspsblveg', 'evspsblsoi']]
-    #variables_to_subtract = []
+    #variables_to_subtract = [['evaporation', 'tran', 'evspsblveg', 'evspsblsoi']]
+    variables_to_subtract = []
 
-    fill_between_lines = []
+    fill_between_lines = [0, 3]
     #fill_between_lines = [2, 6]
     #variables_to_add = []
 
@@ -1438,7 +1675,7 @@ if __name__ == "__main__":
     lower_year = 1979
     upper_year = 2008
     lower_y_lim = 0.0
-    upper_y_lim = 6.0
+    upper_y_lim = 10.0
     y_tick_interval = 1.0
     lower_ylim_right = 0
     upper_ylim_right = 100
@@ -1449,8 +1686,8 @@ if __name__ == "__main__":
     plot = 'yes'
     unit_plot = "mm day-1"
     bar_plot = 'no'
-    bar_seasons = ['MAM']
-    bar_y_axis_title = 'Evaporation (mm $\mathregular{day^{-1}}$)'
+    bar_seasons = ['DJF']
+    bar_y_axis_title = 'Precipitation (mm $\mathregular{day^{-1}}$)'
     #bar_y_axis_title = 'Heat Flux (W $\mathregular{m^{-2}}$)'
     #bar_y_axis_title = "Transpiration (mm $\mathregular{day^{-1}}$)"
     bar_colours = ['saddlebrown', 'dodgerblue', 'forestgreen']
@@ -1492,7 +1729,7 @@ if __name__ == "__main__":
 
     seasonal_cycle_models_multiple_variables_array = []
     seasonal_cycle_ensemble_multiple_variables_array = np.zeros((len(list_of_variables), 12))
-    seasonal_cycle_reanalysis_multiple_variables_array = []
+    seasonal_cycle_reanalysis_multiple_variables_array = np.zeros((len(list_of_variables), 12))
 
     for i in list_of_variables:
 
@@ -1946,6 +2183,8 @@ if __name__ == "__main__":
                 barchart_array_jja[variable_number, reanalysis_number] = jja_value
                 barchart_array_son[variable_number, reanalysis_number] = son_value
 
+                seasonal_cycle_reanalysis_multiple_variables_array[variable_number] = reanalysis_seasonal_cycle
+
         list_all_datasets_input = [str(i) for i in list_all_datasets]
 
         print "DJF VALUES"
@@ -1957,6 +2196,7 @@ if __name__ == "__main__":
 
         print djf_values[::-1]
         print list_all_datasets[::-1]
+        print list_all_datasets
 
         print('')
 
@@ -1967,6 +2207,7 @@ if __name__ == "__main__":
         mam_values = [float('%.3f' % i) for i in mam_values]
         print mam_values[::-1]
         print list_all_datasets[::-1]
+        print list_all_datasets
 
         print('')
 
@@ -1978,6 +2219,7 @@ if __name__ == "__main__":
         jja_values = [float('%.3f' % i) for i in jja_values]
         print jja_values[::-1]
         print list_all_datasets[::-1]
+        print list_all_datasets
 
         print('')
 
@@ -1988,6 +2230,7 @@ if __name__ == "__main__":
         son_values = [float('%.3f' % i) for i in son_values]
         print son_values[::-1]
         print list_all_datasets[::-1]
+        print list_all_datasets
 
         print('')
 
@@ -2019,7 +2262,8 @@ if __name__ == "__main__":
             print "hi4"
             plot_bar(barchart_array_son, number_of_models, number_of_reanalysis, number_of_variables, list_of_variables, model_strings_for_plot, reanalysis_strings_for_plot, ensemble, bar_y_axis_title, bar_colours, lower_y_lim, upper_y_lim, 'SON', bar_width, variables_to_subtract)
 
-    print seasonal_cycle_ensemble_multiple_variables_array
+    #print seasonal_cycle_ensemble_multiple_variables_array
+    print seasonal_cycle_reanalysis_multiple_variables_array
     if plot == 'yes':
 
         if number_of_variables > 1:
