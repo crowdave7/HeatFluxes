@@ -956,7 +956,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                     print i
 
                     if i == ['pr', 'evspsblsoi', 'evspsblveg', 'mrro']:
-                        reanalysis_string = 'Precipitation Available For Plant Uptake'
+                        reanalysis_string = 'Available Water'
                         color = 'blue'
 
                     if i == ['evaporation', 'tran', 'evspsblveg', 'evspsblsoi']:
@@ -964,7 +964,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                         color = 'red'
 
                     if i == ['pr', 'tran', 'evspsblveg', 'mrro']:
-                        reanalysis_string = 'Preciptiation Available for Bare Soil Evaporation'
+                        reanalysis_string = 'Available Water'
                         color = 'blue'
 
                     indices_to_slice_seasonal_cycle = np.zeros((1, len(i)))
@@ -1084,7 +1084,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
                 if name_of_variable == 'tran':
                     ensemble_string = 'Transpiration'
-                    color = 'dodgerblue'
+                    color = 'red'
                     zorder = 1
 
                 if name_of_variable == 'evspsblsoi':
@@ -1183,7 +1183,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                     print i
 
                     if i == ['pr', 'evspsblsoi', 'evspsblveg', 'mrro']:
-                        ensemble_string = 'Precipitation Available For Plant Uptake'
+                        ensemble_string = 'Available Water'
                         color = 'blue'
 
                     if i == ['evaporation', 'tran', 'evspsblveg', 'evspsblsoi']:
@@ -1191,7 +1191,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                         color = 'red'
 
                     if i == ['pr', 'tran', 'evspsblveg', 'mrro']:
-                        ensemble_string = 'Preciptiation Available for Bare Soil Evaporation'
+                        ensemble_string = 'Available Water'
                         color = 'blue'
 
                     indices_to_slice_seasonal_cycle = np.zeros((1, len(i)))
@@ -1253,10 +1253,13 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 y1 = fill_between_lines_data[0]
                 y2 = fill_between_lines_data[1]
 
-                print "y1"
                 print y1
-                print "y2"
                 print y2
+
+                for i in variables_to_subtract:
+                    if i == ['pr', 'evspsblsoi', 'evspsblveg', 'mrro']:
+                        y1 = fill_between_lines_data[1]
+                        y2 = fill_between_lines_data[0]
 
                 ax1.fill_between(x_pos, y1, y2, where=y2 <= y1, facecolor='lightseagreen', interpolate=True, label = 'Soil Moisture Accumulation')
                 handles, labels = ax1.get_legend_handles_labels()
@@ -1276,6 +1279,14 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 if legend_in_plot == 'yes':
                     legend = plt.legend(handles, labels, fontsize=9, handlelength=2.5)
 
+            for i in variables_to_subtract:
+                if i == ['pr', 'evspsblsoi', 'evspsblveg', 'mrro']:
+                    handles, labels = ax1.get_legend_handles_labels()
+                    handles[0], handles[1] = handles[1], handles[0]
+                    labels[0], labels[1] = labels[1], labels[0]
+                    legend = plt.legend(handles, labels, fontsize=9, handlelength=2.5)
+                    print handles
+                    print labels
 
         print lower_y_lim
         print upper_y_lim+y_tick_interval
@@ -1497,7 +1508,7 @@ def plot_bar(barchart_array, number_of_models, number_of_reanalysis, number_of_v
             for i in variables_to_subtract:
 
                 if i == ['pr', 'evspsblsoi', 'evspsblveg', 'mrro']:
-                    string = 'Precipitation Available For Plant Uptake'
+                    string = 'Available Water for Plant Uptake'
                     color = 'blue'
 
                 if i == ['evaporation', 'tran', 'evspsblveg', 'evspsblsoi']:
@@ -1655,17 +1666,17 @@ if __name__ == "__main__":
     #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "hfls"]
     #list_of_variables = ['pr']
     #list_of_variables = ['pr']
-    #list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
+    list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
     #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evaporation"]
-    list_of_variables = ['pr', 'evaporation', 'mrro']
+    #list_of_variables = ['pr', 'evaporation', 'mrro']
 
-    variables_to_add = [['evaporation', 'mrro']]
-    #variables_to_subtract = [['pr', 'tran', 'evspsblveg', 'mrro']]
-    #variables_to_subtract = [['evaporation', 'tran', 'evspsblveg', 'evspsblsoi']]
-    variables_to_subtract = []
+    variables_to_add = []
+    #variables_to_add = [['evaporation', 'mrro']]
+    variables_to_subtract = [['pr', 'evspsblsoi', 'evspsblveg', 'mrro']]
+    #variables_to_subtract = []
 
-    fill_between_lines = [0, 3]
-    #fill_between_lines = [2, 6]
+    #fill_between_lines = [0, 3]
+    fill_between_lines = [3, 6]
     #variables_to_add = []
 
     lower_lat = -10
@@ -1675,8 +1686,8 @@ if __name__ == "__main__":
     lower_year = 1979
     upper_year = 2008
     lower_y_lim = 0.0
-    upper_y_lim = 10.0
-    y_tick_interval = 1.0
+    upper_y_lim = 4.0
+    y_tick_interval = 0.5
     lower_ylim_right = 0
     upper_ylim_right = 100
     y_tick_interval_right = 10
