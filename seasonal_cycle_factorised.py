@@ -681,7 +681,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
     print "Setting up figure"
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
-    objects = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec')
+    objects = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec', 'Jan')
     x_pos = np.arange(len(objects))
     plt.xticks(x_pos, objects)
     ax1.set_xlim([0, 11])
@@ -959,6 +959,10 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                         reanalysis_string = 'Available Water'
                         color = 'blue'
 
+                    if i == ['pr', 'mrro']:
+                        reanalysis_string = 'Available Water'
+                        color = 'blue'
+
                     if i == ['evaporation', 'tran', 'evspsblveg', 'evspsblsoi']:
                         reanalysis_string = 'Residual Evaporation'
                         color = 'red'
@@ -1064,7 +1068,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
                 if name_of_variable == 'evaporation':
                     ensemble_string = 'Evaporation'
-                    color = 'black'
+                    color = 'red'
                     zorder = 2
 
                 if name_of_variable == 'pr':
@@ -1186,6 +1190,10 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                         ensemble_string = 'Available Water'
                         color = 'blue'
 
+                    if i == ['pr', 'mrro']:
+                        ensemble_string = 'Available Water'
+                        color = 'blue'
+
                     if i == ['evaporation', 'tran', 'evspsblveg', 'evspsblsoi']:
                         ensemble_string = 'Residual Evaporation'
                         color = 'red'
@@ -1228,6 +1236,13 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
                         print seasonal_cycle_subtracted
 
+                    if len(i) == 2:
+
+                        print "hi18"
+                        print seasonal_cycle_to_subtract
+                        seasonal_cycle_subtracted = np.subtract(seasonal_cycle_to_subtract[0], seasonal_cycle_to_subtract[1])
+                        print seasonal_cycle_subtracted
+
                     line = ax1.plot(x_pos, seasonal_cycle_subtracted, zorder=2, linestyle='-', linewidth=2.0, color=color, label = ensemble_string)
                     handles, labels = ax1.get_legend_handles_labels()
                     handles[-1].set_linestyle("-")
@@ -1239,6 +1254,8 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
                     line_number +=1
 
+                    print line_number
+
                     if len(fill_between_lines) > 0:
 
                         if line_number in fill_between_lines:
@@ -1249,7 +1266,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                             line[0].remove()
 
             if len(fill_between_lines) > 0:
-
+                print "hi19"
                 y1 = fill_between_lines_data[0]
                 y2 = fill_between_lines_data[1]
 
@@ -1260,6 +1277,13 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                     if i == ['pr', 'evspsblsoi', 'evspsblveg', 'mrro']:
                         y1 = fill_between_lines_data[1]
                         y2 = fill_between_lines_data[0]
+
+                    if i == ['pr', 'mrro']:
+                        y1 = fill_between_lines_data[1]
+                        y2 = fill_between_lines_data[0]
+
+                print y1
+                print y2
 
                 ax1.fill_between(x_pos, y1, y2, where=y2 <= y1, facecolor='lightseagreen', interpolate=True, label = 'Soil Moisture Accumulation')
                 handles, labels = ax1.get_legend_handles_labels()
@@ -1281,6 +1305,14 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
             for i in variables_to_subtract:
                 if i == ['pr', 'evspsblsoi', 'evspsblveg', 'mrro']:
+                    handles, labels = ax1.get_legend_handles_labels()
+                    handles[0], handles[1] = handles[1], handles[0]
+                    labels[0], labels[1] = labels[1], labels[0]
+                    legend = plt.legend(handles, labels, fontsize=9, handlelength=2.5)
+                    print handles
+                    print labels
+
+                if i == ['pr', 'mrro']:
                     handles, labels = ax1.get_legend_handles_labels()
                     handles[0], handles[1] = handles[1], handles[0]
                     labels[0], labels[1] = labels[1], labels[0]
@@ -1666,17 +1698,20 @@ if __name__ == "__main__":
     #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "hfls"]
     #list_of_variables = ['pr']
     #list_of_variables = ['pr']
-    list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
+    #list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
     #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evaporation"]
-    #list_of_variables = ['pr', 'evaporation', 'mrro']
+    list_of_variables = ['pr', 'evaporation', 'mrro']
 
     variables_to_add = []
     #variables_to_add = [['evaporation', 'mrro']]
-    variables_to_subtract = [['pr', 'evspsblsoi', 'evspsblveg', 'mrro']]
-    #variables_to_subtract = []
+    #variables_to_subtract = [['pr', 'evspsblsoi', 'evspsblveg', 'mrro']]
+    variables_to_subtract = [['pr', 'mrro']]
 
+    # EXACT NUMBERS NOT PYTHON INDICES
     #fill_between_lines = [0, 3]
-    fill_between_lines = [3, 6]
+    #fill_between_lines = [3, 6]
+
+    fill_between_lines = [1, 4]
     #variables_to_add = []
 
     lower_lat = -10
@@ -1686,8 +1721,8 @@ if __name__ == "__main__":
     lower_year = 1979
     upper_year = 2008
     lower_y_lim = 0.0
-    upper_y_lim = 4.0
-    y_tick_interval = 0.5
+    upper_y_lim = 8.0
+    y_tick_interval = 1.0
     lower_ylim_right = 0
     upper_ylim_right = 100
     y_tick_interval_right = 10
@@ -1844,6 +1879,8 @@ if __name__ == "__main__":
                     print model_id
                     print model_seasonal_cycle
                     model_strings_for_plot = np.append(model_strings_for_plot, model_id)
+                    jan_value = model_seasonal_cycle[0]
+                    model_seasonal_cycle.append(jan_value)
                     seasonal_cycle_models_array.append(model_seasonal_cycle)
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
@@ -1932,6 +1969,8 @@ if __name__ == "__main__":
                         cube_seasonal_cycle_for_ensemble = array.values()
                         print model_id
                         print cube_seasonal_cycle_for_ensemble
+                        jan_value = cube_seasonal_cycle_for_ensemble[0]
+                        cube_seasonal_cycle_for_ensemble.append(jan_value)
                         seasonal_cycle_array_for_ensemble.append(cube_seasonal_cycle_for_ensemble)
 
                 seasonal_cycle_ensemble_array = np.mean(seasonal_cycle_array_for_ensemble, axis = 0)
@@ -2028,6 +2067,8 @@ if __name__ == "__main__":
                     cube_seasonal_cycle_reanalysis = array.values()
                     print reanalysis_id
                     print cube_seasonal_cycle_reanalysis
+                    jan_value = cube_seasonal_cycle_reanalysis[0]
+                    cube_seasonal_cycle_reanalysis.append(jan_value)
                     reanalysis_strings_for_plot = np.append(reanalysis_strings_for_plot, reanalysis_id)
                     seasonal_cycle_reanalysis_array.append(cube_seasonal_cycle_reanalysis)
 
