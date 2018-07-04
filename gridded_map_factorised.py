@@ -806,7 +806,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------------------------------------------------------------------
     # LIST OF INPUTS
 
-    list_of_models = ['BNU-ESM/', 'MIROC5/', 'IPSL-CM5A-MR/', 'NorESM1-M/', 'IPSL-CM5A-LR/', 'GFDL-HIRAM-C360/', 'GFDL-HIRAM-C180/', 'CanAM4/', 'inmcm4/', 'MRI-AGCM3-2H/', 'MRI-AGCM3-2S/', 'bcc-csm1-1/', 'bcc-csm1-1-m/', 'GISS-E2-R/', 'MRI-CGCM3/', 'IPSL-CM5B-LR/', 'CNRM-CM5/']
+    list_of_models = ['CNRM-CM5/', 'IPSL-CM5B-LR/', 'MRI-CGCM3/', 'GISS-E2-R/', 'bcc-csm1-1-m/', 'bcc-csm1-1/', 'MRI-AGCM3-2S/', 'MRI-AGCM3-2H/', 'inmcm4/', 'CanAM4/', 'GFDL-HIRAM-C180/', 'GFDL-HIRAM-C360/', 'IPSL-CM5A-LR/', 'NorESM1-M/', 'IPSL-CM5A-MR/', 'MIROC5/', 'BNU-ESM/']
     list_of_reanalysis = ['cfsr', 'era5', 'erai', 'gleam', 'jra', 'merra2', 'ncep-doe']
     #list_of_reanalysis = ['gleam', 'merra2']
     #list_of_times = ['DJF', 'MAM', 'JJA', 'SON', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -820,7 +820,7 @@ if __name__ == "__main__":
 
     #list_of_times = ['DJF']
     #list_of_times = ['DJF', 'MAM', 'JJA', 'SON']
-
+ 
     variable = "evaporation"
     lower_year = 1979
     upper_year = 2008
