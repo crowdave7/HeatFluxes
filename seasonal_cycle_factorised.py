@@ -37,9 +37,9 @@ def model_file_paths_func(list_of_models, model_type, variable):
 
     if variable == 'nrad':
         root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1NetRadiationModelFiles"
-    if variable == 'vpd' or variable == 'hurs' or variable == 'tas':
+    if variable == 'vpd' or variable == 'hurs' or variable == 'tas' or variable == 'ws':
         root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles"
-    else:
+    if variable not in ['nrad', 'vpd', 'hurs', 'tas', 'ws']:
         root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
     ensemble = "r1i1p1"
 
@@ -64,6 +64,7 @@ def model_file_paths_func(list_of_models, model_type, variable):
 
     """FIND MODEL PATHS."""
     print "finding model paths"
+    print root_directory
     model_file_paths = find_model_file_paths(list_of_models, model_type, ensemble, variable, root_directory)
 
     """If variable is pr_, convert variable back to pr"""
@@ -90,10 +91,11 @@ def model_file_paths_func(list_of_models, model_type, variable):
 
 def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_directory):
 
-    if variable in ['nrad', 'vpd', 'hurs', 'tas']:
+    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws']:
         print "hi9"
         """Find the paths to the files containing the model data"""
         model_file_paths = []
+        print root_directory
         for root, directories, files in os.walk(root_directory):
             for i in files:
                 path = os.path.join(root, i)
@@ -140,7 +142,7 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                     print j
                     model_file_paths_sorted = np.append(model_file_paths_sorted, j)
 
-    if variable not in ['nrad', 'evap_fraction', 'vpd', 'hurs', 'tas']:
+    if variable not in ['nrad', 'evap_fraction', 'vpd', 'hurs', 'tas', 'ws']:
 
         print list_of_models
         """Find the paths to the directories containing the model data"""
@@ -213,7 +215,7 @@ def slicing(i, array):
             cubelist[i] = cubelist[i].extract(time_range)
             time_points = cubelist[i].coord('time').points
             times = cubelist[i].coord('time').units.num2date(time_points)
-        if variable in ['nrad', 'vpd', 'hurs', 'tas']:
+        if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws']:
             model_id = cubelist[i].long_name
         else:
             model_id = cubelist[i].attributes['model_id']
@@ -230,7 +232,7 @@ def slicing(i, array):
     cubelist[i] = cubelist[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
 
     """Select model ID."""
-    if variable in ['nrad', 'vpd', 'hurs', 'tas']:
+    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws']:
         model_id = cubelist[i].long_name
     else:
         model_id = cubelist[i].attributes['model_id']
@@ -472,7 +474,7 @@ def slicing_ensemble(i, array):
             cubelist_ensemble[i] = cubelist_ensemble[i].extract(time_range)
             time_points = cubelist_ensemble[i].coord('time').points
             times = cubelist_ensemble[i].coord('time').units.num2date(time_points)
-        if variable in ['nrad', 'vpd', 'hurs', 'tas']:
+        if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws']:
             model_id = cubelist_ensemble[i].long_name
         else:
             model_id = cubelist_ensemble[i].attributes['model_id']
@@ -486,7 +488,7 @@ def slicing_ensemble(i, array):
     cubelist_ensemble[i] = cubelist_ensemble[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
 
     """Select model ID."""
-    if variable in ['nrad', 'vpd', 'hurs', 'tas']:
+    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws']:
         model_id = cubelist_ensemble[i].long_name
     else:
         model_id = cubelist_ensemble[i].attributes['model_id']
@@ -1375,15 +1377,15 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
             fig.savefig("Seasonal_Cycle_"+variable+".png", bbox_inches='tight')
             print "Plot done."
 
+    #-------------------------------------------------------------------------------------
+
     if subplot_multiple_variables_ensemble == 'yes' and number_of_variables > 1:
 
-        if subplot_columns == 2 and subplot_rows == 1:
-            print "hi"
+        if subplot_columns == 4 and subplot_rows == 2:
             fig = plt.figure()
 
-        if subplot_columns == 4 and subplot_rows == 2:
-            print "hi2"
-            fig = plt.figure()
+        if subplot_columns == 4 and subplot_rows == 3:
+            fig = plt.figure(figsize=(10,8))
 
         #def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_array, seasonal_cycle_reanalysis_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval, lower_ylim_right, upper_ylim_right, y_tick_interval_right, number_of_variables, list_of_variables, variables_to_add, fill_between_lines, variables_to_subtract, legend_in_plot):
 
@@ -1399,7 +1401,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
             objects = ('J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D', 'J')
             x_pos = np.arange(len(objects))
-            plt.xticks(x_pos, objects)
+            plt.xticks(x_pos, objects, fontsize=7)
 
             print list_of_variables[i]
 
@@ -1407,75 +1409,97 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 lower_y_lim = -2
                 upper_y_lim = 0
                 y_tick_interval = 0.2
-                plt.ylabel('vpd')
-                plt.title('vpd')
+                plt.ylabel('Vapour Pressure Deficit (kPa)', fontsize=7)
 
             if list_of_variables[i] == 'tas':
                 lower_y_lim = 10
                 upper_y_lim = 35
                 y_tick_interval = 5
-                plt.ylabel('tas')
-                plt.title('tas')
+                plt.ylabel('Surface Air Temperature ($^\circ$C )', fontsize=7)
 
             if list_of_variables[i] == 'hurs':
                 lower_y_lim = 0
                 upper_y_lim = 100
                 y_tick_interval = 10
-                plt.ylabel('hurs')
-                plt.title('hurs')
+                plt.ylabel('Surface Relative Humidity (%)', fontsize=7)
 
             if list_of_variables[i] == 'tran':
                 lower_y_lim = 0.0
                 upper_y_lim = 3.0
                 y_tick_interval = 0.5
-                plt.ylabel('tran')
-                plt.title('tran')
+                plt.ylabel('Transpiration (mm $\mathregular{day^{-1}}$)', fontsize=7)
 
             if list_of_variables[i] == 'evspsblveg':
                 lower_y_lim = 0.0
                 upper_y_lim = 3.0
                 y_tick_interval = 0.5
-                plt.ylabel('evspsblveg')
-                plt.title('evspsblveg')
+                plt.ylabel('Canopy Evaporation (mm $\mathregular{day^{-1}}$)', fontsize=7)
 
             if list_of_variables[i] == 'evspsblsoi':
                 lower_y_lim = 0.0
-                upper_y_lim = 1.4
-                y_tick_interval = 0.2
-                plt.ylabel('evspsblsoi')
-                plt.title('evspsblsoi')
+                upper_y_lim = 3.0
+                y_tick_interval = 0.5
+                plt.ylabel('Bare Soil Evaporation (mm $\mathregular{day^{-1}}$)', fontsize=7)
 
             if list_of_variables[i] == 'mrsos':
                 lower_y_lim = 10
                 upper_y_lim = 45
                 y_tick_interval = 5
-                plt.ylabel('mrsos')
-                plt.title('mrsos')
+                plt.ylabel('Soil Moisture Upper Layer (mm)', fontsize=7)
 
             if list_of_variables[i] == 'evaporation':
                 lower_y_lim = 1.0
                 upper_y_lim = 5.0
                 y_tick_interval = 0.5
-                plt.ylabel('evaporation')
-                plt.title('evaporation')
+                plt.ylabel('Evaporation (mm $\mathregular{day^{-1}}$)', fontsize=7)
 
             if list_of_variables[i] == 'pr':
                 lower_y_lim = 0.0
                 upper_y_lim = 10.0
                 y_tick_interval = 1.0
-                plt.ylabel('pr')
-                plt.title('pr')
+                plt.ylabel('Precipitation (mm $\mathregular{day^{-1}}$)', fontsize=7)
+
+            if list_of_variables[i] == 'lai':
+                lower_y_lim = 1
+                upper_y_lim = 7
+                y_tick_interval = 1
+                plt.ylabel('Leaf Area Index', fontsize=7)
+
+            if list_of_variables[i] == 'nrad':
+                lower_y_lim = 90
+                upper_y_lim = 180
+                y_tick_interval = 10
+                plt.ylabel('Surface Net Downward Radiation (W $\mathregular{m^{-2}}$)', fontsize=7)
+
+            if list_of_variables[i] == 'mrsos':
+                lower_y_lim = 10
+                upper_y_lim = 45
+                y_tick_interval = 5
+                plt.ylabel('Soil Moisture Upper Layer (mm)', fontsize=7)
+
+            if list_of_variables[i] == 'ws':
+                lower_y_lim = 0.0
+                upper_y_lim = 10.0
+                y_tick_interval = 1.0
+                plt.ylabel('Near Surface Wind Speed (m s $\mathregular{^{-1}}$)', fontsize=7)
 
             plt.ylim(lower_y_lim, upper_y_lim)
-            plt.yticks(np.arange(lower_y_lim, upper_y_lim+y_tick_interval, y_tick_interval))
+            plt.yticks(np.arange(lower_y_lim, upper_y_lim+y_tick_interval, y_tick_interval), fontsize=7)
 
             seasonal_cycle_ensemble_variable_data = seasonal_cycle_ensemble_array[i]
             line = ax.plot(x_pos, seasonal_cycle_ensemble_variable_data, linestyle='-', linewidth=2.0, color='black')
 
             variable_number +=1
 
-        # if subplot_columns == 2 and subplot_rows == 1:
-        #     fig.subplots_adjust(left=0.05, right=0.98, bottom=0.47, top=0.95, wspace=0.45, hspace=0.5)
+        fig.tight_layout()
+
+        if subplot_columns == 4 and subplot_rows == 2:
+
+            plt.subplots_adjust(left=0.05, right=0.95, wspace=0.8)
+
+        if subplot_columns == 4 and subplot_rows == 3:
+
+            plt.subplots_adjust(left=0.05, right=0.95, wspace=0.6, hspace=0.2)
 
         print "saving final figure"
         fig.savefig("Gridded_Seasonal_Cycles.png", bbox_inches='tight')
@@ -1850,10 +1874,13 @@ if __name__ == "__main__":
     #list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
     #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evaporation"]
     #list_of_variables = ['pr', 'evaporation', 'mrro']
-    list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi", "vpd", 'tas', "hurs", "pr"]
+
+
+    list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi", "pr", "nrad", 'tas', "hurs", "ws", "vpd", "lai",  "mrsos"]
+    #list_of_variables = ['nrad']
     subplot_multiple_variables_ensemble = 'yes'
     subplot_columns = 4
-    subplot_rows = 2
+    subplot_rows = 3
 
     variables_to_add = []
     #variables_to_add = [['evaporation', 'mrro']]
@@ -1890,6 +1917,7 @@ if __name__ == "__main__":
     y_tick_interval_right = 10
 
     cmap = 'rainbow'
+    models = 'no'
     ensemble = 'yes'
     plot = 'yes'
     unit_plot = "mm day-1"
@@ -1957,98 +1985,104 @@ if __name__ == "__main__":
             pass
         else:
 
-            """Extract the model file paths."""
-            start_time = time.time()
-            model_file_paths = model_file_paths_func(list_of_models, model_type, variable)
-            print time.time() - start_time, "seconds"
+            if models == 'no':
+                pass
+            else:
 
-            print len(model_file_paths)
+                """Extract the model file paths."""
+                start_time = time.time()
+                model_file_paths = model_file_paths_func(list_of_models, model_type, variable)
+                print time.time() - start_time, "seconds"
 
-            """Build a list of cubes from the model file paths."""
-            manager = multiprocessing.Manager()
-            array = manager.dict()
-            jobs = []
-            for i in np.arange(0, len(model_file_paths)):
-                p = multiprocessing.Process(target=build_cubelist, args=(i, array))
-                jobs.append(p)
-                p.start()
+                print len(model_file_paths)
 
-            for process in jobs:
-                process.join()
-            cubelist = array.values()
+                """Build a list of cubes from the model file paths."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(model_file_paths)):
+                    p = multiprocessing.Process(target=build_cubelist, args=(i, array))
+                    jobs.append(p)
+                    p.start()
 
-            unit = cubelist[0].units
+                for process in jobs:
+                    process.join()
+                cubelist = array.values()
 
-            """Slice each cube by the time range."""
-            manager = multiprocessing.Manager()
-            array = manager.dict()
-            jobs = []
-            for i in np.arange(0, len(cubelist)):
-                p = multiprocessing.Process(target=slicing, args=(i, array))
-                jobs.append(p)
-                p.start()
-            for process in jobs:
-                process.join()
-            cubelist = array.values()
+                unit = cubelist[0].units
 
-            """Define first set of cubes to transpose."""
-            manager = multiprocessing.Manager()
-            array = manager.dict()
-            jobs = []
-            for i in np.arange(0, len(cubelist)):
-                p = multiprocessing.Process(target=return_cube_transpose_one, args=(i, array))
-                jobs.append(p)
-                p.start()
-            for process in jobs:
-                process.join()
-            first_set_transposed_cubes = array.values()
+                """Slice each cube by the time range."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(cubelist)):
+                    p = multiprocessing.Process(target=slicing, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist = array.values()
 
-            """Define second set of cubes to transpose."""
-            manager = multiprocessing.Manager()
-            array = manager.dict()
-            jobs = []
-            for i in np.arange(0, len(cubelist)):
-                p = multiprocessing.Process(target=return_cube_transpose_two, args=(i, array))
-                jobs.append(p)
-                p.start()
-            for process in jobs:
-                process.join()
-            second_set_transposed_cubes = array.values()
+                """Define first set of cubes to transpose."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(cubelist)):
+                    p = multiprocessing.Process(target=return_cube_transpose_one, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                first_set_transposed_cubes = array.values()
 
-            """For each cube,"""
-            for i in np.arange(0, len(cubelist)):
+                """Define second set of cubes to transpose."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(cubelist)):
+                    p = multiprocessing.Process(target=return_cube_transpose_two, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                second_set_transposed_cubes = array.values()
 
-                model_id = cubelist[i].long_name
+                """For each cube,"""
+                for i in np.arange(0, len(cubelist)):
 
-                with iris.FUTURE.context(cell_datetime_objects=True):
+                    model_id = cubelist[i].long_name
 
-                    """Select the cubes to transpose and the coordinates of the first cube."""
-                    first_cube = first_set_transposed_cubes[i]
-                    second_cube = second_set_transposed_cubes[i]
-                    coord_names = [coord.name() for coord in first_cube.coords()]
+                    with iris.FUTURE.context(cell_datetime_objects=True):
 
-                    """Multiprocess calculations for each month."""
-                    manager = multiprocessing.Manager()
-                    array = manager.dict()
-                    jobs = []
-                    for i in np.arange(1, 13, 1):
-                        p = multiprocessing.Process(target=seasonal_cycle_calculations, args=(i, array))
-                        jobs.append(p)
-                        p.start()
-                    for process in jobs:
-                        process.join()
-                    model_seasonal_cycle = array.values()
-                    print model_id
-                    print model_seasonal_cycle
-                    model_strings_for_plot = np.append(model_strings_for_plot, model_id)
-                    jan_value = model_seasonal_cycle[0]
-                    model_seasonal_cycle.append(jan_value)
-                    seasonal_cycle_models_array.append(model_seasonal_cycle)
+                        """Select the cubes to transpose and the coordinates of the first cube."""
+                        first_cube = first_set_transposed_cubes[i]
+                        second_cube = second_set_transposed_cubes[i]
+                        coord_names = [coord.name() for coord in first_cube.coords()]
+
+                        """Multiprocess calculations for each month."""
+                        manager = multiprocessing.Manager()
+                        array = manager.dict()
+                        jobs = []
+                        for i in np.arange(1, 13, 1):
+                            p = multiprocessing.Process(target=seasonal_cycle_calculations, args=(i, array))
+                            jobs.append(p)
+                            p.start()
+                        for process in jobs:
+                            process.join()
+                        model_seasonal_cycle = array.values()
+                        print model_id
+                        print model_seasonal_cycle
+                        model_strings_for_plot = np.append(model_strings_for_plot, model_id)
+                        jan_value = model_seasonal_cycle[0]
+                        model_seasonal_cycle.append(jan_value)
+                        seasonal_cycle_models_array.append(model_seasonal_cycle)
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
 
             """ENSEMBLE MEAN."""
 
+
+            #edit here 
             if ensemble == 'yes':
 
                 """Extract the regridded model file paths for the ensemble mean."""
@@ -2306,39 +2340,44 @@ if __name__ == "__main__":
 
         if len(list_of_models) > 0:
 
-            for i in np.arange(0, len(seasonal_cycle_models_array)):
+            if models == 'no':
+                pass
 
-                model_number = i
+            else:
 
-                model_id = model_strings_for_plot[i]
-                print model_id
-                model_seasonal_cycle = seasonal_cycle_models_array[i]
+                for i in np.arange(0, len(list_of_models)):
 
-                model_seasonal_cycle = [float('%.3f' % i) for i in model_seasonal_cycle]
+                    model_number = i
 
-                print model_seasonal_cycle
+                    model_id = model_strings_for_plot[i]
+                    print model_id
+                    model_seasonal_cycle = seasonal_cycle_models_array[i]
 
-                djf_value = (model_seasonal_cycle[11] + model_seasonal_cycle[0] + model_seasonal_cycle[1])/float(3.0)
-                mam_value = (model_seasonal_cycle[2] + model_seasonal_cycle[3] + model_seasonal_cycle[4])/float(3.0)
-                jja_value = (model_seasonal_cycle[5] + model_seasonal_cycle[6] + model_seasonal_cycle[7])/float(3.0)
-                son_value = (model_seasonal_cycle[8] + model_seasonal_cycle[9] + model_seasonal_cycle[10])/float(3.0)
+                    model_seasonal_cycle = [float('%.3f' % i) for i in model_seasonal_cycle]
 
-                print "%.3f, %.3f, %.3f, %.3f" % (djf_value, mam_value, jja_value, son_value)
+                    print model_seasonal_cycle
 
-                print('')
+                    djf_value = (model_seasonal_cycle[11] + model_seasonal_cycle[0] + model_seasonal_cycle[1])/float(3.0)
+                    mam_value = (model_seasonal_cycle[2] + model_seasonal_cycle[3] + model_seasonal_cycle[4])/float(3.0)
+                    jja_value = (model_seasonal_cycle[5] + model_seasonal_cycle[6] + model_seasonal_cycle[7])/float(3.0)
+                    son_value = (model_seasonal_cycle[8] + model_seasonal_cycle[9] + model_seasonal_cycle[10])/float(3.0)
 
-                djf_values = np.append(djf_values, djf_value)
-                mam_values = np.append(mam_values, mam_value)
-                jja_values = np.append(jja_values, jja_value)
-                son_values = np.append(son_values, son_value)
+                    print "%.3f, %.3f, %.3f, %.3f" % (djf_value, mam_value, jja_value, son_value)
 
-                barchart_array_djf[variable_number, model_number] = djf_value
-                barchart_array_mam[variable_number, model_number] = mam_value
-                barchart_array_jja[variable_number, model_number] = jja_value
-                barchart_array_son[variable_number, model_number] = son_value
+                    print('')
 
-                print variable_number
-                print model_number
+                    djf_values = np.append(djf_values, djf_value)
+                    mam_values = np.append(mam_values, mam_value)
+                    jja_values = np.append(jja_values, jja_value)
+                    son_values = np.append(son_values, son_value)
+
+                    barchart_array_djf[variable_number, model_number] = djf_value
+                    barchart_array_mam[variable_number, model_number] = mam_value
+                    barchart_array_jja[variable_number, model_number] = jja_value
+                    barchart_array_son[variable_number, model_number] = son_value
+
+                    print variable_number
+                    print model_number
 
         if ensemble == 'yes':
 
@@ -2360,7 +2399,10 @@ if __name__ == "__main__":
             jja_values = np.append(jja_values, jja_value)
             son_values = np.append(son_values, son_value)
 
-            model_number = model_number+1
+            if models == 'yes':
+                model_number = model_number+1
+            if models == 'no':
+                model_number = 0
 
             barchart_array_djf[variable_number, model_number] = djf_value
             barchart_array_mam[variable_number, model_number] = mam_value
