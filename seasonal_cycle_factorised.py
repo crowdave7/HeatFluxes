@@ -1379,7 +1379,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
     #-------------------------------------------------------------------------------------
 
-    if subplot_multiple_variables_ensemble == 'yes' and number_of_variables > 1:
+    if subplot_multiple_variables_ensemble == 'yes' and number_of_variables >= 1:
 
         if subplot_columns == 4 and subplot_rows == 2:
             fig = plt.figure()
@@ -1406,7 +1406,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
             print list_of_variables[i]
 
             if list_of_variables[i] == 'vpd':
-                lower_y_lim = -2
+                lower_y_lim = -1.4
                 upper_y_lim = 0
                 y_tick_interval = 0.2
                 plt.ylabel('Vapour Pressure Deficit (kPa)', fontsize=7)
@@ -1418,26 +1418,26 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 plt.ylabel('Surface Air Temperature ($^\circ$C )', fontsize=7)
 
             if list_of_variables[i] == 'hurs':
-                lower_y_lim = 0
+                lower_y_lim = 50
                 upper_y_lim = 100
-                y_tick_interval = 10
+                y_tick_interval = 5
                 plt.ylabel('Surface Relative Humidity (%)', fontsize=7)
 
             if list_of_variables[i] == 'tran':
                 lower_y_lim = 0.0
-                upper_y_lim = 3.0
+                upper_y_lim = 5.0
                 y_tick_interval = 0.5
                 plt.ylabel('Transpiration (mm $\mathregular{day^{-1}}$)', fontsize=7)
 
             if list_of_variables[i] == 'evspsblveg':
                 lower_y_lim = 0.0
-                upper_y_lim = 3.0
+                upper_y_lim = 5.0
                 y_tick_interval = 0.5
                 plt.ylabel('Canopy Evaporation (mm $\mathregular{day^{-1}}$)', fontsize=7)
 
             if list_of_variables[i] == 'evspsblsoi':
                 lower_y_lim = 0.0
-                upper_y_lim = 3.0
+                upper_y_lim = 5.0
                 y_tick_interval = 0.5
                 plt.ylabel('Bare Soil Evaporation (mm $\mathregular{day^{-1}}$)', fontsize=7)
 
@@ -1448,7 +1448,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 plt.ylabel('Soil Moisture Upper Layer (mm)', fontsize=7)
 
             if list_of_variables[i] == 'evaporation':
-                lower_y_lim = 1.0
+                lower_y_lim = 0.0
                 upper_y_lim = 5.0
                 y_tick_interval = 0.5
                 plt.ylabel('Evaporation (mm $\mathregular{day^{-1}}$)', fontsize=7)
@@ -1479,8 +1479,8 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
             if list_of_variables[i] == 'ws':
                 lower_y_lim = 0.0
-                upper_y_lim = 10.0
-                y_tick_interval = 1.0
+                upper_y_lim = 3.2
+                y_tick_interval = 0.4
                 plt.ylabel('Near Surface Wind Speed (m s $\mathregular{^{-1}}$)', fontsize=7)
 
             plt.ylim(lower_y_lim, upper_y_lim)
@@ -1502,7 +1502,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
             plt.subplots_adjust(left=0.05, right=0.95, wspace=0.6, hspace=0.2)
 
         print "saving final figure"
-        fig.savefig("Gridded_Seasonal_Cycles.png", bbox_inches='tight')
+        fig.savefig("Gridded_Seasonal_Cycles_South.png", bbox_inches='tight')
         plt.close()
         print "plot done"
 
@@ -1846,10 +1846,10 @@ if __name__ == "__main__":
     #all for barchart
     #list_of_models = []
 
-    #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "MIROC5/", "MPI-ESM-LR/", "MPI-ESM-MR/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     #list_of_models = ["CNRM-CM5/", "BNU-ESM/"]
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/"]
-    list_of_models = ["MIROC5"]
+    #list_of_models = ["MIROC5"]
     #list_of_models = []
     list_of_reanalysis = []
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/"]
@@ -1877,7 +1877,7 @@ if __name__ == "__main__":
 
 
     list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi", "pr", "nrad", 'tas', "hurs", "ws", "vpd", "lai",  "mrsos"]
-    #list_of_variables = ['nrad']
+    #list_of_variables = ['hurs', 'vpd']
     subplot_multiple_variables_ensemble = 'yes'
     subplot_columns = 4
     subplot_rows = 3
@@ -1898,20 +1898,24 @@ if __name__ == "__main__":
     fill_between_lines = []
     #variables_to_add = []
 
-    lower_lat = -10
-    upper_lat = 5
-    lower_lon = 5
-    upper_lon = 35
     # lower_lat = -10
-    # upper_lat = -5
-    # lower_lon = 18
+    # upper_lat = 5
+    # lower_lon = 5
+    # upper_lon = 35
+    lower_lat = -12
+    upper_lat = -6
+    lower_lon = 18
+    upper_lon = 27
+    # lower_lat = -3
+    # upper_lat = 3
+    # lower_lon = 21
     # upper_lon = 27
 
     lower_year = 1979
     upper_year = 2008
-    lower_y_lim = -2
-    upper_y_lim = 0
-    y_tick_interval = 0.2
+    lower_y_lim = 0.0
+    upper_y_lim = 3.0
+    y_tick_interval = 0.5
     lower_ylim_right = 0
     upper_ylim_right = 100
     y_tick_interval_right = 10
@@ -1966,6 +1970,8 @@ if __name__ == "__main__":
     seasonal_cycle_models_multiple_variables_array = []
     seasonal_cycle_ensemble_multiple_variables_array = np.zeros((len(list_of_variables), 13))
     seasonal_cycle_reanalysis_multiple_variables_array = np.zeros((len(list_of_variables), 13))
+
+    list_of_models2 = list_of_models
 
     for i in list_of_variables:
 
@@ -2081,14 +2087,62 @@ if __name__ == "__main__":
 
             """ENSEMBLE MEAN."""
 
-
-            #edit here 
             if ensemble == 'yes':
 
-                """Extract the regridded model file paths for the ensemble mean."""
-                model_file_paths_ensemble = model_file_paths_ensemble_func(list_of_models, model_type, variable)
+                if variable == 'lai':
 
-                print model_file_paths_ensemble
+                    list_to_remove_lai = ['BNU-ESM/', 'CanAM4/', 'CNRM-CM5/', 'GISS-E2-R/', 'inmcm4/', 'MRI-AGCM3-2H/', 'MRI-AGCM3-2S/', 'MRI-CGCM3/']
+
+                    list_to_remove_lai = set(list_to_remove_lai)
+
+                    list_models_lai = [x for x in list_of_models if x not in list_to_remove_lai]
+
+                    print list_models_lai
+
+                    model_file_paths_ensemble = model_file_paths_ensemble_func(list_models_lai, model_type, variable)
+
+                if variable == 'mrsos':
+
+                    list_to_remove_mrsos = ['CNRM-CM5/', 'IPSL-CM5A-LR/', 'IPSL-CM5A-MR/', 'IPSL-CM5B-LR/']
+
+                    list_to_remove_mrsos = set(list_to_remove_mrsos)
+
+                    list_models_mrsos = [x for x in list_of_models if x not in list_to_remove_mrsos]
+
+                    print list_models_mrsos
+
+                    model_file_paths_ensemble = model_file_paths_ensemble_func(list_models_mrsos, model_type, variable)
+
+                if variable == 'vpd':
+
+                    list_to_remove_vpd = ['GFDL-HIRAM-C180/', 'GFDL-HIRAM-C360/', 'GISS-E2-R/', 'IPSL-CM5A-LR/', 'IPSL-CM5A-MR/', 'IPSL-CM5B-LR/', 'MIROC5/', 'MRI-AGCM3-2H/', 'MRI-AGCM3-2S/', 'MRI-CGCM3/']
+
+                    list_to_remove_vpd = set(list_to_remove_vpd)
+
+                    list_models_vpd = [x for x in list_of_models if x not in list_to_remove_vpd]
+
+                    print list_models_vpd
+
+                    model_file_paths_ensemble = model_file_paths_ensemble_func(list_models_vpd, model_type, variable)
+
+                if variable == 'hurs':
+
+                    list_to_remove_hurs = ['GFDL-HIRAM-C180/', 'GFDL-HIRAM-C360/', 'GISS-E2-R/', 'IPSL-CM5A-LR/', 'IPSL-CM5A-MR/', 'IPSL-CM5B-LR/', 'MIROC5/', 'MRI-AGCM3-2H/', 'MRI-AGCM3-2S/', 'MRI-CGCM3/']
+
+                    list_to_remove_hurs = set(list_to_remove_hurs)
+
+                    list_models_hurs = [x for x in list_of_models if x not in list_to_remove_hurs]
+
+                    print list_models_hurs
+
+                    model_file_paths_ensemble = model_file_paths_ensemble_func(list_models_hurs, model_type, variable)
+
+                    print model_file_paths_ensemble
+
+                if variable not in ['mrsos', 'lai', 'hurs', 'vpd']:
+
+                    """Extract the regridded model file paths for the ensemble mean."""
+                    model_file_paths_ensemble = model_file_paths_ensemble_func(list_of_models, model_type, variable)
 
                 """Build a list of cubes from the regridded model file paths."""
                 manager = multiprocessing.Manager()
@@ -2177,7 +2231,8 @@ if __name__ == "__main__":
                         seasonal_cycle_array_for_ensemble.append(cube_seasonal_cycle_for_ensemble)
 
                 seasonal_cycle_ensemble_array = np.mean(seasonal_cycle_array_for_ensemble, axis = 0)
-
+                print "ensemble"
+                print seasonal_cycle_ensemble_array
 
                 ensemble_string_for_plot = np.append(ensemble_string_for_plot, "Ensemble")
 
@@ -2305,7 +2360,7 @@ if __name__ == "__main__":
         number_of_reanalysis = len(list_of_reanalysis)
         number_of_variables = len(list_of_variables)
 
-        if plot == 'yes':
+        if plot == 'yes' and subplot_multiple_variables_ensemble != 'yes':
 
             if number_of_variables == 1:
 
@@ -2332,8 +2387,6 @@ if __name__ == "__main__":
             list_all_datasets = np.append(list_all_datasets, list_of_reanalysis)
 
         print "hi3"
-        print list_of_reanalysis
-        print list_all_datasets
 
         if len(list_of_models) == 0:
             model_number = -1
@@ -2525,13 +2578,26 @@ if __name__ == "__main__":
             print "hi4"
             plot_bar(barchart_array_son, number_of_models, number_of_reanalysis, number_of_variables, list_of_variables, model_strings_for_plot, reanalysis_strings_for_plot, ensemble, bar_y_axis_title, bar_colours, lower_y_lim, upper_y_lim, 'SON', bar_width, variables_to_subtract)
 
-    #print seasonal_cycle_ensemble_multiple_variables_array
-    print seasonal_cycle_reanalysis_multiple_variables_array
+
+    #print seasonal_cycle_reanalysis_multiple_variables_array
+
     if plot == 'yes':
+        print "hi21"
 
         if number_of_variables > 1:
 
             print "hi5"
             model_line_colours = []
             reanalysis_line_colours = []
+            print seasonal_cycle_ensemble_multiple_variables_array
+
+            plot_seasonal_cycle(seasonal_cycle_models_multiple_variables_array, seasonal_cycle_ensemble_multiple_variables_array, seasonal_cycle_reanalysis_multiple_variables_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval, lower_ylim_right, upper_ylim_right, y_tick_interval_right, number_of_variables, list_of_variables, variables_to_add, fill_between_lines, variables_to_subtract, legend_in_plot)
+
+        if number_of_variables == 1 and subplot_multiple_variables_ensemble == "yes":
+
+            print "hi5"
+            model_line_colours = []
+            reanalysis_line_colours = []
+            print seasonal_cycle_ensemble_multiple_variables_array
+
             plot_seasonal_cycle(seasonal_cycle_models_multiple_variables_array, seasonal_cycle_ensemble_multiple_variables_array, seasonal_cycle_reanalysis_multiple_variables_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval, lower_ylim_right, upper_ylim_right, y_tick_interval_right, number_of_variables, list_of_variables, variables_to_add, fill_between_lines, variables_to_subtract, legend_in_plot)
