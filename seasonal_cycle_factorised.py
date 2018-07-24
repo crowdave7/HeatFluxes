@@ -37,9 +37,9 @@ def model_file_paths_func(list_of_models, model_type, variable):
 
     if variable == 'nrad':
         root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1NetRadiationModelFiles"
-    if variable == 'vpd' or variable == 'hurs' or variable == 'tas' or variable == 'ws':
+    if variable == 'vpd' or variable == 'hurs' or variable == 'tas' or variable == 'ws' or variable == 'sa':
         root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles"
-    if variable not in ['nrad', 'vpd', 'hurs', 'tas', 'ws']:
+    if variable not in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa']:
         root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
     ensemble = "r1i1p1"
 
@@ -91,7 +91,7 @@ def model_file_paths_func(list_of_models, model_type, variable):
 
 def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_directory):
 
-    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws']:
+    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa']:
         print "hi9"
         """Find the paths to the files containing the model data"""
         model_file_paths = []
@@ -142,7 +142,7 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                     print j
                     model_file_paths_sorted = np.append(model_file_paths_sorted, j)
 
-    if variable not in ['nrad', 'evap_fraction', 'vpd', 'hurs', 'tas', 'ws']:
+    if variable not in ['nrad', 'evap_fraction', 'vpd', 'hurs', 'tas', 'ws', 'sa']:
 
         print list_of_models
         """Find the paths to the directories containing the model data"""
@@ -215,7 +215,7 @@ def slicing(i, array):
             cubelist[i] = cubelist[i].extract(time_range)
             time_points = cubelist[i].coord('time').points
             times = cubelist[i].coord('time').units.num2date(time_points)
-        if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws']:
+        if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa']:
             model_id = cubelist[i].long_name
         else:
             model_id = cubelist[i].attributes['model_id']
@@ -232,7 +232,7 @@ def slicing(i, array):
     cubelist[i] = cubelist[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
 
     """Select model ID."""
-    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws']:
+    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa']:
         model_id = cubelist[i].long_name
     else:
         model_id = cubelist[i].attributes['model_id']
@@ -474,7 +474,7 @@ def slicing_ensemble(i, array):
             cubelist_ensemble[i] = cubelist_ensemble[i].extract(time_range)
             time_points = cubelist_ensemble[i].coord('time').points
             times = cubelist_ensemble[i].coord('time').units.num2date(time_points)
-        if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws']:
+        if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa']:
             model_id = cubelist_ensemble[i].long_name
         else:
             model_id = cubelist_ensemble[i].attributes['model_id']
@@ -488,7 +488,7 @@ def slicing_ensemble(i, array):
     cubelist_ensemble[i] = cubelist_ensemble[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
 
     """Select model ID."""
-    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws']:
+    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa']:
         model_id = cubelist_ensemble[i].long_name
     else:
         model_id = cubelist_ensemble[i].attributes['model_id']
@@ -826,6 +826,8 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 plt.ylabel('Surface Relative Humidity (%)')
             if variable == 'tas':
                 plt.ylabel('Surface Air Temperature ($^\circ$C)')
+            if variable == 'sa':
+                plt.ylabel('Soil Moisture Accumulation (mm $\mathregular{day^{-1}}$)')
 
             """Save the figure."""
             print "Saving figure"
@@ -1406,8 +1408,8 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
             print list_of_variables[i]
 
             if list_of_variables[i] == 'vpd':
-                lower_y_lim = -1.4
-                upper_y_lim = 0
+                lower_y_lim = -1.8
+                upper_y_lim = 0.0
                 y_tick_interval = 0.2
                 plt.ylabel('Vapour Pressure Deficit (kPa)', fontsize=7)
 
@@ -1415,13 +1417,13 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 lower_y_lim = 10
                 upper_y_lim = 35
                 y_tick_interval = 5
-                plt.ylabel('Surface Air Temperature ($^\circ$C )', fontsize=7)
+                plt.ylabel('Air Temperature ($^\circ$C )', fontsize=7)
 
             if list_of_variables[i] == 'hurs':
-                lower_y_lim = 50
+                lower_y_lim = 30
                 upper_y_lim = 100
-                y_tick_interval = 5
-                plt.ylabel('Surface Relative Humidity (%)', fontsize=7)
+                y_tick_interval = 10
+                plt.ylabel('Relative Humidity (%)', fontsize=7)
 
             if list_of_variables[i] == 'tran':
                 lower_y_lim = 0.0
@@ -1469,7 +1471,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 lower_y_lim = 90
                 upper_y_lim = 180
                 y_tick_interval = 10
-                plt.ylabel('Surface Net Downward Radiation (W $\mathregular{m^{-2}}$)', fontsize=7)
+                plt.ylabel('Net Downward Radiation (W $\mathregular{m^{-2}}$)', fontsize=7)
 
             if list_of_variables[i] == 'mrsos':
                 lower_y_lim = 10
@@ -1481,7 +1483,13 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 lower_y_lim = 0.0
                 upper_y_lim = 3.2
                 y_tick_interval = 0.4
-                plt.ylabel('Near Surface Wind Speed (m s $\mathregular{^{-1}}$)', fontsize=7)
+                plt.ylabel('Wind Speed (m s $\mathregular{^{-1}}$)', fontsize=7)
+
+            if list_of_variables[i] == 'sa':
+                lower_y_lim = -3.2
+                upper_y_lim = 3.2
+                y_tick_interval = 0.8
+                plt.ylabel('Soil Moisture Accumulation (mm $\mathregular{day^{-1}}$)', fontsize=7)
 
             plt.ylim(lower_y_lim, upper_y_lim)
             plt.yticks(np.arange(lower_y_lim, upper_y_lim+y_tick_interval, y_tick_interval), fontsize=7)
@@ -1502,7 +1510,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
             plt.subplots_adjust(left=0.05, right=0.95, wspace=0.6, hspace=0.2)
 
         print "saving final figure"
-        fig.savefig("Gridded_Seasonal_Cycles_South.png", bbox_inches='tight')
+        fig.savefig("Gridded_Seasonal_Cycles_Congo.png", bbox_inches='tight')
         plt.close()
         print "plot done"
 
@@ -1876,8 +1884,8 @@ if __name__ == "__main__":
     #list_of_variables = ['pr', 'evaporation', 'mrro']
 
 
-    list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi", "pr", "nrad", 'tas', "hurs", "ws", "vpd", "lai",  "mrsos"]
-    #list_of_variables = ['hurs', 'vpd']
+    list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi", "pr", "nrad", 'tas', "hurs", "ws", "vpd", "lai",  "sa"]
+    #list_of_variables = ['sa']
     subplot_multiple_variables_ensemble = 'yes'
     subplot_columns = 4
     subplot_rows = 3
@@ -1898,14 +1906,14 @@ if __name__ == "__main__":
     fill_between_lines = []
     #variables_to_add = []
 
-    # lower_lat = -10
-    # upper_lat = 5
-    # lower_lon = 5
-    # upper_lon = 35
-    lower_lat = -12
-    upper_lat = -6
-    lower_lon = 18
-    upper_lon = 27
+    lower_lat = -10
+    upper_lat = 5
+    lower_lon = 5
+    upper_lon = 35
+    # lower_lat = -12
+    # upper_lat = -6
+    # lower_lon = 18
+    # upper_lon = 27
     # lower_lat = -3
     # upper_lat = 3
     # lower_lon = 21
