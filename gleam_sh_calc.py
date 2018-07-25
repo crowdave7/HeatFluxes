@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import iris
 import iris.analysis
 from iris.util import unify_time_units
@@ -10,147 +12,589 @@ import iris.quickplot as qplt
 import matplotlib.pyplot as plt
 import os
 
-#DOWNLOAD DATA
+print "hi"
 
-# list_of_yearmonths = []
-# for i in np.arange(1984, 2008, 1):
-#     for j in ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']:
-#         yearmonth = str(i) + j
-#         list_of_yearmonths = np.append(list_of_yearmonths, yearmonth)
-# print list_of_yearmonths
 
-# for i in list_of_yearmonths:
-#     cube_generator = iris.fileformats.netcdf.load_cubes("https://opendap.larc.nasa.gov/opendap/hyrax/SRB/GLW/SRB_REL3.1_LW_MONTHLY_NC/srb_rel3.1_longwave_monthly_"+str(i)+".nc")
-#     cube = list(cube_generator)
-#     iris.save(cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/Rad_data/LW/srb_rel3.1_longwave_monthly_"+str(i)+".nc")
-#     print "done "+str(i)+""
-#
-# list_of_yearmonths = []
-# for i in np.arange(1984, 2008, 1):
-#     for j in ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']:
-#         yearmonth = str(i) + j
-#         list_of_yearmonths = np.append(list_of_yearmonths, yearmonth)
-# print list_of_yearmonths
+#-------------------------------------------------------------
 
-# for i in list_of_yearmonths:
-#     cube_generator = iris.fileformats.netcdf.load_cubes("https://opendap.larc.nasa.gov/opendap/hyrax/SRB/GSW/SRB_REL3.0_SW_MONTHLY_UTC_NC/srb_rel3.0_shortwave_monthly_utc_"+str(i)+".nc")
-#     cube = list(cube_generator)
-#     iris.save(cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/Rad_data/SW/srb_rel3.0_shortwave_monthly_utc_"+str(i)+".nc")
-#     print "done "+str(i)+""
-#
+"SOIL MOISTURE ACCUMULATION / DEPLETION EXTRACTION"
 
-list_of_models = ["bcc-csm1-1/"]
+list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
 
-#list_of_models = ["BNU-ESM", "CanAM4", "CNRM-CM5", "CSIRO-Mk3-6-0", "GFDL-HIRAM-C180", "GFDL-HIRAM-C360", "GISS-E2-R", "HadGEM2-A", "inmcm4", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-MR", "MRI-AGCM3-2H", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M"]
+root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles"
 
-for i in list_of_models:
+for m in list_of_models:
 
-    model_name = str(i)
+    for char in '/':
+        model = m.replace(char,'')
 
-    """Import the data."""
-    root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
-    ensemble = "r1i1p1"
-    model_type = "amip"
+    model_name = str(model)
 
-    """Find the paths to the directories containing the model data"""
-    directory_paths = []
+    pr_file_path = []
     for root, directories, files in os.walk(root_directory):
-        for i in directories:
+        for i in files:
             path = os.path.join(root, i)
-            for j in list_of_models:
-                if j in path and model_type in path and ensemble in path:
-                    directory_paths = np.append(directory_paths, path)
+            if m == "bcc-csm1-1/":
+                m = "bcc-csm1-1_"
+            for char in '/':
+                m = m.replace(char,'')
+                if m in path and 'amip' in path and 'pr_' in path:
+                    pr_file_path = np.append(pr_file_path, path)
 
-    print directory_paths
+    hfls_file_path = []
+    for root, directories, files in os.walk(root_directory):
+        for i in files:
+            path = os.path.join(root, i)
+            if m == "bcc-csm1-1/":
+                m = "bcc-csm1-1_"
+            for char in '/':
+                m = m.replace(char,'')
+                if m in path and 'amip' in path and 'hfls_' in path:
+                    hfls_file_path = np.append(hfls_file_path, path)
 
-    """Find the model files and their absolute paths."""
-    rlds_file_path = []
-    for i in directory_paths:
-        files = os.listdir(i)
-        for j in files:
-            if "rlds" in j:
-                model_file_path = os.path.join(i, j)
-                rlds_file_path = np.append(rlds_file_path, model_file_path)
+    mrro_file_path = []
+    for root, directories, files in os.walk(root_directory):
+        for i in files:
+            path = os.path.join(root, i)
+            if m == "bcc-csm1-1/":
+                m = "bcc-csm1-1_"
+            for char in '/':
+                m = m.replace(char,'')
+                if m in path and 'amip' in path and 'mrro_' in path:
+                    mrro_file_path = np.append(mrro_file_path, path)
 
-    rlds_file_path = sorted(rlds_file_path, key=lambda s: s.lower())
-    print rlds_file_path
-
-
-    """Find the model files and their absolute paths."""
-    rsds_file_path = []
-    for i in directory_paths:
-        files = os.listdir(i)
-        for j in files:
-            if "rsds" in j:
-                model_file_path = os.path.join(i, j)
-                rsds_file_path = np.append(rsds_file_path, model_file_path)
-
-    rsds_file_path = sorted(rsds_file_path, key=lambda s: s.lower())
-    print rsds_file_path
-
-    """Find the model files and their absolute paths."""
-    rlus_file_path = []
-    for i in directory_paths:
-        files = os.listdir(i)
-        for j in files:
-            if "rlus" in j:
-                model_file_path = os.path.join(i, j)
-                rlus_file_path = np.append(rlus_file_path, model_file_path)
-
-    rlus_file_path = sorted(rlus_file_path, key=lambda s: s.lower())
-    print rlus_file_path
+    print pr_file_path
+    print hfls_file_path
+    print mrro_file_path
 
 
-    """Find the model files and their absolute paths."""
-    rsus_file_path = []
-    for i in directory_paths:
-        files = os.listdir(i)
-        for j in files:
-            if "rsus" in j:
-                model_file_path = os.path.join(i, j)
-                rsus_file_path = np.append(rsus_file_path, model_file_path)
+    pr_cube = iris.load_cube(pr_file_path)
+    pr_cube = iris.analysis.maths.multiply(pr_cube, 86400)
 
-    rsus_file_path = sorted(rsus_file_path, key=lambda s: s.lower())
-    print rsus_file_path
+    pr_cube.units = "mm day-1"
 
-    lw_cube_down = iris.load_cube(rlds_file_path, "surface_downwelling_longwave_flux_in_air")
-    sw_cube_down = iris.load_cube(rsds_file_path, "surface_downwelling_shortwave_flux_in_air")
-    lw_cube_up = iris.load_cube(rlus_file_path, "surface_upwelling_longwave_flux_in_air")
-    sw_cube_up = iris.load_cube(rsus_file_path, "surface_upwelling_shortwave_flux_in_air")
+    hfls_cube = iris.load_cube(hfls_file_path)
+    evap_cube = iris.analysis.maths.divide(hfls_cube, 28)
 
-    downwelling_cube = iris.analysis.maths.add(lw_cube_down, sw_cube_down)
+    evap_cube.units = "mm day-1"
 
-    print downwelling_cube.shape
+    mrro_cube = iris.load_cube(mrro_file_path)
+    mrro_cube = iris.analysis.maths.multiply(mrro_cube, 86400)
 
-    upwelling_cube = iris.analysis.maths.add(lw_cube_up, sw_cube_up)
+    mrro_cube.units = "mm day-1"
 
-    print upwelling_cube.shape
+    first_cube = iris.analysis.maths.subtract(pr_cube, evap_cube)
 
-    net_downward_rad_cube = iris.analysis.maths.subtract(downwelling_cube, upwelling_cube)
+    soil_accumulation_cube = iris.analysis.maths.subtract(first_cube, mrro_cube)
 
-    if str(i) == 'bcc-csm1-1/':
-        model_name = "bcc-csm1-1"
+    soil_accumulation_cube.long_name = model_name
+    soil_accumulation_cube.units = "mm day-1"
 
-    net_downward_rad_cube.long_name = model_name
+    print soil_accumulation_cube
+#
+    iris.save(soil_accumulation_cube, "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles/sa_"+model_name+"_amip_regridded.nc")
 
-    print net_downward_rad_cube
+# #------------------------------------------------------------
+#
+# "WIND SPEED MODEL EXTRACTION"
+#
+# """FUNCTIONS TO CALCULATE WIND SPEED USING PYTHAG."""
+#
+# def ws_data_func(u_data, v_data):
+#     return np.sqrt(u_data**2 + v_data**2)
+#
+# def ws_units_func(u_cube, v_cube):
+#     if u_cube.units != getattr(v_cube, 'units', u_cube.units):
+#         raise ValueError("units do not match")
+#     return u_cube.units
+#
+# #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+# list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+#
+# for m in list_of_models:
+#
+#     #---------------------------------------------------------------------------------
+#     "EXTRACT EASTWARD SURFACE WIND"
+#
+#     if m in ["bcc-csm1-1/", "bcc-csm1-1-m/"]:
+#
+#         for char in '/':
+#             model = m.replace(char,'')
+#
+#         model_name = str(model)
+#
+#         """Import the data."""
+#         root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
+#         ensemble = "r1i1p1"
+#         model_type = "amip"
+#
+#         """Find the paths to the directories containing the model data"""
+#         directory_paths = []
+#         for root, directories, files in os.walk(root_directory):
+#             for k in directories:
+#                 path = os.path.join(root, k)
+#                 if m in path and model_type in path and ensemble in path:
+#                     directory_paths = np.append(directory_paths, path)
+#
+#         print directory_paths
+#
+#         """Find the model files to uas and their absolute paths."""
+#         ua_file_path = []
+#         for i in directory_paths:
+#             files = os.listdir(i)
+#             for j in files:
+#                 if "ua" in j:
+#                     model_file_path = os.path.join(i, j)
+#                     ua_file_path = np.append(ua_file_path, model_file_path)
+#
+#         ua_file_path = sorted(ua_file_path, key=lambda s: s.lower())
+#         print ua_file_path
+#
+#         ua_cube = iris.load_cube(ua_file_path)
+#
+#         uas_cube = ua_cube.extract(iris.Constraint(air_pressure=100000))
+#
+#     else:
+#
+#         for char in '/':
+#             model = m.replace(char,'')
+#
+#         model_name = str(model)
+#
+#         """Import the data."""
+#         root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
+#         ensemble = "r1i1p1"
+#         model_type = "amip"
+#
+#         """Find the paths to the directories containing the model data"""
+#         directory_paths = []
+#         for root, directories, files in os.walk(root_directory):
+#             for k in directories:
+#                 path = os.path.join(root, k)
+#                 if m in path and model_type in path and ensemble in path:
+#                     directory_paths = np.append(directory_paths, path)
+#
+#         print directory_paths
+#
+#         """Find the model files to uas and their absolute paths."""
+#         uas_file_path = []
+#         for i in directory_paths:
+#             files = os.listdir(i)
+#             for j in files:
+#                 if "uas" in j:
+#                     model_file_path = os.path.join(i, j)
+#                     uas_file_path = np.append(uas_file_path, model_file_path)
+#
+#         uas_file_path = sorted(uas_file_path, key=lambda s: s.lower())
+#         print uas_file_path
+#
+#         if model_name in ["GFDL-HIRAM-C180", "GFDL-HIRAM-C360"]:
+#             uas_cube = iris.load(uas_file_path)[1]
+#         else:
+#             uas_cube = iris.load_cube(uas_file_path)
+#
+#     #---------------------------------------------------------------------------------
+#     "EXTRACT NORTHWARD SURFACE WIND"
+#
+#     if m in ["bcc-csm1-1/", "bcc-csm1-1-m/"]:
+#
+#         for char in '/':
+#             model = m.replace(char,'')
+#
+#         model_name = str(model)
+#
+#         """Import the data."""
+#         root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
+#         ensemble = "r1i1p1"
+#         model_type = "amip"
+#
+#         """Find the paths to the directories containing the model data"""
+#         directory_paths = []
+#         for root, directories, files in os.walk(root_directory):
+#             for k in directories:
+#                 path = os.path.join(root, k)
+#                 if m in path and model_type in path and ensemble in path:
+#                     directory_paths = np.append(directory_paths, path)
+#
+#         print directory_paths
+#
+#         """Find the model files to vas and their absolute paths."""
+#         va_file_path = []
+#         for i in directory_paths:
+#             files = os.listdir(i)
+#             for j in files:
+#                 if "va" in j:
+#                     model_file_path = os.path.join(i, j)
+#                     va_file_path = np.append(va_file_path, model_file_path)
+#
+#         va_file_path = sorted(va_file_path, key=lambda s: s.lower())
+#         print va_file_path
+#
+#         va_cube = iris.load_cube(va_file_path)
+#
+#         vas_cube = va_cube.extract(iris.Constraint(air_pressure=100000))
+#
+#     else:
+#
+#         for char in '/':
+#             model = m.replace(char,'')
+#
+#         model_name = str(model)
+#
+#         """Import the data."""
+#         root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
+#         ensemble = "r1i1p1"
+#         model_type = "amip"
+#
+#         """Find the paths to the directories containing the model data"""
+#         directory_paths = []
+#         for root, directories, files in os.walk(root_directory):
+#             for k in directories:
+#                 path = os.path.join(root, k)
+#                 if m in path and model_type in path and ensemble in path:
+#                     directory_paths = np.append(directory_paths, path)
+#
+#         print directory_paths
+#
+#         """Find the model files to vas and their absolute paths."""
+#         vas_file_path = []
+#         for i in directory_paths:
+#             files = os.listdir(i)
+#             for j in files:
+#                 if "vas" in j:
+#                     model_file_path = os.path.join(i, j)
+#                     vas_file_path = np.append(vas_file_path, model_file_path)
+#
+#         vas_file_path = sorted(vas_file_path, key=lambda s: s.lower())
+#         print vas_file_path
+#
+#         if model_name in ["GFDL-HIRAM-C180", "GFDL-HIRAM-C360"]:
+#             vas_cube = iris.load(vas_file_path)[1]
+#         else:
+#             vas_cube = iris.load_cube(vas_file_path)
+#
+#     #---------------------------------------------------------------------------------
+#     """CALCULATE AND SAVE WIND SPEED."""
+#
+#     ws_ifunc = iris.analysis.maths.IFunc(ws_data_func, ws_units_func)
+#     ws_cube = ws_ifunc(uas_cube, vas_cube, new_name='wind speed')
+#
+#     ws_cube.long_name = model_name
+#     ws_cube.units = "m s-1"
+#
+#     print ws_cube
+#
+#     # ws_cube = ws_cube.collapsed('time', iris.analysis.MEAN)
+#     #
+#     # qplt.contourf(ws_cube, 25)
+#     #
+#     # plt.gca().coastlines()
+#     #
+#     # plt.show()
+#
+#     iris.save(ws_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_ws_Amon_"+model_name+"_amip_r1i1p1.nc")
 
-    iris.save(net_downward_rad_cube, "/ouce-home/students/kebl4396/Paper1/Paper1NetRadiationFiles/atlas_nrad_Amon_"+model_name+"_amip_r1i1p1_197901-200812.nc")
+
+
+# "SURFACE TEMP, RH AND VPD MODEL EXTRACTION"
+#
+#
+# list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+#
+# for m in list_of_models:
+#
+#     for char in '/':
+#         model = m.replace(char,'')
+#
+#     model_name = str(model)
+#
+#     """Import the data."""
+#     root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
+#     ensemble = "r1i1p1"
+#     model_type = "amip"
+#
+#     """Find the paths to the directories containing the model data"""
+#     directory_paths = []
+#     for root, directories, files in os.walk(root_directory):
+#         for k in directories:
+#             path = os.path.join(root, k)
+#             if m in path and model_type in path and ensemble in path:
+#                 directory_paths = np.append(directory_paths, path)
+#
+#     print directory_paths
+#
+#     """Find the model files to surface temp and their absolute paths."""
+#     tas_file_path = []
+#     for i in directory_paths:
+#         files = os.listdir(i)
+#         for j in files:
+#             if "tas" in j:
+#                 model_file_path = os.path.join(i, j)
+#                 tas_file_path = np.append(tas_file_path, model_file_path)
+#
+#     tas_file_path = sorted(tas_file_path, key=lambda s: s.lower())
+#     print tas_file_path
+#
+#     if model_name in ["GFDL-HIRAM-C180", "GFDL-HIRAM-C360"]:
+#         tas_cube = iris.load(tas_file_path)[1]
+#     else:
+#         tas_cube = iris.load_cube(tas_file_path)
+#
+#     tas_cube.convert_units('celsius')
+#
+#     print tas_cube
+#
+#     tas_cube.long_name = model_name
+#
+#     print tas_cube
+#
+#     #iris.save(tas_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_tas_Amon_"+model_name+"_amip_r1i1p1.nc")
+#
+#     # tas_cube = tas_cube.collapsed('time', iris.analysis.MEAN)
+#     #
+#     # qplt.contourf(tas_cube, 25)
+#     #
+#     # plt.gca().coastlines()
+#     #
+#     # plt.show()
+#
+#     numerator = iris.analysis.maths.multiply(tas_cube, 17.27)
+#
+#     denominator = iris.analysis.maths.add(tas_cube, 237.3)
+#
+#     second_half = iris.analysis.maths.divide(numerator, denominator)
+#
+#     exp = iris.analysis.maths.exp(second_half)
+#
+#     svp_cube = iris.analysis.maths.multiply(exp, 6.1078)
+#
+#     svp_cube.long_name = model_name
+#
+#     svp_cube.units = "hPa"
+#
+#     print svp_cube
+#
+#     #iris.save(svp_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_svp_Amon_"+model_name+"_amip_r1i1p1.nc")
+#
+#     # svp_cube = svp_cube.collapsed('time', iris.analysis.MEAN)
+#     #
+#     # qplt.contourf(svp_cube, 25)
+#     #
+#     # plt.gca().coastlines()
+#     #
+#     # plt.show()
+#
+#     """Find the model files to RH and their absolute paths."""
+#     hur_file_path = []
+#     for i in directory_paths:
+#         files = os.listdir(i)
+#         for j in files:
+#             if "hur" in j:
+#                 model_file_path = os.path.join(i, j)
+#                 hur_file_path = np.append(hur_file_path, model_file_path)
+#
+#     hur_file_path = sorted(hur_file_path, key=lambda s: s.lower())
+#     print hur_file_path
+#
+#     if model_name in ["GFDL-HIRAM-C180", "GFDL-HIRAM-C360"]:
+#         hurs_cube = iris.load(hur_file_path)[1]
+#         hurs_cube = hurs_cube.extract(iris.Constraint(air_pressure=100000))
+#     else:
+#         hurs_cube = iris.load_cube(hur_file_path, iris.Constraint(air_pressure=100000))
+#
+#     print hurs_cube
+#
+#     hurs_cube.long_name = model_name
+#
+#     print hurs_cube
+#
+#     #iris.save(hurs_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_hurs_Amon_"+model_name+"_amip_r1i1p1.nc")
+#
+#     # hurs_cube = hurs_cube.collapsed('time', iris.analysis.MEAN)
+#
+#     # qplt.contourf(hurs_cube, 25)
+#     #
+#     # plt.gca().coastlines()
+#     #
+#     # plt.show()
+#
+#     # e/es x 100 = RH
+#     #
+#     # rh/100 = e/es
+#     #
+#     # rh/100 x es = e
+#
+#     rh_div_100 = iris.analysis.maths.divide(hurs_cube, 100)
+#
+#     avp_cube = iris.analysis.maths.multiply(rh_div_100, svp_cube)
+#
+#     avp_cube.long_name = "Actual Vapour Pressure"
+#
+#     avp_cube.units = "hPa"
+#
+#     print avp_cube
+#
+#     #iris.save(avp_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_avp_Amon_"+model_name+"_amip_r1i1p1.nc")
+#
+#     # avp_cube = avp_cube.collapsed('time', iris.analysis.MEAN)
+#     #
+#     # qplt.contourf(avp_cube, 25)
+#     #
+#     # plt.gca().coastlines()
+#     #
+#     # plt.show()
+#
+#     vpd_cube = avp_cube - svp_cube
+#
+#     #vpd_cube = iris.analysis.maths.multiply(vpd_cube, -1)
+#
+#     vpd_cube = iris.analysis.maths.divide(vpd_cube, 10)
+#
+#     vpd_cube.long_name = model_name
+#
+#     avp_cube.units = "kPa"
+#
+#     print vpd_cube
+#
+#     iris.save(vpd_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_vpd_Amon_"+model_name+"_amip_r1i1p1.nc")
+#
+#     # vpd_cube = vpd_cube.collapsed('time', iris.analysis.MEAN)
+#     #
+#     # qplt.contourf(vpd_cube, 25)
+#     #
+#     # plt.gca().coastlines()
+#     #
+#     # plt.show()
+
+#------------------------------------------------------------
+
+"NET RAD MODEL EXTRACTION"
+
+# list_of_models = ["BNU-ESM/", "CanAM4/"]
+#
+# for m in list_of_models:
+#
+#     for char in '/':
+#         model = m.replace(char,'')
+#
+#     model_name = str(model)
+#
+#     """Import the data."""
+#     root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
+#     ensemble = "r1i1p1"
+#     model_type = "amip"
+#
+#     """Find the paths to the directories containing the model data"""
+#     directory_paths = []
+#     for root, directories, files in os.walk(root_directory):
+#         for k in directories:
+#             path = os.path.join(root, k)
+#             if m in path and model_type in path and ensemble in path:
+#                 directory_paths = np.append(directory_paths, path)
+#
+#     print directory_paths
+#
+#     """Find the model files and their absolute paths."""
+#     rlds_file_path = []
+#     for i in directory_paths:
+#         files = os.listdir(i)
+#         for j in files:
+#             if "rlds" in j:
+#                 model_file_path = os.path.join(i, j)
+#                 rlds_file_path = np.append(rlds_file_path, model_file_path)
+#
+#     rlds_file_path = sorted(rlds_file_path, key=lambda s: s.lower())
+#     print rlds_file_path
+#
+#
+#     """Find the model files and their absolute paths."""
+#     rsds_file_path = []
+#     for i in directory_paths:
+#         files = os.listdir(i)
+#         for j in files:
+#             if "rsds" in j:
+#                 model_file_path = os.path.join(i, j)
+#                 rsds_file_path = np.append(rsds_file_path, model_file_path)
+#
+#     rsds_file_path = sorted(rsds_file_path, key=lambda s: s.lower())
+#     print rsds_file_path
+#
+#     """Find the model files and their absolute paths."""
+#     rlus_file_path = []
+#     for i in directory_paths:
+#         files = os.listdir(i)
+#         for j in files:
+#             if "rlus" in j:
+#                 model_file_path = os.path.join(i, j)
+#                 rlus_file_path = np.append(rlus_file_path, model_file_path)
+#
+#     rlus_file_path = sorted(rlus_file_path, key=lambda s: s.lower())
+#     print rlus_file_path
+#
+#
+#     """Find the model files and their absolute paths."""
+#     rsus_file_path = []
+#     for i in directory_paths:
+#         files = os.listdir(i)
+#         for j in files:
+#             if "rsus" in j:
+#                 model_file_path = os.path.join(i, j)
+#                 rsus_file_path = np.append(rsus_file_path, model_file_path)
+#
+#     rsus_file_path = sorted(rsus_file_path, key=lambda s: s.lower())
+#     print rsus_file_path
+#
+#     print "hi3"
+#     print str(m)
+#
+#     lw_cube_down = iris.load_cube(rlds_file_path, "surface_downwelling_longwave_flux_in_air")
+#     sw_cube_down = iris.load_cube(rsds_file_path, "surface_downwelling_shortwave_flux_in_air")
+#     lw_cube_up = iris.load_cube(rlus_file_path, "surface_upwelling_longwave_flux_in_air")
+#     sw_cube_up = iris.load_cube(rsus_file_path, "surface_upwelling_shortwave_flux_in_air")
+#
+#     downwelling_cube = iris.analysis.maths.add(lw_cube_down, sw_cube_down)
+#
+#     print downwelling_cube.shape
+#
+#     upwelling_cube = iris.analysis.maths.add(lw_cube_up, sw_cube_up)
+#
+#     print upwelling_cube.shape
+#
+#     net_downward_rad_cube = iris.analysis.maths.subtract(downwelling_cube, upwelling_cube)
+#
+#     print net_downward_rad_cube.shape
+#
+#     net_downward_rad_cube.long_name = model_name
+#
+#     iris.save(net_downward_rad_cube, "/ouce-home/students/kebl4396/atlas_nrad_Amon_"+model_name+"_amip_r1i1p1_197901-200812.nc")
+#
+#     print net_downward_rad_cube
+
+    # if str(m) == 'bcc-csm1-1/':
+    #     model_name = "bcc-csm1-1"
+    #
+
+    #
+    # print net_downward_rad_cube
+    #
+    # iris.save(net_downward_rad_cube, "/ouce-home/students/kebl4396/Paper1/Paper1NetRadiationModelFiles/atlas_nrad_Amon_"+model_name+"_amip_r1i1p1_197901-200812.nc")
 
     #"/ouce-home/students/kebl4396/Paper1/atlas_nrad_Amon_"+str(i)+"_amip_r1i1p1_197901-200812.nc"
 
-"""
-net_rad_cube = net_rad_cube.collapsed('time', iris.analysis.MEAN)
 
-qplt.contourf(net_rad_cube, 25)
+    # net_rad_cube = net_rad_cube.collapsed('time', iris.analysis.MEAN)
+    #
+    # qplt.contourf(net_rad_cube, 25)
+    #
+    # # Add coastlines to the map created by contourf.
+    # plt.gca().coastlines()
+    #
+    # plt.show()
 
-# Add coastlines to the map created by contourf.
-plt.gca().coastlines()
 
-plt.show()
-"""
+#------------------------------------------------------------
 
-#iris.save(net_downward_rad_cube, "/ouce-home/data_not_backed_up/model/cmip5/ACCESS1-0/amip/mon/Amon/r1i1p1/atlas_nrad_Amon_ACCESS1-0_amip_r1i1p1_197901-200812.nc")
+"GLEAM NET RAD EXTRACTION"
 
 # SAVE SW DOWNWELLING
 
@@ -186,7 +630,7 @@ plt.show()
 # print cube1
 # print cube2
 
-# LOAD LWR DOWNWELLING AND SWR DOWNWELLING
+#LOAD LWR DOWNWELLING AND SWR DOWNWELLING
 
 # lw_cube_down = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/Rad_data/srb_rel3.1_longwave_monthly_downwelling.nc")
 # #print lw_cube_down
@@ -219,27 +663,38 @@ plt.show()
 
 
 # CONSTRAIN YEARS IN HFLS CUBE
-#
-# cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/hfls_gleam.nc")
-# time_range = iris.Constraint(time=lambda cell: 1984 <= cell.point.year <= 2007)
+# #
+# cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/evap/E_GLEAM_v3.2a_monthly.nc")
+# time_range = iris.Constraint(time=lambda cell: 1980 <= cell.point.year <= 2008)
 # with iris.FUTURE.context(cell_datetime_objects=True):
 #     cube = cube.extract(time_range)
 #     cube = iris.analysis.maths.multiply(cube, 28)
 #     cube.long_name = "Surface Upward Latent Heat Flux"
 #     cube.units = "W m-2"
-#     iris.save(cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/gleam_ungridded.nc")
+#     iris.save(cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/evap/LH_GLEAM_v3.2a_monthly.nc")
 
-
+# cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/tran_merra2.nc")
 #
+# with iris.FUTURE.context(cell_datetime_objects=True):
+#     cube = iris.analysis.maths.divide(cube, 28)
+#
+#     cube.long_name = "Transpiration"
+#
+#     cube.units = "mm day-1"
+#
+#     print cube
+#
+#     iris.save(cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/tran_merra2_1.nc")
+
 # # #LOAD NET RAD CUBE
 #
-# srb_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/srb_net_downward_rad.nc")
+# srb_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/nrad_gewex")
 # print srb_cube
 # #
 #
 # #LOAD HFLS CUBE
-#
-# gleam_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/gleam_ungridded.nc")
+# #
+# gleam_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/evap/E_GLEAM_v3.2a_monthly_1984_2007.nc")
 # print gleam_cube
 #
 # #REGRID HFLS CUBE ONTO NET RAD CUBE
@@ -253,19 +708,14 @@ plt.show()
 # #
 # regridded_gleam_cube = gleam_cube.regrid(srb_cube, iris.analysis.AreaWeighted())
 # print regridded_gleam_cube
-# iris.save(regridded_gleam_cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/hfls_gleam_regridded1.nc")
-#
-# gleam_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/hfls_gleam_regridded1.nc")
-# print gleam_cube
-# REGRID HFLS CUBE ONTO REANALYSIS CUBE
+# iris.save(regridded_gleam_cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/evap/E_GLEAM_v3.2a_monthly_1984_2007_regridded.nc")
 
 
+# # LOAD REGRIDDED HFLS CUBE AND NET RAD CUBE
 #
-# # # LOAD REGRIDDED HFLS CUBE AND NET RAD CUBE
-# #
-# gleam_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/hfls_gleam_regridded.nc")
+# gleam_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/LH_GLEAM_v3.2a_monthly_1984_2007_regridded.nc")
 # print gleam_cube.coord('time')
-# srb_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/srb_net_downward_rad.nc")
+# srb_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/srb_net_downward_rad.nc")
 # print srb_cube.coord('time')
 #
 # #REMOVE TIME COORD IN HFLS CUBE AND REPLACE WITH COORD IN NET RAD CUBE
@@ -276,13 +726,13 @@ plt.show()
 #
 # # SAVE NEW HFLS CUBE
 #
-# iris.save(gleam_cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/hfls_gleam_regridded1.nc")
+# iris.save(gleam_cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/LH_GLEAM_v3.2a_monthly_1984_2007_regridded_correct_coords.nc")
 #
 # # RELOAD HFLS AND SRB cubes
 
-# srb_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/srb_net_downward_rad.nc")
+# srb_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/srb_net_downward_rad.nc")
 #
-# gleam_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/hfls_gleam_regridded.nc")
+# gleam_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/LH_GLEAM_v3.2a_monthly_1984_2007_regridded_correct_coords.nc")
 # print gleam_cube.coord('time')
 # print srb_cube.coord('time')
 #
@@ -295,17 +745,124 @@ plt.show()
 # #
 # # SAVE HFSS CUBE (180x360 GRID)
 #
-# iris.save(sensible_cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/hfss_gleam_regridded.nc")
+# iris.save(sensible_cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/SH_GLEAM_estimate_v3.2a_monthly_1984_2007.nc")
 
 # LOAD SENSIBLE CUBE
 # LOAD LATENT CUBE
+#
+# nt_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/ERAI_data/net_rad/erai_nt.nc")
+# ns_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/ERAI_data/net_rad/erai_ns.nc")
+#
+# print nt_cube
+# print ns_cube
+#
+# nt_cube_2 = iris.analysis.maths.divide(nt_cube, -43200)
+# ns_cube_2 = iris.analysis.maths.divide(ns_cube, 43200)
+#
+# iris.save(nt_cube_2, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/ERAI_data/net_rad/nt_cube_2.nc")
+#
+# iris.save(ns_cube_2, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/ERAI_data/net_rad/ns_cube_2.nc")
+#
+# nrad_cube = iris.analysis.maths.add(nt_cube, ns_cube)
+# #
+# # print nrad_cube
+# #
+# iris.save(nrad_cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/ERAI_data/net_rad/nrad_cube.nc")
 
-#hfss_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/hfss_gleam.nc")
-#hfls_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/hfls_gleam.nc")
+# cfsr_downward_lw = iris.load("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/cfsr_downward_lw.nc")
+#
+# cfsr_downward_sw = iris.load("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/cfsr_downward_sw.nc")
+#
+# cfsr_upward_lw = iris.load("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/cfsr_upward_lw.nc")
+#
+# cfsr_upward_sw = iris.load("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/cfsr_upward_sw.nc")
+#
+# print cfsr_downward_lw[1].data
+# print cfsr_downward_sw[0].data
+# print cfsr_upward_lw[0].data
+# print cfsr_upward_sw[1].data
+#
+# iris.save(cfsr_downward_lw[1], "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/cfsr_downward_lw_1.nc")
+# iris.save(cfsr_downward_sw[0], "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/cfsr_downward_sw_1.nc")
+# iris.save(cfsr_upward_lw[0], "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/cfsr_upward_lw_1.nc")
+# iris.save(cfsr_upward_sw[1], "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/cfsr_upward_sw_1.nc")
 
-#print hfss_cube
-#print hfls_cube
 
+# print nt_cube
+# print ns_cube
+# #
+# nt_cube_2 = iris.analysis.maths.divide(nt_cube, 86400)
+# ns_cube_2 = iris.analysis.maths.divide(ns_cube, 86400)
+#
+# print nt_cube_2
+# print ns_cube_2
+#
+# iris.save(nt_cube_2, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/ERAI_data/net_rad/nt_cube_2.nc")
+#
+# iris.save(ns_cube_2, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/ERAI_data/net_rad/ns_cube_2.nc")
+
+# nrad_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/ERAI_data/net_rad/nrad_cube.nc")
+#
+# nrad_cube_2 = iris.analysis.maths.divide(nrad_cube, 86400)
+#
+# iris.save(nrad_cube_2, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/ERAI_data/net_rad/nrad_cube_2.nc")
+# print hfss_cube
+# print hfls_cube
+
+# merra_sw_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/MERRA_data/net_rad/merra2_net_shortwave.nc")
+# merra_lw_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/MERRA_data/net_rad/merra2_net_longwave.nc")
+#
+# merra_nrad_cube = iris.analysis.maths.add(merra_sw_cube, merra_lw_cube)
+
+# ncepdoe_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/nrad_ncepdoe.nc")
+# print ncepdoe_cube
+# print ncepdoe_cube.long_name
+#
+# merra_nrad_cube.long_name = "Net Downward Solar Radiation"
+#
+# merra_nrad_cube.units = "W m-2"
+#
+# iris.save(merra_nrad_cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/MERRA_data/net_rad/nrad_merra2.nc")
+
+# gewex_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/nrad_merra2.nc")
+#
+# print gewex_cube.long_name
+
+# jra_downward_lw = iris.load("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/JRA_data/JRA_downward_lw.nc")
+#
+# jra_downward_sw = iris.load("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/JRA_data/JRA_downward_sw.nc")
+#
+# jra_upward_lw = iris.load("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/JRA_data/JRA_upward_lw.nc")
+#
+# jra_upward_sw = iris.load("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/JRA_data/JRA_upward_sw.nc")
+#
+# iris.save(jra_downward_lw[0], "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/JRA_data/JRA_downward_lw_1.nc")
+# iris.save(jra_downward_sw[0], "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/JRA_data/JRA_downward_sw_1.nc")
+# iris.save(jra_upward_lw[1], "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/JRA_data/JRA_upward_lw_1.nc")
+# iris.save(jra_upward_sw[1], "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/JRA_data/JRA_upward_sw_1.nc")
+#
+# print jra_downward_lw
+# print jra_downward_sw
+# print jra_upward_lw
+# print jra_upward_sw
+
+# cfsr_downward_lw = iris.load("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/CFSR_downward_lw.nc")
+#
+# cfsr_downward_sw = iris.load("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/CFSR_downward_sw.nc")
+#
+# cfsr_upward_lw = iris.load("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/CFSR_upward_lw.nc")
+#
+# cfsr_upward_sw = iris.load("/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/CFSR_upward_sw.nc")
+#
+# iris.save(cfsr_downward_lw[1], "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/CFSR_downward_lw_1.nc")
+# iris.save(cfsr_downward_sw[0], "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/CFSR_downward_sw_1.nc")
+# iris.save(cfsr_upward_lw[1], "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/CFSR_upward_lw_1.nc")
+# iris.save(cfsr_upward_sw[1], "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/CFSR_data/net_rad/CFSR_upward_sw_1.nc")
+
+# print cfsr_downward_lw
+# print cfsr_downward_sw
+# print cfsr_upward_lw
+# print cfsr_upward_sw
 
 #gleam_cube.coord('time').points = gleam_times
 
@@ -314,3 +871,38 @@ plt.show()
 #gleam_cube.remove_coord('time')
 
 #gleam_cube.add_dim_coord(icoords.DimCoord(gleam_times), 0)
+
+# era5_cube = iris.load_cube("/ouce-home/students/kebl4396/Paper1/Paper1Code/pr_era5.nc")
+#
+# era5_cube_2 = iris.analysis.maths.multiply(era5_cube, 1000)
+#
+# iris.save(era5_cube_2, "/ouce-home/students/kebl4396/Paper1/Paper1Code/pr_era5_2.nc")
+#
+# print era5_cube_2
+
+
+# list_of_yearmonths = []
+# for i in np.arange(1984, 2008, 1):
+#     for j in ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']:
+#         yearmonth = str(i) + j
+#         list_of_yearmonths = np.append(list_of_yearmonths, yearmonth)
+# print list_of_yearmonths
+
+# for i in list_of_yearmonths:
+#     cube_generator = iris.fileformats.netcdf.load_cubes("https://opendap.larc.nasa.gov/opendap/hyrax/SRB/GLW/SRB_REL3.1_LW_MONTHLY_NC/srb_rel3.1_longwave_monthly_"+str(i)+".nc")
+#     cube = list(cube_generator)
+#     iris.save(cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/Rad_data/LW/srb_rel3.1_longwave_monthly_"+str(i)+".nc")
+#     print "done "+str(i)+""
+#
+# list_of_yearmonths = []
+# for i in np.arange(1984, 2008, 1):
+#     for j in ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']:
+#         yearmonth = str(i) + j
+#         list_of_yearmonths = np.append(list_of_yearmonths, yearmonth)
+# print list_of_yearmonths
+
+# for i in list_of_yearmonths:
+#     cube_generator = iris.fileformats.netcdf.load_cubes("https://opendap.larc.nasa.gov/opendap/hyrax/SRB/GSW/SRB_REL3.0_SW_MONTHLY_UTC_NC/srb_rel3.0_shortwave_monthly_utc_"+str(i)+".nc")
+#     cube = list(cube_generator)
+#     iris.save(cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/Rad_data/SW/srb_rel3.0_shortwave_monthly_utc_"+str(i)+".nc")
+#     print "done "+str(i)+""

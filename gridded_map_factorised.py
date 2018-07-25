@@ -17,6 +17,8 @@ import numpy as np
 import os
 import time
 
+start_time = time.time()
+
 def build_cubelist(i, array):
 
     cubes_in_file = iris.load(model_file_paths[i])
@@ -649,6 +651,8 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
         fig = plt.figure(figsize=(7, 10))
     if subplot_columns == 5 and subplot_rows == 5:
         fig = plt.figure(figsize=(8, 8))
+    if subplot_columns == 4 and subplot_rows == 4:
+        fig = plt.figure(figsize=(8, 8))
 
     cube_number = 0
 
@@ -721,6 +725,10 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
         #colourbar_axis = fig.add_axes([0.20, 0.07, 0.60, 0.02])
         colourbar_axis = fig.add_axes([0.21, 0.31, 0.60, 0.015])
 
+    if subplot_columns == 4 and subplot_rows == 4:
+        #colourbar_axis = fig.add_axes([0.20, 0.07, 0.60, 0.02])
+        colourbar_axis = fig.add_axes([0.21, 0.31, 0.60, 0.015])
+
     colour_bar = plt.colorbar(contour_plot, colourbar_axis, orientation='horizontal')
 
     """Adjust ticks."""
@@ -787,6 +795,8 @@ def plot_map(cubelist, variable, input_time, contour_levels, cmap, lower_tick, u
         fig.subplots_adjust(left=0.05, right=0.98, bottom=0.36, top=0.96, wspace=0.4, hspace=0.55)
     if subplot_columns == 5 and subplot_rows == 5:
         fig.subplots_adjust(left=0.05, right=0.98, bottom=0.36, top=0.96, wspace=0.4, hspace=0.55)
+    if subplot_columns == 4 and subplot_rows == 4:
+        fig.subplots_adjust(left=0.05, right=0.98, bottom=0.36, top=0.96, wspace=0.4, hspace=0.55)
 
     """Save the figure, close the plot and print an end statement."""
     if input_time in ['DJF', 'MAM', 'JJA', 'SON']:
@@ -806,9 +816,14 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------------------------------------------------------------------
     # LIST OF INPUTS
 
-    list_of_models = ['CNRM-CM5/', 'IPSL-CM5B-LR/', 'MRI-CGCM3/', 'GISS-E2-R/', 'bcc-csm1-1-m/', 'bcc-csm1-1/', 'MRI-AGCM3-2S/', 'MRI-AGCM3-2H/', 'inmcm4/', 'CanAM4/', 'GFDL-HIRAM-C180/', 'GFDL-HIRAM-C360/', 'IPSL-CM5A-LR/', 'NorESM1-M/', 'IPSL-CM5A-MR/', 'MIROC5/', 'BNU-ESM/']
-    list_of_reanalysis = ['cfsr', 'era5', 'erai', 'gleam', 'jra', 'merra2', 'ncep-doe']
-    #list_of_reanalysis = ['gleam', 'merra2']
+    list_of_models = ['CanAM4/', 'CNRM-CM5/', 'bcc-csm1-1-m/', 'MRI-AGCM3-2S/', 'IPSL-CM5A-MR/', 'GISS-E2-R/', 'NorESM1-M/', 'GFDL-HIRAM-C360/', 'BNU-ESM/', 'MIROC5/', 'inmcm4/']
+
+    #'CNRM-CM5/', 'CanAM4/', 'bcc-csm1-1-m/', 'IPSL-CM5A-MR/', 'MRI-AGCM3-2S/', 'NorESM1-M/', 'MIROC5/', 'GFDL-HIRAM-C360/', 'GISS-E2-R/', 'BNU-ESM/', 'inmcm4/'
+    #'CNRM-CM5/', 'CanAM4/', 'bcc-csm1-1-m/', 'GISS-E2-R/', 'IPSL-CM5A-MR/', 'MRI-AGCM3-2S/', 'NorESM1-M/', 'GFDL-HIRAM-C360/', 'BNU-ESM/', 'MIROC5/', 'inmcm4/'
+    #'bcc-csm1-1-m/', 'GISS-E2-R/', 'CNRM-CM5/', 'GFDL-HIRAM-C360/', 'MRI-AGCM3-2S/', 'CanAM4/', 'NorESM1-M/', 'IPSL-CM5A-MR/', 'inmcm4/', 'BNU-ESM/', 'MIROC5/'
+    #'CanAM4/', 'CNRM-CM5/', 'bcc-csm1-1-m/', 'MRI-AGCM3-2S/', 'IPSL-CM5A-MR/', 'GISS-E2-R/', 'NorESM1-M/', 'GFDL-HIRAM-C360/', 'BNU-ESM/', 'MIROC5/', 'inmcm4/'
+    #list_of_reanalysis = ['cfsr', 'era5', 'erai', 'gleam', 'jra', 'merra2', 'ncep-doe']
+    list_of_reanalysis = ['era5', 'erai', 'gleam', 'merra2']
     #list_of_times = ['DJF', 'MAM', 'JJA', 'SON', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     #list_of_times = ['Jun', 'Oct', 'Nov', 'Dec']
     list_of_times = ['SON']
@@ -820,7 +835,7 @@ if __name__ == "__main__":
 
     #list_of_times = ['DJF']
     #list_of_times = ['DJF', 'MAM', 'JJA', 'SON']
- 
+
     variable = "evaporation"
     lower_year = 1979
     upper_year = 2008
@@ -833,8 +848,8 @@ if __name__ == "__main__":
     ensemble = "yes"
     cmap = "YlGnBu"
     unit_plot = "mm day-1"
-    subplot_columns = 5
-    subplot_rows = 5
+    subplot_columns = 4
+    subplot_rows = 4
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -961,9 +976,21 @@ if __name__ == "__main__":
                     process.join()
                 cubelist_ensemble = array.values()
 
-                """Compute the ensemble mean cube."""
-                ensemble_mean_cube = sum(cubelist_ensemble) / float(len(cubelist_ensemble))
-                ensemble_mean_cube.long_name = "Ensemble"
+                """Compute the ensemble mean cube, ignoring fill values."""
+
+                cube_1 = cubelist_ensemble[0]
+
+                for i in range(len(cubelist_ensemble)):
+                    array = np.ma.filled(cubelist_ensemble[i].data)
+                    array[array==1e20] = np.nan
+                    cubelist_ensemble[i].data = array
+                    cubelist_ensemble[i] = cubelist_ensemble[i].data
+
+                cube_data = np.nansum(cubelist_ensemble, axis = 0) / float(len(cubelist_ensemble))
+
+                cube_1.data = cube_data
+                cube_1.long_name = "Ensemble"
+                ensemble_mean_cube = cube_1
 
                 """Append ensemble mean to the cubelist."""
                 cubelist = np.append(cubelist, ensemble_mean_cube)
@@ -1017,7 +1044,6 @@ if __name__ == "__main__":
 
         """PLOT MAP."""
 
-        start_time = time.time()
         """Define the contour levels and colour map for the plot."""
         contour_levels = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[0]
         cmap = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[1]
