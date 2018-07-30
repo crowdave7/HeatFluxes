@@ -245,6 +245,10 @@ def slicing(i, array):
         if unit_plot == 'mm day-1':
             cubelist[i] = iris.analysis.maths.divide(cubelist[i], 28)
 
+    """if variable is vpd, multiply by -1"""
+    if variable == 'vpd':
+        cubelist[i] = iris.analysis.maths.multiply(cubelist[i], -1)
+
     print model_id
 
     """if variable is bare soil evap, canopy evap or transpiration and model is IPSL-CM5B-LR:"""
@@ -501,6 +505,10 @@ def slicing_ensemble(i, array):
         if unit_plot == "mm day-1":
             cubelist_ensemble[i] = iris.analysis.maths.divide(cubelist_ensemble[i], 28)
 
+    """if variable is vpd, multiply by -1"""
+    if variable == 'vpd':
+        cubelist_ensemble[i] = iris.analysis.maths.multiply(cubelist_ensemble[i], -1)
+
     if variable == 'evspsblsoi' or variable == "evspsblveg" or variable == 'tran':
         if model_id == "IPSL-CM5B-LR":
             cubelist_ensemble[i] = iris.analysis.maths.multiply(cubelist_ensemble[i], 4)
@@ -629,6 +637,10 @@ def slicing_reanalysis(i, array):
     if variable == 'evspsblsoi' or variable == "evspsblveg" or variable == 'tran':
         if unit_plot == 'W m-2':
             cubelist_reanalysis[i] = iris.analysis.maths.multiply(cubelist_reanalysis[i], 28)
+
+    """if variable is vpd, multiply by -1"""
+    if variable == 'vpd':
+        cubelist_reanalysis[i] = iris.analysis.maths.multiply(cubelist_reanalysis[i], -1)
 
     """Select the reanalysis ID."""
     reanalysis_id = list_of_reanalysis[i]
@@ -772,6 +784,7 @@ def plot_bar(barchart_array, number_of_models, number_of_reanalysis, number_of_v
 
         plt.ylabel(bar_season+" "+bar_y_axis_title, fontsize=9)
         plt.xticks(number_of_bars, model_strings_for_plot, rotation=45, ha='right', fontsize=8)
+
         plt.ylim(lower_y_lim, upper_y_lim)
 
         for i in list_of_variables:
@@ -959,16 +972,37 @@ def plot_bar(barchart_array, number_of_models, number_of_reanalysis, number_of_v
                     bar.set_linestyle("-")
 
         if include_dynamic_prescribed == 'yes':
-            model_strings_for_plot = np.append(model_strings_for_plot, "Dynamic Veg")
-            model_strings_for_plot = np.append(model_strings_for_plot, "Prescribed Veg")
+            model_strings_for_plot = np.append(model_strings_for_plot, "Dynamic Vegetation")
+            model_strings_for_plot = np.append(model_strings_for_plot, "Prescribed Vegetation")
 
         if ensemble == 'yes':
             model_strings_for_plot = np.append(model_strings_for_plot, "Ensemble")
         if number_of_reanalysis > 0:
             model_strings_for_plot = np.append(model_strings_for_plot, reanalysis_strings_for_plot)
 
+        count = 0
+
+        for i in model_strings_for_plot:
+
+            if i in ['bcc-csm1-1-m', 'BNU-ESM', 'GFDL-HIRAM-C360', 'IPSL-CM5A-MR', 'Dynamic Vegetation']:
+
+                model_string = str(i) + "*"
+
+                model_strings_for_plot[count] = model_string
+
+                count+=1
+
+                #model_strings_for_plot[count] = r"$\bf{"+str(i)+"}$"
+
+            if i in ['CanAM4', 'CNRM-CM5', 'GISS-E2-R', 'inmcm4', 'MIROC5', 'MRI-AGCM3-2S', 'NorESM1-M', 'Prescribed Vegetation', 'Ensemble', 'GLEAM']:
+
+                #model_strings_for_plot[count] = r"$\it{"+str(i)+"}$"
+
+                count+=1
+
         plt.ylabel(bar_season+" "+bar_y_axis_title, fontsize=9)
         plt.xticks(number_of_bars, model_strings_for_plot, rotation=45, ha='right', fontsize=9)
+
         plt.ylim(lower_y_lim, upper_y_lim)
 
         for i in list_of_variables:
@@ -1020,7 +1054,7 @@ def plot_bar(barchart_array, number_of_models, number_of_reanalysis, number_of_v
         fig.savefig("Bar_Graph_"+bar_season, bbox_inches='tight')
 
 
-def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_array, seasonal_cycle_dv_array, seasonal_cycle_pv_array, seasonal_cycle_reanalysis_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval, number_of_variables, list_of_variables, variables_to_add, fill_between_lines, variables_to_subtract, legend_in_plot):
+def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_array, seasonal_cycle_ensemble_std_array, seasonal_cycle_ensemble_top_array, seasonal_cycle_ensemble_bottom_array, seasonal_cycle_dv_array, seasonal_cycle_pv_array, seasonal_cycle_reanalysis_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval, number_of_variables, list_of_variables, variables_to_add, fill_between_lines, variables_to_subtract, legend_in_plot):
 
     """Before looping through all the models, set up the figure to plot to."""
 
@@ -1741,8 +1775,8 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
             print list_of_variables[i]
 
             if list_of_variables[i] == 'vpd':
-                lower_y_lim = -2.2
-                upper_y_lim = 0.0
+                lower_y_lim = 0.0
+                upper_y_lim = 2.6
                 y_tick_interval = 0.2
                 plt.ylabel('Vapour Pressure Deficit (kPa)', fontsize=7)
                 line_colour = 'steelblue'
@@ -1755,7 +1789,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 line_colour = 'darkorange'
 
             if list_of_variables[i] == 'hurs':
-                lower_y_lim = 30
+                lower_y_lim = 10
                 upper_y_lim = 100
                 y_tick_interval = 10
                 plt.ylabel('Relative Humidity (%)', fontsize=7)
@@ -1763,21 +1797,21 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
             if list_of_variables[i] == 'tran':
                 lower_y_lim = 0.0
-                upper_y_lim = 5.0
+                upper_y_lim = 5.5
                 y_tick_interval = 0.5
                 plt.ylabel('Transpiration (mm $\mathregular{day^{-1}}$)', fontsize=7)
                 line_colour = 'dodgerblue'
 
             if list_of_variables[i] == 'evspsblveg':
                 lower_y_lim = 0.0
-                upper_y_lim = 5.0
+                upper_y_lim = 5.5
                 y_tick_interval = 0.5
                 plt.ylabel('Canopy Evaporation (mm $\mathregular{day^{-1}}$)', fontsize=7)
                 line_colour = 'forestgreen'
 
             if list_of_variables[i] == 'evspsblsoi':
                 lower_y_lim = 0.0
-                upper_y_lim = 5.0
+                upper_y_lim = 5.5
                 y_tick_interval = 0.5
                 plt.ylabel('Bare Soil Evaporation (mm $\mathregular{day^{-1}}$)', fontsize=7)
                 line_colour = 'saddlebrown'
@@ -1791,28 +1825,28 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
             if list_of_variables[i] == 'evaporation':
                 lower_y_lim = 0.0
-                upper_y_lim = 5.0
+                upper_y_lim = 5.5
                 y_tick_interval = 0.5
                 plt.ylabel('Evaporation (mm $\mathregular{day^{-1}}$)', fontsize=7)
                 line_colour = 'black'
 
             if list_of_variables[i] == 'pr':
                 lower_y_lim = 0.0
-                upper_y_lim = 10.0
+                upper_y_lim = 13.0
                 y_tick_interval = 1.0
                 plt.ylabel('Precipitation (mm $\mathregular{day^{-1}}$)', fontsize=7)
                 line_colour = 'blue'
 
             if list_of_variables[i] == 'lai':
-                lower_y_lim = 1
-                upper_y_lim = 7
+                lower_y_lim = 0
+                upper_y_lim = 8
                 y_tick_interval = 1
                 plt.ylabel('Leaf Area Index', fontsize=7)
                 line_colour = 'darkgreen'
 
             if list_of_variables[i] == 'nrad':
-                lower_y_lim = 90
-                upper_y_lim = 180
+                lower_y_lim = 80
+                upper_y_lim = 190
                 y_tick_interval = 10
                 plt.ylabel('Net Downward Radiation (W $\mathregular{m^{-2}}$)', fontsize=7)
                 line_colour = 'darkred'
@@ -1826,14 +1860,14 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
             if list_of_variables[i] == 'ws':
                 lower_y_lim = 0.0
-                upper_y_lim = 3.2
-                y_tick_interval = 0.4
+                upper_y_lim = 6.4
+                y_tick_interval = 0.8
                 plt.ylabel('Wind Speed (m s $\mathregular{^{-1}}$)', fontsize=7)
                 line_colour = 'peru'
 
             if list_of_variables[i] == 'sa':
-                lower_y_lim = -3.2
-                upper_y_lim = 3.2
+                lower_y_lim = -4.0
+                upper_y_lim = 4.8
                 y_tick_interval = 0.8
                 plt.ylabel('Soil Moisture Accumulation (mm $\mathregular{day^{-1}}$)', fontsize=7)
                 line_colour = 'darkcyan'
@@ -1848,13 +1882,34 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
                 seasonal_cycle_ensemble_variable_data = seasonal_cycle_ensemble_array[i]
 
-                line = ax.plot(x_pos, seasonal_cycle_ensemble_variable_data, linestyle='-', linewidth=1.5, color=line_colour)
+                #seasonal_cycle_ensemble_variable_std_data = seasonal_cycle_ensemble_std_array[i]
+
+                seasonal_cycle_ensemble_variable_top_data = seasonal_cycle_ensemble_top_array[i]
+
+                seasonal_cycle_ensemble_variable_bottom_data = seasonal_cycle_ensemble_bottom_array[i]
+
+                line = ax.plot(x_pos, seasonal_cycle_ensemble_variable_data, linestyle='-', linewidth=1.5, color=line_colour, zorder=2)
+
+                line2 = ax.errorbar(x_pos, seasonal_cycle_ensemble_variable_data, yerr=(seasonal_cycle_ensemble_variable_bottom_data, seasonal_cycle_ensemble_variable_top_data), fmt='none', ecolor='black', elinewidth=0.5, capsize=2, capthick=1.25, linestyle = '--', zorder=1)
+
+                line2[-1][0].set_linestyle('--')
+
+                xticks, xticklabels = plt.xticks()
+
+                xmin = (2*xticks[0] - xticks[1])
+
+                xmax = (2*xticks[-1] - xticks[-2])
+
+                ax.tick_params(axis='x', direction='in', which='both', labelbottom='on', labeltop='off', bottom='off', top='off')
+
+                plt.xlim(xmin, xmax)
+                plt.xticks(xticks)
 
             if reanalysis == 'yes':
 
                 seasonal_cycle_reanalysis_variable_data = seasonal_cycle_reanalysis_array[i]
 
-                line = ax.plot(x_pos, seasonal_cycle_reanalysis_variable_data, linestyle=':', linewidth=1.5, color=line_colour)
+                line = ax.plot(x_pos, seasonal_cycle_reanalysis_variable_data, linestyle='--', linewidth=1.5, color=line_colour, zorder=3)
 
             if include_dynamic_prescribed == 'yes':
 
@@ -1878,7 +1933,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
             plt.subplots_adjust(left=0.05, right=0.95, wspace=0.6, hspace=0.2)
 
         print "saving final figure"
-        fig.savefig("Gridded_Seasonal_Cycles_Rainforest.png", bbox_inches='tight')
+        fig.savefig("Gridded_Seasonal_Cycles_Rainforest_GLEAM.png", bbox_inches='tight')
         plt.close()
         print "plot done"
 
@@ -1935,6 +1990,7 @@ if __name__ == "__main__":
 
     #list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi"]
     #list_of_variables = ['evaporation']
+    #list_of_variables = ['pr', 'nrad', 'vpd']
     #list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi", "pr", "nrad", 'tas', "hurs", "ws", "vpd", "lai",  "sa"]
     subplot_multiple_variables = 'no'
     include_dynamic_prescribed = 'yes'
@@ -1951,6 +2007,7 @@ if __name__ == "__main__":
     #variables_to_subtract = []
     #variables_to_subtract = [['pr', 'evspsblsoi', 'evspsblveg', 'mrro']]
     #variables_to_subtract = [['pr', 'mrro']]
+    #partitioning one
     variables_to_subtract = [['evaporation', 'tran', 'evspsblveg', 'evspsblsoi']]
     #variables_to_subtract = [['pr', 'mrro']]
 
@@ -1962,18 +2019,23 @@ if __name__ == "__main__":
     fill_between_lines = []
     #variables_to_add = []
 
-    lower_lat = -10
-    upper_lat = 5
-    lower_lon = 5
-    upper_lon = 35
-    # lower_lat = -3
-    # upper_lat = 3
-    # lower_lon = 21
-    # upper_lon = 27
-    # lower_lat = -3
-    # upper_lat = 3
-    # lower_lon = 21
-    # upper_lon = 27
+    #CONGO BASIN
+    # lower_lat = -12
+    # upper_lat = 4
+    # lower_lon = 18
+    # upper_lon = 30
+
+    # CONGO RAINFOREST
+    # lower_lat = -4
+    # upper_lat = 4
+    # lower_lon = 18
+    # upper_lon = 30
+
+    # CONGO BASIN SOUTH
+    lower_lat = -12
+    upper_lat = -4
+    lower_lon = 18
+    upper_lon = 30
 
     lower_year = 1979
     upper_year = 2008
@@ -1988,7 +2050,7 @@ if __name__ == "__main__":
     plot = 'no'
     unit_plot = "mm day-1"
     bar_plot = 'yes'
-    bar_seasons = ['JJA']
+    bar_times = ['Jul']
     bar_y_axis_title = 'Evaporation (mm $\mathregular{day^{-1}}$)'
     #bar_y_axis_title = 'Heat Flux (W $\mathregular{m^{-2}}$)'
     #bar_y_axis_title = "Transpiration (mm $\mathregular{day^{-1}}$)"
@@ -2015,6 +2077,8 @@ if __name__ == "__main__":
         barchart_array_mam = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis))))
         barchart_array_jja = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis))))
         barchart_array_son = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis))))
+        barchart_array_mar = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis))))
+        barchart_array_jul = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis))))
 
     if ensemble == 'yes':
 
@@ -2022,6 +2086,8 @@ if __name__ == "__main__":
         barchart_array_mam = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+1)))
         barchart_array_jja = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+1)))
         barchart_array_son = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+1)))
+        barchart_array_mar = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+1)))
+        barchart_array_jul = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+1)))
 
     if ensemble == 'yes' and include_dynamic_prescribed == 'yes':
 
@@ -2029,6 +2095,8 @@ if __name__ == "__main__":
         barchart_array_mam = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+3)))
         barchart_array_jja = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+3)))
         barchart_array_son = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+3)))
+        barchart_array_mar = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+3)))
+        barchart_array_jul = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+3)))
 
     """For each variable, calculate the model, ensemble and reanalysis seasonal cycle arrays. """
 
@@ -2038,6 +2106,9 @@ if __name__ == "__main__":
 
     seasonal_cycle_models_multiple_variables_array = []
     seasonal_cycle_ensemble_multiple_variables_array = np.zeros((len(list_of_variables), 13))
+    seasonal_cycle_ensemble_multiple_variables_std_array = np.zeros((len(list_of_variables), 13))
+    seasonal_cycle_ensemble_multiple_variables_top_array = np.zeros((len(list_of_variables), 13))
+    seasonal_cycle_ensemble_multiple_variables_bottom_array = np.zeros((len(list_of_variables), 13))
     seasonal_cycle_pv_multiple_variables_array = np.zeros((len(list_of_variables), 13))
     seasonal_cycle_dv_multiple_variables_array = np.zeros((len(list_of_variables), 13))
     seasonal_cycle_reanalysis_multiple_variables_array = np.zeros((len(list_of_variables), 13))
@@ -2048,6 +2119,9 @@ if __name__ == "__main__":
 
         seasonal_cycle_models_array = []
         seasonal_cycle_ensemble_array = []
+        seasonal_cycle_ensemble_std_array = []
+        seasonal_cycle_ensemble_top_array = []
+        seasonal_cycle_ensemble_bottom_array = []
         seasonal_cycle_dv_array = []
         seasonal_cycle_pv_array = []
         seasonal_cycle_reanalysis_array = []
@@ -2368,6 +2442,17 @@ if __name__ == "__main__":
                         seasonal_cycle_array_for_ensemble.append(cube_seasonal_cycle_for_ensemble)
 
                 seasonal_cycle_ensemble_array = np.mean(seasonal_cycle_array_for_ensemble, axis = 0)
+
+                seasonal_cycle_ensemble_std_array = np.std(seasonal_cycle_array_for_ensemble, axis = 0)
+
+                seasonal_cycle_ensemble_max_array = np.amax(seasonal_cycle_array_for_ensemble, axis = 0)
+
+                seasonal_cycle_ensemble_min_array = np.amin(seasonal_cycle_array_for_ensemble, axis = 0)
+
+                seasonal_cycle_ensemble_top_array = seasonal_cycle_ensemble_max_array - seasonal_cycle_ensemble_array
+
+                seasonal_cycle_ensemble_bottom_array = seasonal_cycle_ensemble_array - seasonal_cycle_ensemble_min_array
+
                 print "ensemble"
                 print seasonal_cycle_ensemble_array
 
@@ -2700,7 +2785,7 @@ if __name__ == "__main__":
 
                 model_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap)[0]
                 reanalysis_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap)[1]
-                plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_array, seasonal_cycle_dv_array, seasonal_cycle_pv_array, seasonal_cycle_reanalysis_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval, number_of_variables, list_of_variables, variables_to_add, fill_between_lines, variables_to_subtract, legend_in_plot)
+                plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_array, seasonal_cycle_ensemble_std_array, seasonal_cycle_ensemble_top_array, seasonal_cycle_ensemble_bottom_array, seasonal_cycle_dv_array, seasonal_cycle_pv_array, seasonal_cycle_reanalysis_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval, number_of_variables, list_of_variables, variables_to_add, fill_between_lines, variables_to_subtract, legend_in_plot)
                 print('')
 
     #------------------------------------------------------------------------------------------------------------------------------------------
@@ -2711,6 +2796,8 @@ if __name__ == "__main__":
         mam_values = []
         jja_values = []
         son_values = []
+        mar_values = []
+        jul_values = []
         list_all_datasets = []
 
         if len(list_of_models) > 0:
@@ -2753,6 +2840,8 @@ if __name__ == "__main__":
                     mam_value = (model_seasonal_cycle[2] + model_seasonal_cycle[3] + model_seasonal_cycle[4])/float(3.0)
                     jja_value = (model_seasonal_cycle[5] + model_seasonal_cycle[6] + model_seasonal_cycle[7])/float(3.0)
                     son_value = (model_seasonal_cycle[8] + model_seasonal_cycle[9] + model_seasonal_cycle[10])/float(3.0)
+                    mar_value = model_seasonal_cycle[2]
+                    jul_value = model_seasonal_cycle[6]
 
                     print "%.3f, %.3f, %.3f, %.3f" % (djf_value, mam_value, jja_value, son_value)
 
@@ -2762,11 +2851,15 @@ if __name__ == "__main__":
                     mam_values = np.append(mam_values, mam_value)
                     jja_values = np.append(jja_values, jja_value)
                     son_values = np.append(son_values, son_value)
+                    mar_values = np.append(mar_values, mar_value)
+                    jul_values = np.append(jul_values, jul_value)
 
                     barchart_array_djf[variable_number, model_number] = djf_value
                     barchart_array_mam[variable_number, model_number] = mam_value
                     barchart_array_jja[variable_number, model_number] = jja_value
                     barchart_array_son[variable_number, model_number] = son_value
+                    barchart_array_mar[variable_number, model_number] = mar_value
+                    barchart_array_jul[variable_number, model_number] = jul_value
 
                     print variable_number
                     print model_number
@@ -2787,21 +2880,29 @@ if __name__ == "__main__":
                 mam_value_dv = (dv_seasonal_cycle[2] + dv_seasonal_cycle[3] + dv_seasonal_cycle[4])/float(3.0)
                 jja_value_dv = (dv_seasonal_cycle[5] + dv_seasonal_cycle[6] + dv_seasonal_cycle[7])/float(3.0)
                 son_value_dv = (dv_seasonal_cycle[8] + dv_seasonal_cycle[9] + dv_seasonal_cycle[10])/float(3.0)
+                mar_value_dv = dv_seasonal_cycle[2]
+                jul_value_dv = dv_seasonal_cycle[6]
 
                 djf_value_pv = (pv_seasonal_cycle[11] + pv_seasonal_cycle[0] + pv_seasonal_cycle[1])/float(3.0)
                 mam_value_pv = (pv_seasonal_cycle[2] + pv_seasonal_cycle[3] + pv_seasonal_cycle[4])/float(3.0)
                 jja_value_pv = (pv_seasonal_cycle[5] + pv_seasonal_cycle[6] + pv_seasonal_cycle[7])/float(3.0)
                 son_value_pv = (pv_seasonal_cycle[8] + pv_seasonal_cycle[9] + pv_seasonal_cycle[10])/float(3.0)
+                mar_value_pv = pv_seasonal_cycle[2]
+                jul_value_pv = pv_seasonal_cycle[6]
 
                 djf_values = np.append(djf_values, djf_value_dv)
                 mam_values = np.append(mam_values, mam_value_dv)
                 jja_values = np.append(jja_values, jja_value_dv)
                 son_values = np.append(son_values, son_value_dv)
+                mar_values = np.append(mar_values, mar_value_dv)
+                jul_values = np.append(jul_values, jul_value_dv)
 
                 djf_values = np.append(djf_values, djf_value_pv)
                 mam_values = np.append(mam_values, mam_value_pv)
                 jja_values = np.append(jja_values, jja_value_pv)
                 son_values = np.append(son_values, son_value_pv)
+                mar_values = np.append(mar_values, mar_value_pv)
+                jul_values = np.append(jul_values, jul_value_pv)
 
                 model_number = model_number+1
 
@@ -2809,6 +2910,8 @@ if __name__ == "__main__":
                 barchart_array_mam[variable_number, model_number] = mam_value_dv
                 barchart_array_jja[variable_number, model_number] = jja_value_dv
                 barchart_array_son[variable_number, model_number] = son_value_dv
+                barchart_array_mar[variable_number, model_number] = mar_value_dv
+                barchart_array_jul[variable_number, model_number] = jul_value_dv
 
                 model_number = model_number+1
 
@@ -2816,15 +2919,22 @@ if __name__ == "__main__":
                 barchart_array_mam[variable_number, model_number] = mam_value_pv
                 barchart_array_jja[variable_number, model_number] = jja_value_pv
                 barchart_array_son[variable_number, model_number] = son_value_pv
+                barchart_array_mar[variable_number, model_number] = mar_value_pv
+                barchart_array_jul[variable_number, model_number] = jul_value_pv
 
             print "Ensemble"
             ensemble_seasonal_cycle = [float('%.3f' % i) for i in seasonal_cycle_ensemble_array]
+            ensemble_std_seasonal_cycle = [float('%.3f' % i) for i in seasonal_cycle_ensemble_std_array]
+            ensemble_top_seasonal_cycle = [float('%.3f' % i) for i in seasonal_cycle_ensemble_top_array]
+            ensemble_bottom_seasonal_cycle = [float('%.3f' % i) for i in seasonal_cycle_ensemble_bottom_array]
             print ensemble_seasonal_cycle
 
             djf_value = (ensemble_seasonal_cycle[11] + ensemble_seasonal_cycle[0] + ensemble_seasonal_cycle[1])/float(3.0)
             mam_value = (ensemble_seasonal_cycle[2] + ensemble_seasonal_cycle[3] + ensemble_seasonal_cycle[4])/float(3.0)
             jja_value = (ensemble_seasonal_cycle[5] + ensemble_seasonal_cycle[6] + ensemble_seasonal_cycle[7])/float(3.0)
             son_value = (ensemble_seasonal_cycle[8] + ensemble_seasonal_cycle[9] + ensemble_seasonal_cycle[10])/float(3.0)
+            mar_value = ensemble_seasonal_cycle[2]
+            jul_value = ensemble_seasonal_cycle[6]
 
             print "%.3f, %.3f, %.3f, %.3f" % (djf_value, mam_value, jja_value, son_value)
 
@@ -2834,6 +2944,11 @@ if __name__ == "__main__":
             mam_values = np.append(mam_values, mam_value)
             jja_values = np.append(jja_values, jja_value)
             son_values = np.append(son_values, son_value)
+            mar_values = np.append(mar_values, mar_value)
+            jul_values = np.append(jul_values, jul_value)
+
+            print "hi30"
+            print mar_values
 
             if models == 'yes':
                 model_number = model_number+1
@@ -2844,12 +2959,15 @@ if __name__ == "__main__":
             barchart_array_mam[variable_number, model_number] = mam_value
             barchart_array_jja[variable_number, model_number] = jja_value
             barchart_array_son[variable_number, model_number] = son_value
+            barchart_array_mar[variable_number, model_number] = mar_value
+            barchart_array_jul[variable_number, model_number] = jul_value
 
             print variable_number
-            print "hi12"
-            print barchart_array_djf.shape
 
             seasonal_cycle_ensemble_multiple_variables_array[variable_number] = ensemble_seasonal_cycle
+            seasonal_cycle_ensemble_multiple_variables_std_array[variable_number] = ensemble_std_seasonal_cycle
+            seasonal_cycle_ensemble_multiple_variables_top_array[variable_number] = ensemble_top_seasonal_cycle
+            seasonal_cycle_ensemble_multiple_variables_bottom_array[variable_number] = ensemble_bottom_seasonal_cycle
 
 
         if len(list_of_reanalysis) > 0:
@@ -2868,6 +2986,8 @@ if __name__ == "__main__":
                 mam_value = (reanalysis_seasonal_cycle[2] + reanalysis_seasonal_cycle[3] + reanalysis_seasonal_cycle[4])/float(3.0)
                 jja_value = (reanalysis_seasonal_cycle[5] + reanalysis_seasonal_cycle[6] + reanalysis_seasonal_cycle[7])/float(3.0)
                 son_value = (reanalysis_seasonal_cycle[8] + reanalysis_seasonal_cycle[9] + reanalysis_seasonal_cycle[10])/float(3.0)
+                mar_value = reanalysis_seasonal_cycle[2]
+                jul_value = reanalysis_seasonal_cycle[6]
 
                 print "%.3f, %.3f, %.3f, %.3f" % (djf_value, mam_value, jja_value, son_value)
 
@@ -2877,6 +2997,11 @@ if __name__ == "__main__":
                 mam_values = np.append(mam_values, mam_value)
                 jja_values = np.append(jja_values, jja_value)
                 son_values = np.append(son_values, son_value)
+                mar_values = np.append(mar_values, mar_value)
+                jul_values = np.append(jul_values, jul_value)
+
+                print "hi31"
+                print mar_values
 
                 reanalysis_number = reanalysis_number + 1 + model_number
 
@@ -2884,6 +3009,10 @@ if __name__ == "__main__":
                 barchart_array_mam[variable_number, reanalysis_number] = mam_value
                 barchart_array_jja[variable_number, reanalysis_number] = jja_value
                 barchart_array_son[variable_number, reanalysis_number] = son_value
+                barchart_array_mar[variable_number, reanalysis_number] = mar_value
+                barchart_array_jul[variable_number,  reanalysis_number] = jul_value
+
+                print barchart_array_mar
 
                 seasonal_cycle_reanalysis_multiple_variables_array[variable_number] = reanalysis_seasonal_cycle
 
@@ -2936,6 +3065,28 @@ if __name__ == "__main__":
 
         print('')
 
+        print "Mar VALUES"
+
+        print mar_values
+        mar_values, list_all_datasets = (list(i) for i in zip(*sorted(zip(mar_values, list_all_datasets_input))))
+        mar_values = [float('%.3f' % i) for i in mar_values]
+        print mar_values[::-1]
+        print list_all_datasets[::-1]
+        print list_all_datasets
+
+        print('')
+
+        print "Jul VALUES"
+
+        print jul_values
+        jul_values, list_all_datasets = (list(i) for i in zip(*sorted(zip(jul_values, list_all_datasets_input))))
+        jul_values = [float('%.3f' % i) for i in jul_values]
+        print jul_values[::-1]
+        print list_all_datasets[::-1]
+        print list_all_datasets
+
+        print('')
+
 
         """
         print mam_values
@@ -2950,20 +3101,25 @@ if __name__ == "__main__":
 
         print barchart_array_djf
 
-        if 'DJF' in bar_seasons:
+        if 'DJF' in bar_times:
             print "hi1"
             plot_bar(barchart_array_djf, number_of_models, number_of_reanalysis, number_of_variables, list_of_variables, model_strings_for_plot, reanalysis_strings_for_plot, ensemble, bar_y_axis_title, bar_colours, lower_y_lim, upper_y_lim, 'DJF', bar_width, variables_to_subtract)
-        if 'MAM' in bar_seasons:
+        if 'MAM' in bar_times:
             print "hi2"
             plot_bar(barchart_array_mam, number_of_models, number_of_reanalysis, number_of_variables, list_of_variables, model_strings_for_plot, reanalysis_strings_for_plot, ensemble, bar_y_axis_title, bar_colours, lower_y_lim, upper_y_lim, 'MAM', bar_width, variables_to_subtract)
-        if 'JJA' in bar_seasons:
+        if 'JJA' in bar_times:
             print "hi3"
             print barchart_array_jja
             plot_bar(barchart_array_jja, number_of_models, number_of_reanalysis, number_of_variables, list_of_variables, model_strings_for_plot, reanalysis_strings_for_plot, ensemble, bar_y_axis_title, bar_colours, lower_y_lim, upper_y_lim, 'JJA', bar_width, variables_to_subtract)
-        if 'SON' in bar_seasons:
+        if 'SON' in bar_times:
             print "hi4"
             plot_bar(barchart_array_son, number_of_models, number_of_reanalysis, number_of_variables, list_of_variables, model_strings_for_plot, reanalysis_strings_for_plot, ensemble, bar_y_axis_title, bar_colours, lower_y_lim, upper_y_lim, 'SON', bar_width, variables_to_subtract)
-
+        if 'Mar' in bar_times:
+            print "hi4"
+            plot_bar(barchart_array_mar, number_of_models, number_of_reanalysis, number_of_variables, list_of_variables, model_strings_for_plot, reanalysis_strings_for_plot, ensemble, bar_y_axis_title, bar_colours, lower_y_lim, upper_y_lim, 'Mar', bar_width, variables_to_subtract)
+        if 'Jul' in bar_times:
+            print "hi4"
+            plot_bar(barchart_array_jul, number_of_models, number_of_reanalysis, number_of_variables, list_of_variables, model_strings_for_plot, reanalysis_strings_for_plot, ensemble, bar_y_axis_title, bar_colours, lower_y_lim, upper_y_lim, 'Jul', bar_width, variables_to_subtract)
 
     #print seasonal_cycle_reanalysis_multiple_variables_array
 
@@ -2976,8 +3132,11 @@ if __name__ == "__main__":
             model_line_colours = []
             reanalysis_line_colours = []
             print seasonal_cycle_ensemble_multiple_variables_array
+            #print seasonal_cycle_ensemble_multiple_variables_std_array
+            print seasonal_cycle_ensemble_multiple_variables_top_array
+            print seasonal_cycle_ensemble_multiple_variables_bottom_array
 
-            plot_seasonal_cycle(seasonal_cycle_models_multiple_variables_array, seasonal_cycle_ensemble_multiple_variables_array, seasonal_cycle_dv_multiple_variables_array, seasonal_cycle_pv_multiple_variables_array, seasonal_cycle_reanalysis_multiple_variables_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval, number_of_variables, list_of_variables, variables_to_add, fill_between_lines, variables_to_subtract, legend_in_plot)
+            plot_seasonal_cycle(seasonal_cycle_models_multiple_variables_array, seasonal_cycle_ensemble_multiple_variables_array, seasonal_cycle_ensemble_multiple_variables_std_array, seasonal_cycle_ensemble_multiple_variables_top_array, seasonal_cycle_ensemble_multiple_variables_bottom_array, seasonal_cycle_dv_multiple_variables_array, seasonal_cycle_pv_multiple_variables_array, seasonal_cycle_reanalysis_multiple_variables_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval, number_of_variables, list_of_variables, variables_to_add, fill_between_lines, variables_to_subtract, legend_in_plot)
 
         if number_of_variables == 1 and subplot_multiple_variables == "yes":
 
@@ -2985,9 +3144,11 @@ if __name__ == "__main__":
             model_line_colours = []
             reanalysis_line_colours = []
             print seasonal_cycle_ensemble_multiple_variables_array
+            print seasonal_cycle_ensemble_multiple_variables_top_array
+            print seasonal_cycle_ensemble_multiple_variables_bottom_array
 
             if include_dynamic_prescribed == 'yes':
                 print seasonal_cycle_dv_multiple_variables_array
                 print seasonal_cycle_pv_multiple_variables_array
 
-            plot_seasonal_cycle(seasonal_cycle_models_multiple_variables_array, seasonal_cycle_ensemble_multiple_variables_array, seasonal_cycle_dv_multiple_variables_array, seasonal_cycle_pv_multiple_variables_array, seasonal_cycle_reanalysis_multiple_variables_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval, number_of_variables, list_of_variables, variables_to_add, fill_between_lines, variables_to_subtract, legend_in_plot)
+            plot_seasonal_cycle(seasonal_cycle_models_multiple_variables_array, seasonal_cycle_ensemble_multiple_variables_array, seasonal_cycle_ensemble_multiple_variables_std_array, seasonal_cycle_ensemble_multiple_variables_top_array, seasonal_cycle_ensemble_multiple_variables_bottom_array, seasonal_cycle_dv_multiple_variables_array, seasonal_cycle_pv_multiple_variables_array, seasonal_cycle_reanalysis_multiple_variables_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval, number_of_variables, list_of_variables, variables_to_add, fill_between_lines, variables_to_subtract, legend_in_plot)
