@@ -1772,8 +1772,6 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
             x_pos = np.arange(len(objects))
             plt.xticks(x_pos, objects, fontsize=7)
 
-            print list_of_variables[i]
-
             if list_of_variables[i] == 'vpd':
                 lower_y_lim = 0.0
                 upper_y_lim = 2.6
@@ -1875,9 +1873,6 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
             plt.ylim(lower_y_lim, upper_y_lim)
             plt.yticks(np.arange(lower_y_lim, upper_y_lim+y_tick_interval, y_tick_interval), fontsize=7)
 
-            print seasonal_cycle_ensemble_array
-            print seasonal_cycle_reanalysis_array
-
             if ensemble == 'yes':
 
                 seasonal_cycle_ensemble_variable_data = seasonal_cycle_ensemble_array[i]
@@ -1887,6 +1882,13 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 seasonal_cycle_ensemble_variable_top_data = seasonal_cycle_ensemble_top_array[i]
 
                 seasonal_cycle_ensemble_variable_bottom_data = seasonal_cycle_ensemble_bottom_array[i]
+
+                print list_of_variables[i]
+                print seasonal_cycle_ensemble_variable_data
+                print "max"
+                print seasonal_cycle_ensemble_array[i] + seasonal_cycle_ensemble_top_array[i]
+                print "min"
+                print seasonal_cycle_ensemble_array[i] - seasonal_cycle_ensemble_bottom_array[i]
 
                 line = ax.plot(x_pos, seasonal_cycle_ensemble_variable_data, linestyle='-', linewidth=1.5, color=line_colour, zorder=2)
 
@@ -1963,8 +1965,8 @@ if __name__ == "__main__":
     #list_of_models = ["MIROC5"]
     #list_of_models = []
     #list_of_reanalysis = ["era5", "erai", "gleam", "merra2"]
-    list_of_reanalysis = ['gleam']
-    #list_of_reanalysis = []
+    #list_of_reanalysis = ['gleam']
+    list_of_reanalysis = []
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/"]
     #list_of_reanalysis = ['cfsr', 'era5', 'erai', 'gleam', 'jra', 'merra2', 'ncep-doe']
     #list_of_reanalysis = ["cfsr", "era5", "erai", "gleam", "jra", "merra2", "ncep-doe"]
@@ -1978,12 +1980,12 @@ if __name__ == "__main__":
 
     #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evaporation"]
     #partitioning one
-    list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evaporation"]
+    #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evaporation"]
     #list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi"]
     #list_of_variables = ["hfls", "hfss", "nrad"]
     #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "hfls"]
     #list_of_variables = ['tran']
-    #list_of_variables = ['pr']
+    #list_of_variables = ['evspsblsoi']
     #list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
     #list_of_variables = ['pr', 'evaporation', 'mrro']
 
@@ -1991,8 +1993,9 @@ if __name__ == "__main__":
     #list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi"]
     #list_of_variables = ['evaporation']
     #list_of_variables = ['pr', 'nrad', 'vpd']
-    #list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi", "pr", "nrad", 'tas', "hurs", "ws", "vpd", "lai",  "sa"]
-    subplot_multiple_variables = 'no'
+    list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi", "pr", "nrad", 'tas', "hurs", "ws", "vpd", "lai",  "sa"]
+    #list_of_variables = ["pr", "nrad", 'tas', "hurs", "ws", "vpd", "lai",  "sa"]
+    subplot_multiple_variables = 'yes'
     include_dynamic_prescribed = 'yes'
     #list_dynamic_veg_models = ['bcc-csm1-1/', 'bcc-csm1-1-m/', 'BNU-ESM/', 'GFDL-HIRAM-C180/', 'GFDL-HIRAM-C360/', 'IPSL-CM5A-LR/', 'IPSL-CM5A-MR/', 'IPSL-CM5B-LR/']
     #list_prescribed_veg_models = ['CanAM4/', 'CNRM-CM5/', 'GISS-E2-R/', 'inmcm4/', 'MIROC5/', "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
@@ -2004,11 +2007,11 @@ if __name__ == "__main__":
 
     variables_to_add = []
     #variables_to_add = [['evaporation', 'mrro']]
-    #variables_to_subtract = []
+    variables_to_subtract = []
     #variables_to_subtract = [['pr', 'evspsblsoi', 'evspsblveg', 'mrro']]
     #variables_to_subtract = [['pr', 'mrro']]
     #partitioning one
-    variables_to_subtract = [['evaporation', 'tran', 'evspsblveg', 'evspsblsoi']]
+    #variables_to_subtract = [['evaporation', 'tran', 'evspsblveg', 'evspsblsoi']]
     #variables_to_subtract = [['pr', 'mrro']]
 
     # EXACT NUMBERS NOT PYTHON INDICES
@@ -2044,12 +2047,12 @@ if __name__ == "__main__":
     y_tick_interval = 1.0
 
     cmap = 'rainbow'
-    models = 'yes'
+    models = 'no'
     ensemble = 'yes'
-    reanalysis = 'yes'
-    plot = 'no'
+    reanalysis = 'no'
+    plot = 'yes'
     unit_plot = "mm day-1"
-    bar_plot = 'yes'
+    bar_plot = 'no'
     bar_times = ['Jul']
     bar_y_axis_title = 'Evaporation (mm $\mathregular{day^{-1}}$)'
     #bar_y_axis_title = 'Heat Flux (W $\mathregular{m^{-2}}$)'
@@ -2927,6 +2930,7 @@ if __name__ == "__main__":
             ensemble_std_seasonal_cycle = [float('%.3f' % i) for i in seasonal_cycle_ensemble_std_array]
             ensemble_top_seasonal_cycle = [float('%.3f' % i) for i in seasonal_cycle_ensemble_top_array]
             ensemble_bottom_seasonal_cycle = [float('%.3f' % i) for i in seasonal_cycle_ensemble_bottom_array]
+            print variable
             print ensemble_seasonal_cycle
 
             djf_value = (ensemble_seasonal_cycle[11] + ensemble_seasonal_cycle[0] + ensemble_seasonal_cycle[1])/float(3.0)
