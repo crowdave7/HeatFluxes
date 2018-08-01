@@ -1756,6 +1756,9 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
         if subplot_columns == 4 and subplot_rows == 3:
             fig = plt.figure(figsize=(10,8))
 
+        if subplot_columns == 4 and subplot_rows == 4:
+            fig = plt.figure(figsize=(10, 10))
+
         #def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_array, seasonal_cycle_reanalysis_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval, number_of_variables, list_of_variables, variables_to_add, fill_between_lines, variables_to_subtract, legend_in_plot):
 
         variable_number = 0
@@ -1814,13 +1817,6 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 plt.ylabel('Bare Soil Evaporation (mm $\mathregular{day^{-1}}$)', fontsize=7)
                 line_colour = 'saddlebrown'
 
-            if list_of_variables[i] == 'mrsos':
-                lower_y_lim = 10
-                upper_y_lim = 45
-                y_tick_interval = 5
-                plt.ylabel('Soil Moisture Upper Layer (mm)', fontsize=7)
-                line_colour = 'deepskyblue'
-
             if list_of_variables[i] == 'evaporation':
                 lower_y_lim = 0.0
                 upper_y_lim = 5.5
@@ -1850,11 +1846,11 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 line_colour = 'darkred'
 
             if list_of_variables[i] == 'mrsos':
-                lower_y_lim = 10
+                lower_y_lim = 0
                 upper_y_lim = 45
                 y_tick_interval = 5
                 plt.ylabel('Soil Moisture Upper Layer (mm)', fontsize=7)
-                line_colour = 'cornflowerblue'
+                line_colour = 'blueviolet'
 
             if list_of_variables[i] == 'ws':
                 lower_y_lim = 0.0
@@ -1869,6 +1865,27 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 y_tick_interval = 0.8
                 plt.ylabel('Soil Moisture Accumulation (mm $\mathregular{day^{-1}}$)', fontsize=7)
                 line_colour = 'darkcyan'
+
+            if list_of_variables[i] == 'hfls':
+                lower_y_lim = 0.0
+                upper_y_lim = 160.0
+                y_tick_interval = 20.0
+                plt.ylabel('Latent Heat Flux (W $\mathregular{m^{-2}}$)', fontsize=7)
+                line_colour = 'navy'
+
+            if list_of_variables[i] == 'hfss':
+                lower_y_lim = 0.0
+                upper_y_lim = 110.0
+                y_tick_interval = 10.0
+                plt.ylabel('Sensible Heat Flux (W $\mathregular{m^{-2}}$)', fontsize=7)
+                line_colour = 'darkred'
+
+            if list_of_variables[i] == 'mrro':
+                lower_y_lim = -1.0
+                upper_y_lim = 9.0
+                y_tick_interval = 1.0
+                plt.ylabel('Runoff (mm $\mathregular{day^{-1}}$)', fontsize=7)
+                line_colour = 'purple'
 
             plt.ylim(lower_y_lim, upper_y_lim)
             plt.yticks(np.arange(lower_y_lim, upper_y_lim+y_tick_interval, y_tick_interval), fontsize=7)
@@ -1934,8 +1951,12 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
             plt.subplots_adjust(left=0.05, right=0.95, wspace=0.6, hspace=0.2)
 
+        if subplot_columns == 4 and subplot_rows == 4:
+
+            plt.subplots_adjust(left=0.05, right=0.95, wspace=0.6, hspace=0.2)
+
         print "saving final figure"
-        fig.savefig("Gridded_Seasonal_Cycles_Rainforest_GLEAM.png", bbox_inches='tight')
+        fig.savefig("Gridded_Seasonal_Cycles_South.png", bbox_inches='tight')
         plt.close()
         print "plot done"
 
@@ -1993,17 +2014,17 @@ if __name__ == "__main__":
     #list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi"]
     #list_of_variables = ['evaporation']
     #list_of_variables = ['pr', 'nrad', 'vpd']
-    list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi", "pr", "nrad", 'tas', "hurs", "ws", "vpd", "lai",  "sa"]
-    #list_of_variables = ["pr", "nrad", 'tas', "hurs", "ws", "vpd", "lai",  "sa"]
+    list_of_variables = ["evaporation", "tran", "evspsblveg", "evspsblsoi", "pr", "nrad", "hfls", "hfss", 'tas', "hurs", "ws", "vpd", "mrro", "mrsos", "sa", "lai"]
+    #list_of_variables = ["hfls", "hfss", "mrro", "mrsos"]
     subplot_multiple_variables = 'yes'
-    include_dynamic_prescribed = 'yes'
+    include_dynamic_prescribed = 'no'
     #list_dynamic_veg_models = ['bcc-csm1-1/', 'bcc-csm1-1-m/', 'BNU-ESM/', 'GFDL-HIRAM-C180/', 'GFDL-HIRAM-C360/', 'IPSL-CM5A-LR/', 'IPSL-CM5A-MR/', 'IPSL-CM5B-LR/']
     #list_prescribed_veg_models = ['CanAM4/', 'CNRM-CM5/', 'GISS-E2-R/', 'inmcm4/', 'MIROC5/', "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     list_dynamic_veg_models = ['bcc-csm1-1-m/', 'BNU-ESM/', 'GFDL-HIRAM-C360/', 'IPSL-CM5A-MR/']
     list_prescribed_veg_models = ['CanAM4/', 'CNRM-CM5/', 'GISS-E2-R/', 'inmcm4/', 'MIROC5/', "MRI-AGCM3-2S/", "NorESM1-M/"]
 
     subplot_columns = 4
-    subplot_rows = 3
+    subplot_rows = 4
 
     variables_to_add = []
     #variables_to_add = [['evaporation', 'mrro']]
