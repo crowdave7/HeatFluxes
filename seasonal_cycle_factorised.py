@@ -3447,6 +3447,9 @@ if __name__ == "__main__":
 
         if rmse == 'yes':
 
+            months = [1,2,3,4,9,10,11,12]
+            months[:] = [i - 1 for i in months]
+
             evap_rmse = []
             pr_rmse = []
             list_of_rmse_models_evap = []
@@ -3479,11 +3482,14 @@ if __name__ == "__main__":
                                 model_seasonal_cycle = model_seasonal_cycle[:-1]
                                 landfluxeval_seasonal_cycle = landfluxeval_seasonal_cycle[:-1]
 
-                                print model_id
-                                print model_seasonal_cycle
-                                print landfluxeval_seasonal_cycle
+                                model_seasonal_cycle = np.asarray(model_seasonal_cycle)
+                                landfluxeval_seasonal_cycle = np.asarray(landfluxeval_seasonal_cycle)
 
-                                rmse_val = np.sqrt(((np.array(model_seasonal_cycle) - np.array(landfluxeval_seasonal_cycle)) ** 2).mean())
+                                print model_id
+                                print model_seasonal_cycle[months]
+                                print landfluxeval_seasonal_cycle[months]
+
+                                rmse_val = np.sqrt(((np.array(model_seasonal_cycle[months]) - np.array(landfluxeval_seasonal_cycle[months])) ** 2).mean())
                                 print rmse_val
 
                                 evap_rmse = np.append(evap_rmse, rmse_val)
@@ -3509,10 +3515,12 @@ if __name__ == "__main__":
 
                         if variable == 'pr':
                             model_seasonal_cycle = model_seasonal_cycle[:-1]
+                            model_seasonal_cycle = np.asarray(model_seasonal_cycle)
+                            pr_ref_seasonal_cycle = np.asarray(pr_ref_seasonal_cycle)
                             print model_id
                             print model_seasonal_cycle
                             print pr_ref_seasonal_cycle
-                            rmse_val = np.sqrt(((np.array(model_seasonal_cycle) - np.array(pr_ref_seasonal_cycle)) ** 2).mean())
+                            rmse_val = np.sqrt(((np.array(model_seasonal_cycle[months]) - np.array(pr_ref_seasonal_cycle[months])) ** 2).mean())
                             print rmse_val
                             pr_rmse = np.append(pr_rmse, rmse_val)
                             list_of_rmse_models_precip = np.append(list_of_rmse_models_precip, model_id)
@@ -3539,10 +3547,14 @@ if __name__ == "__main__":
                             landfluxeval_seasonal_cycle = landfluxeval_seasonal_cycle[:-1]
 
                             print "ensemble"
-                            print ensemble_seasonal_cycle
-                            print landfluxeval_seasonal_cycle
 
-                            rmse_val = np.sqrt(((np.array(ensemble_seasonal_cycle) - np.array(landfluxeval_seasonal_cycle)) ** 2).mean())
+                            ensemble_seasonal_cycle = np.asarray(ensemble_seasonal_cycle)
+                            landfluxeval_seasonal_cycle = np.asarray(landfluxeval_seasonal_cycle)
+
+                            print ensemble_seasonal_cycle[months]
+                            print landfluxeval_seasonal_cycle[months]
+
+                            rmse_val = np.sqrt(((np.array(ensemble_seasonal_cycle[months]) - np.array(landfluxeval_seasonal_cycle[months])) ** 2).mean())
 
                             evap_rmse = np.append(evap_rmse, rmse_val)
                             list_of_rmse_models_evap = np.append(list_of_rmse_models_evap, "Ensemble")
@@ -3568,9 +3580,11 @@ if __name__ == "__main__":
                     if variable == 'pr':
 
                         print "Ensemble"
+                        ensemble_seasonal_cycle = np.asarray(ensemble_seasonal_cycle)
+                        pr_ref_seasonal_cycle = np.asarray(pr_ref_seasonal_cycle)
                         print ensemble_seasonal_cycle
                         print pr_ref_seasonal_cycle
-                        rmse_val = np.sqrt(((np.array(ensemble_seasonal_cycle) - np.array(pr_ref_seasonal_cycle)) ** 2).mean())
+                        rmse_val = np.sqrt(((np.array(ensemble_seasonal_cycle[months]) - np.array(landfluxeval_seasonal_cycle[months])) ** 2).mean())
                         print rmse_val
                         pr_rmse = np.append(pr_rmse, rmse_val)
                         list_of_rmse_models_precip = np.append(list_of_rmse_models_precip, "Ensemble")
@@ -3604,12 +3618,17 @@ if __name__ == "__main__":
                             if reanalysis_id_1 in ['LandFlux-EVAL', 'MODIS']:
                                 pass
                             else:
-
+                                if reanalysis_id_1 == 'GLEAM':
+                                    reanalysis_id_1 = 'GLEAM/MSWEP'
                                 print reanalysis_id_1
-                                print reanalysis_seasonal_cycle
-                                print landfluxeval_seasonal_cycle
 
-                                rmse_val = np.sqrt(((np.array(reanalysis_seasonal_cycle) - np.array(landfluxeval_seasonal_cycle)) ** 2).mean())
+                                reanalysis_seasonal_cycle = np.asarray(reanalysis_seasonal_cycle)
+                                landfluxeval_seasonal_cycle = np.asarray(landfluxeval_seasonal_cycle)
+
+                                print reanalysis_seasonal_cycle[months]
+                                print landfluxeval_seasonal_cycle[months]
+
+                                rmse_val = np.sqrt(((np.array(reanalysis_seasonal_cycle[months]) - np.array(landfluxeval_seasonal_cycle[months])) ** 2).mean())
                                 print rmse_val
 
                                 evap_rmse = np.append(evap_rmse, rmse_val)
@@ -3636,15 +3655,17 @@ if __name__ == "__main__":
                     if variable == 'pr':
 
                         print reanalysis_id_1
+                        reanalysis_seasonal_cycle = np.asarray(reanalysis_seasonal_cycle)
+                        pr_ref_seasonal_cycle = np.asarray(pr_ref_seasonal_cycle)
                         print reanalysis_seasonal_cycle
                         print pr_ref_seasonal_cycle
-                        rmse_val = np.sqrt(((np.array(reanalysis_seasonal_cycle) - np.array(pr_ref_seasonal_cycle)) ** 2).mean())
+                        rmse_val = np.sqrt(((np.array(reanalysis_seasonal_cycle[months]) - np.array(pr_ref_seasonal_cycle[months])) ** 2).mean())
                         print rmse_val
 
                         if reanalysis_id_1 in ['CHIRPS', 'GPCC']:
                             pass
                         else:
-                            if reanalysis_id_1 == 'GLEAM':
+                            if reanalysis_id_1 == 'MSWEP':
                                 reanalysis_id_1 = 'GLEAM/MSWEP'
                             list_of_rmse_models_precip = np.append(list_of_rmse_models_precip, reanalysis_id_1)
                             pr_rmse = np.append(pr_rmse, rmse_val)
