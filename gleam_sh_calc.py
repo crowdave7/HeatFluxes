@@ -14,14 +14,130 @@ import os
 
 print "hi"
 
+#------------------------------------------------------------
+
+# "CANOPY STORAGE CAPACITY EXTRACTION"
+#
+# list_of_models = ["bcc-csm1-1-m/", "GFDL-HIRAM-C360/", "IPSL-CM5A-MR/", "MIROC5/", "NorESM1-M/"]
+#
+# root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles"
+#
+# for m in list_of_models:
+#
+#     for char in '/':
+#         model = m.replace(char,'')
+#
+#     model_name = str(model)
+#
+#     lai_file_path = []
+#     for root, directories, files in os.walk(root_directory):
+#         for i in files:
+#             path = os.path.join(root, i)
+#             #print path
+#             if m == "bcc-csm1-1/":
+#                 m = "bcc-csm1-1_"
+#             for char in '/':
+#                 m = m.replace(char,'')
+#                 print m
+#                 if m in path and 'amip' in path and 'lai' in path:
+#                     lai_file_path = np.append(lai_file_path, path)
+#
+#     lai_cube = iris.load_cube(lai_file_path)
+#
+#     lai_cube = iris.analysis.maths.multiply(lai_cube, 0.2)
+#
+#     canopy_capacity_cube = iris.analysis.maths.add(lai_cube, 0.05)
+#
+#     canopy_capacity_cube.units = "mm day-1"
+#
+#     canopy_capacity_cube.long_name = model_name
+#
+#     iris.save(canopy_capacity_cube, "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles/cancap_"+model_name+"_amip_regridded.nc")
 
 #-------------------------------------------------------------
 
-"SOIL MOISTURE ACCUMULATION / DEPLETION EXTRACTION"
+# "SOIL MOISTURE ACCUMULATION / DEPLETION EXTRACTION FROM REGRIDDED MODEL FILES."
+#
+# list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+#
+# root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles"
+#
+# for m in list_of_models:
+#
+#     for char in '/':
+#         model = m.replace(char,'')
+#
+#     model_name = str(model)
+#
+#     pr_file_path = []
+#     for root, directories, files in os.walk(root_directory):
+#         for i in files:
+#             path = os.path.join(root, i)
+#             if m == "bcc-csm1-1/":
+#                 m = "bcc-csm1-1_"
+#             for char in '/':
+#                 m = m.replace(char,'')
+#                 if m in path and 'amip' in path and 'pr_' in path:
+#                     pr_file_path = np.append(pr_file_path, path)
+#
+#     hfls_file_path = []
+#     for root, directories, files in os.walk(root_directory):
+#         for i in files:
+#             path = os.path.join(root, i)
+#             if m == "bcc-csm1-1/":
+#                 m = "bcc-csm1-1_"
+#             for char in '/':
+#                 m = m.replace(char,'')
+#                 if m in path and 'amip' in path and 'hfls_' in path:
+#                     hfls_file_path = np.append(hfls_file_path, path)
+#
+#     mrro_file_path = []
+#     for root, directories, files in os.walk(root_directory):
+#         for i in files:
+#             path = os.path.join(root, i)
+#             if m == "bcc-csm1-1/":
+#                 m = "bcc-csm1-1_"
+#             for char in '/':
+#                 m = m.replace(char,'')
+#                 if m in path and 'amip' in path and 'mrro_' in path:
+#                     mrro_file_path = np.append(mrro_file_path, path)
+#
+#     print pr_file_path
+#     print hfls_file_path
+#     print mrro_file_path
+#
+#
+#     pr_cube = iris.load_cube(pr_file_path)
+#     pr_cube = iris.analysis.maths.multiply(pr_cube, 86400)
+#
+#     pr_cube.units = "mm day-1"
+#
+#     hfls_cube = iris.load_cube(hfls_file_path)
+#     evap_cube = iris.analysis.maths.divide(hfls_cube, 28)
+#
+#     evap_cube.units = "mm day-1"
+#
+#     mrro_cube = iris.load_cube(mrro_file_path)
+#     mrro_cube = iris.analysis.maths.multiply(mrro_cube, 86400)
+#
+#     mrro_cube.units = "mm day-1"
+#
+#     first_cube = iris.analysis.maths.subtract(pr_cube, evap_cube)
+#
+#     soil_accumulation_cube = iris.analysis.maths.subtract(first_cube, mrro_cube)
+#
+#     soil_accumulation_cube.long_name = model_name
+#     soil_accumulation_cube.units = "mm day-1"
+#
+#     print soil_accumulation_cube
+# #
+#     iris.save(soil_accumulation_cube, "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles/sa_"+model_name+"_amip_regridded.nc")
 
-list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+#------------------------------------------------------------
 
-root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles"
+"SOIL MOISTURE ACCUMULATION / DEPLETION EXTRACTION: MODEL FILES."
+
+list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
 
 for m in list_of_models:
 
@@ -30,72 +146,139 @@ for m in list_of_models:
 
     model_name = str(model)
 
+    """Import the data."""
+    root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
+    ensemble = "r1i1p1"
+    model_type = "amip"
+
+    """Find the paths to the directories containing the model data"""
+    directory_paths = []
+    for root, directories, files in os.walk(root_directory):
+        for k in directories:
+            path = os.path.join(root, k)
+            if m in path and model_type in path and ensemble in path:
+                directory_paths = np.append(directory_paths, path)
+
+    print directory_paths
+
+    """Find the model files to pr and their absolute paths."""
     pr_file_path = []
-    for root, directories, files in os.walk(root_directory):
-        for i in files:
-            path = os.path.join(root, i)
-            if m == "bcc-csm1-1/":
-                m = "bcc-csm1-1_"
-            for char in '/':
-                m = m.replace(char,'')
-                if m in path and 'amip' in path and 'pr_' in path:
-                    pr_file_path = np.append(pr_file_path, path)
+    for i in directory_paths:
+        files = os.listdir(i)
+        for j in files:
+            if "pr_" in j:
+                model_file_path = os.path.join(i, j)
+                pr_file_path = np.append(pr_file_path, model_file_path)
 
+    pr_file_path = sorted(pr_file_path, key=lambda s: s.lower())
+    print pr_file_path
+
+    if model_name in ["GFDL-HIRAM-C180", "GFDL-HIRAM-C360"]:
+        pr_cube = iris.load(pr_file_path)[1]
+    else:
+        pr_cube = iris.load_cube(pr_file_path)
+
+    """Find the model files to hfls and their absolute paths."""
     hfls_file_path = []
-    for root, directories, files in os.walk(root_directory):
-        for i in files:
-            path = os.path.join(root, i)
-            if m == "bcc-csm1-1/":
-                m = "bcc-csm1-1_"
-            for char in '/':
-                m = m.replace(char,'')
-                if m in path and 'amip' in path and 'hfls_' in path:
-                    hfls_file_path = np.append(hfls_file_path, path)
+    for i in directory_paths:
+        files = os.listdir(i)
+        for j in files:
+            if "hfls_" in j:
+                model_file_path = os.path.join(i, j)
+                hfls_file_path = np.append(hfls_file_path, model_file_path)
 
+    hfls_file_path = sorted(hfls_file_path, key=lambda s: s.lower())
+    print hfls_file_path
+
+    if model_name in ["GFDL-HIRAM-C180", "GFDL-HIRAM-C360"]:
+        hfls_cube = iris.load(hfls_file_path)[1]
+    else:
+        hfls_cube = iris.load_cube(hfls_file_path)
+
+    """Find the model files to mrro and their absolute paths."""
     mrro_file_path = []
-    for root, directories, files in os.walk(root_directory):
-        for i in files:
-            path = os.path.join(root, i)
-            if m == "bcc-csm1-1/":
-                m = "bcc-csm1-1_"
-            for char in '/':
-                m = m.replace(char,'')
-                if m in path and 'amip' in path and 'mrro_' in path:
-                    mrro_file_path = np.append(mrro_file_path, path)
+    for i in directory_paths:
+        files = os.listdir(i)
+        for j in files:
+            if "mrro_" in j:
+                model_file_path = os.path.join(i, j)
+                mrro_file_path = np.append(mrro_file_path, model_file_path)
+
+    mrro_file_path = sorted(mrro_file_path, key=lambda s: s.lower())
+    print mrro_file_path
+
+    if model_name in ["GFDL-HIRAM-C180", "GFDL-HIRAM-C360"]:
+        mrro_cube = iris.load(mrro_file_path)[1]
+    else:
+        mrro_cube = iris.load_cube(mrro_file_path)
 
     print pr_file_path
     print hfls_file_path
     print mrro_file_path
 
 
-    pr_cube = iris.load_cube(pr_file_path)
+    #pr_cube = iris.load_cube(pr_file_path)
     pr_cube = iris.analysis.maths.multiply(pr_cube, 86400)
-
+    pr_cube.long_name = model_name
     pr_cube.units = "mm day-1"
 
-    hfls_cube = iris.load_cube(hfls_file_path)
+    #hfls_cube = iris.load_cube(hfls_file_path)
     evap_cube = iris.analysis.maths.divide(hfls_cube, 28)
-
+    evap_cube.long_name = model_name
     evap_cube.units = "mm day-1"
 
-    mrro_cube = iris.load_cube(mrro_file_path)
+    #mrro_cube = iris.load_cube(mrro_file_path)
     mrro_cube = iris.analysis.maths.multiply(mrro_cube, 86400)
-
+    mrro_cube.long_name = model_name
     mrro_cube.units = "mm day-1"
+
+    print pr_cube
+    print evap_cube
+    print mrro_cube
+
+    # iris.save(pr_cube, "/ouce-home/students/kebl4396/Paper1/Paper1SAModelFiles/atlas_pr_Amon_"+model_name+"_amip_r1i1p1.nc")
+    # iris.save(evap_cube, "/ouce-home/students/kebl4396/Paper1/Paper1SAModelFiles/atlas_evap_Amon_"+model_name+"_amip_r1i1p1.nc")
+    # iris.save(mrro_cube, "/ouce-home/students/kebl4396/Paper1/Paper1SAModelFiles/atlas_mrro_Amon_"+model_name+"_amip_r1i1p1.nc")
+
+    # print pr_cube
+    # print evap_cube
+    # print mrro_cube
 
     first_cube = iris.analysis.maths.subtract(pr_cube, evap_cube)
 
-    soil_accumulation_cube = iris.analysis.maths.subtract(first_cube, mrro_cube)
+    first_cube.long_name = model_name
+    first_cube.units = "mm day-1"
 
-    soil_accumulation_cube.long_name = model_name
-    soil_accumulation_cube.units = "mm day-1"
+    iris.save(first_cube, "/ouce-home/students/kebl4396/Paper1/Paper1SAModelFiles/atlas_pr_minus_evap_"+model_name+"_amip_r1i1p1.nc")
+    iris.save(mrro_cube, "/ouce-home/students/kebl4396/Paper1/Paper1SAModelFiles/atlas_mrro_Amon_"+model_name+"_amip_r1i1p1.nc")
 
-    print soil_accumulation_cube
+
+
+    # pr_cube.coord('latitude').attributes = {}
+    # evap_cube.coord('latitude').attributes = {}
+    # mrro_cube.coord('latitude').attributes = {}
+
+    #second_cube = iris.analysis.maths.add(evap_cube, mrro_cube)
+
+
+    # if first_cube.coord('latitude').points != mrro_cube.coord('latitude').points:
+    #
+    #     print "yes"
+
 #
-    iris.save(soil_accumulation_cube, "/ouce-home/students/kebl4396/Paper1/Paper1RegriddedModelFiles/sa_"+model_name+"_amip_regridded.nc")
-
-# #------------------------------------------------------------
+#     # first_cube.coord('latitude').attributes = {}
 #
+
+#
+#     soil_accumulation_cube.long_name = model_name
+#     soil_accumulation_cube.units = "mm day-1"
+#
+#     print soil_accumulation_cube
+# #
+    #iris.save(soil_accumulation_cube, "/ouce-home/students/kebl4396/Paper1/Paper1SAModelFiles/sa_"+model_name+"_amip.nc")
+
+#------------------------------------------------------------
+
 # "WIND SPEED MODEL EXTRACTION"
 #
 # """FUNCTIONS TO CALCULATE WIND SPEED USING PYTHAG."""
@@ -109,170 +292,117 @@ for m in list_of_models:
 #     return u_cube.units
 #
 # #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
-# list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+# #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+#
+# list_of_models = ['GISS-E2-R/']
 #
 # for m in list_of_models:
 #
 #     #---------------------------------------------------------------------------------
 #     "EXTRACT EASTWARD SURFACE WIND"
 #
-#     if m in ["bcc-csm1-1/", "bcc-csm1-1-m/"]:
+#     for char in '/':
+#         model = m.replace(char,'')
 #
-#         for char in '/':
-#             model = m.replace(char,'')
+#     model_name = str(model)
 #
-#         model_name = str(model)
+#     """Import the data."""
+#     root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
+#     ensemble = "r1i1p1"
+#     model_type = "amip"
 #
-#         """Import the data."""
-#         root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
-#         ensemble = "r1i1p1"
-#         model_type = "amip"
+#     """Find the paths to the directories containing the model data"""
+#     directory_paths = []
+#     for root, directories, files in os.walk(root_directory):
+#         for k in directories:
+#             path = os.path.join(root, k)
+#             if m in path and model_type in path and ensemble in path:
+#                 directory_paths = np.append(directory_paths, path)
 #
-#         """Find the paths to the directories containing the model data"""
-#         directory_paths = []
-#         for root, directories, files in os.walk(root_directory):
-#             for k in directories:
-#                 path = os.path.join(root, k)
-#                 if m in path and model_type in path and ensemble in path:
-#                     directory_paths = np.append(directory_paths, path)
+#     print directory_paths
 #
-#         print directory_paths
+#     """Find the model files to ua and their absolute paths."""
+#     ua_file_path = []
+#     for i in directory_paths:
+#         files = os.listdir(i)
+#         for j in files:
+#             if "ua_" in j:
+#                 model_file_path = os.path.join(i, j)
+#                 ua_file_path = np.append(ua_file_path, model_file_path)
 #
-#         """Find the model files to uas and their absolute paths."""
-#         ua_file_path = []
-#         for i in directory_paths:
-#             files = os.listdir(i)
-#             for j in files:
-#                 if "ua" in j:
-#                     model_file_path = os.path.join(i, j)
-#                     ua_file_path = np.append(ua_file_path, model_file_path)
+#     ua_file_path = sorted(ua_file_path, key=lambda s: s.lower())
+#     print ua_file_path
 #
-#         ua_file_path = sorted(ua_file_path, key=lambda s: s.lower())
-#         print ua_file_path
 #
+#     if model_name in ["GFDL-HIRAM-C180", "GFDL-HIRAM-C360"]:
+#         ua_cube = iris.load(ua_file_path)[1]
+#     else:
 #         ua_cube = iris.load_cube(ua_file_path)
 #
-#         uas_cube = ua_cube.extract(iris.Constraint(air_pressure=100000))
+#     uas_cube = ua_cube.extract(iris.Constraint(air_pressure=92500))
 #
-#     else:
-#
-#         for char in '/':
-#             model = m.replace(char,'')
-#
-#         model_name = str(model)
-#
-#         """Import the data."""
-#         root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
-#         ensemble = "r1i1p1"
-#         model_type = "amip"
-#
-#         """Find the paths to the directories containing the model data"""
-#         directory_paths = []
-#         for root, directories, files in os.walk(root_directory):
-#             for k in directories:
-#                 path = os.path.join(root, k)
-#                 if m in path and model_type in path and ensemble in path:
-#                     directory_paths = np.append(directory_paths, path)
-#
-#         print directory_paths
-#
-#         """Find the model files to uas and their absolute paths."""
-#         uas_file_path = []
-#         for i in directory_paths:
-#             files = os.listdir(i)
-#             for j in files:
-#                 if "uas" in j:
-#                     model_file_path = os.path.join(i, j)
-#                     uas_file_path = np.append(uas_file_path, model_file_path)
-#
-#         uas_file_path = sorted(uas_file_path, key=lambda s: s.lower())
-#         print uas_file_path
-#
-#         if model_name in ["GFDL-HIRAM-C180", "GFDL-HIRAM-C360"]:
-#             uas_cube = iris.load(uas_file_path)[1]
-#         else:
-#             uas_cube = iris.load_cube(uas_file_path)
-#
-#     #---------------------------------------------------------------------------------
-#     "EXTRACT NORTHWARD SURFACE WIND"
-#
-#     if m in ["bcc-csm1-1/", "bcc-csm1-1-m/"]:
-#
-#         for char in '/':
-#             model = m.replace(char,'')
-#
-#         model_name = str(model)
-#
-#         """Import the data."""
-#         root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
-#         ensemble = "r1i1p1"
-#         model_type = "amip"
-#
-#         """Find the paths to the directories containing the model data"""
-#         directory_paths = []
-#         for root, directories, files in os.walk(root_directory):
-#             for k in directories:
-#                 path = os.path.join(root, k)
-#                 if m in path and model_type in path and ensemble in path:
-#                     directory_paths = np.append(directory_paths, path)
-#
-#         print directory_paths
-#
-#         """Find the model files to vas and their absolute paths."""
-#         va_file_path = []
-#         for i in directory_paths:
-#             files = os.listdir(i)
-#             for j in files:
-#                 if "va" in j:
-#                     model_file_path = os.path.join(i, j)
-#                     va_file_path = np.append(va_file_path, model_file_path)
-#
-#         va_file_path = sorted(va_file_path, key=lambda s: s.lower())
-#         print va_file_path
-#
-#         va_cube = iris.load_cube(va_file_path)
-#
-#         vas_cube = va_cube.extract(iris.Constraint(air_pressure=100000))
-#
-#     else:
-#
-#         for char in '/':
-#             model = m.replace(char,'')
-#
-#         model_name = str(model)
-#
-#         """Import the data."""
-#         root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
-#         ensemble = "r1i1p1"
-#         model_type = "amip"
-#
-#         """Find the paths to the directories containing the model data"""
-#         directory_paths = []
-#         for root, directories, files in os.walk(root_directory):
-#             for k in directories:
-#                 path = os.path.join(root, k)
-#                 if m in path and model_type in path and ensemble in path:
-#                     directory_paths = np.append(directory_paths, path)
-#
-#         print directory_paths
-#
-#         """Find the model files to vas and their absolute paths."""
-#         vas_file_path = []
-#         for i in directory_paths:
-#             files = os.listdir(i)
-#             for j in files:
-#                 if "vas" in j:
-#                     model_file_path = os.path.join(i, j)
-#                     vas_file_path = np.append(vas_file_path, model_file_path)
-#
-#         vas_file_path = sorted(vas_file_path, key=lambda s: s.lower())
-#         print vas_file_path
-#
-#         if model_name in ["GFDL-HIRAM-C180", "GFDL-HIRAM-C360"]:
-#             vas_cube = iris.load(vas_file_path)[1]
-#         else:
-#             vas_cube = iris.load_cube(vas_file_path)
-#
+#     iris.save(uas_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_uas_Amon_"+model_name+"_amip_r1i1p1.nc")
+
+    # uas_cube = uas_cube.collapsed('time', iris.analysis.MEAN)
+    #
+    # qplt.contourf(uas_cube, 25)
+    #
+    # plt.gca().coastlines()
+    #
+    # plt.show()
+
+    #---------------------------------------------------------------------------------
+    # "EXTRACT NORTHWARD SURFACE WIND"
+    #
+    # for char in '/':
+    #     model = m.replace(char,'')
+    #
+    # model_name = str(model)
+    #
+    # """Import the data."""
+    # root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
+    # ensemble = "r1i1p1"
+    # model_type = "amip"
+    #
+    # """Find the paths to the directories containing the model data"""
+    # directory_paths = []
+    # for root, directories, files in os.walk(root_directory):
+    #     for k in directories:
+    #         path = os.path.join(root, k)
+    #         if m in path and model_type in path and ensemble in path:
+    #             directory_paths = np.append(directory_paths, path)
+    #
+    # print directory_paths
+    #
+    # """Find the model files to vas and their absolute paths."""
+    # va_file_path = []
+    # for i in directory_paths:
+    #     files = os.listdir(i)
+    #     for j in files:
+    #         if "va_" in j:
+    #             model_file_path = os.path.join(i, j)
+    #             va_file_path = np.append(va_file_path, model_file_path)
+    #
+    # va_file_path = sorted(va_file_path, key=lambda s: s.lower())
+    # print va_file_path
+    #
+    # if model_name in ["GFDL-HIRAM-C180", "GFDL-HIRAM-C360"]:
+    #     va_cube = iris.load(va_file_path)[1]
+    # else:
+    #     va_cube = iris.load_cube(va_file_path)
+    #
+    # vas_cube = va_cube.extract(iris.Constraint(air_pressure=92500))
+
+    # vas_cube = vas_cube.collapsed('time', iris.analysis.MEAN)
+    #
+    # qplt.contourf(vas_cube, 25)
+    #
+    # plt.gca().coastlines()
+    #
+    # plt.show()
+
+    #iris.save(vas_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_vas_Amon_"+model_name+"_amip_r1i1p1.nc")
+
 #     #---------------------------------------------------------------------------------
 #     """CALCULATE AND SAVE WIND SPEED."""
 #
@@ -284,17 +414,17 @@ for m in list_of_models:
 #
 #     print ws_cube
 #
-#     # ws_cube = ws_cube.collapsed('time', iris.analysis.MEAN)
-#     #
-#     # qplt.contourf(ws_cube, 25)
-#     #
-#     # plt.gca().coastlines()
-#     #
-#     # plt.show()
+#     ws_cube = ws_cube.collapsed('time', iris.analysis.MEAN)
+#
+#     qplt.contourf(ws_cube, 25)
+#
+#     plt.gca().coastlines()
+#
+#     plt.show()
 #
 #     iris.save(ws_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_ws_Amon_"+model_name+"_amip_r1i1p1.nc")
-
-
+#
+# #---------------------------------------------------------------------------------
 
 # "SURFACE TEMP, RH AND VPD MODEL EXTRACTION"
 #
@@ -324,21 +454,23 @@ for m in list_of_models:
 #     print directory_paths
 #
 #     """Find the model files to surface temp and their absolute paths."""
-#     tas_file_path = []
+#     ta_file_path = []
 #     for i in directory_paths:
 #         files = os.listdir(i)
 #         for j in files:
-#             if "tas" in j:
+#             if "ta_" in j:
 #                 model_file_path = os.path.join(i, j)
-#                 tas_file_path = np.append(tas_file_path, model_file_path)
+#                 ta_file_path = np.append(ta_file_path, model_file_path)
 #
-#     tas_file_path = sorted(tas_file_path, key=lambda s: s.lower())
-#     print tas_file_path
+#     ta_file_path = sorted(ta_file_path, key=lambda s: s.lower())
+#     print ta_file_path
 #
 #     if model_name in ["GFDL-HIRAM-C180", "GFDL-HIRAM-C360"]:
-#         tas_cube = iris.load(tas_file_path)[1]
+#         ta_cube = iris.load(ta_file_path)[1]
 #     else:
-#         tas_cube = iris.load_cube(tas_file_path)
+#         ta_cube = iris.load_cube(ta_file_path)
+#
+#     tas_cube = ta_cube.extract(iris.Constraint(air_pressure=92500))
 #
 #     tas_cube.convert_units('celsius')
 #
@@ -348,7 +480,7 @@ for m in list_of_models:
 #
 #     print tas_cube
 #
-#     #iris.save(tas_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_tas_Amon_"+model_name+"_amip_r1i1p1.nc")
+#     # iris.save(tas_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_tas_Amon_"+model_name+"_amip_r1i1p1.nc")
 #
 #     # tas_cube = tas_cube.collapsed('time', iris.analysis.MEAN)
 #     #
@@ -373,8 +505,8 @@ for m in list_of_models:
 #     svp_cube.units = "hPa"
 #
 #     print svp_cube
-#
-#     #iris.save(svp_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_svp_Amon_"+model_name+"_amip_r1i1p1.nc")
+#     #
+#     # iris.save(svp_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_svp_Amon_"+model_name+"_amip_r1i1p1.nc")
 #
 #     # svp_cube = svp_cube.collapsed('time', iris.analysis.MEAN)
 #     #
@@ -389,7 +521,7 @@ for m in list_of_models:
 #     for i in directory_paths:
 #         files = os.listdir(i)
 #         for j in files:
-#             if "hur" in j:
+#             if "hur_" in j:
 #                 model_file_path = os.path.join(i, j)
 #                 hur_file_path = np.append(hur_file_path, model_file_path)
 #
@@ -398,17 +530,17 @@ for m in list_of_models:
 #
 #     if model_name in ["GFDL-HIRAM-C180", "GFDL-HIRAM-C360"]:
 #         hurs_cube = iris.load(hur_file_path)[1]
-#         hurs_cube = hurs_cube.extract(iris.Constraint(air_pressure=100000))
+#         hurs_cube = hurs_cube.extract(iris.Constraint(air_pressure=92500))
 #     else:
-#         hurs_cube = iris.load_cube(hur_file_path, iris.Constraint(air_pressure=100000))
+#         hurs_cube = iris.load_cube(hur_file_path, iris.Constraint(air_pressure=92500))
 #
 #     print hurs_cube
 #
 #     hurs_cube.long_name = model_name
 #
 #     print hurs_cube
-#
-#     #iris.save(hurs_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_hurs_Amon_"+model_name+"_amip_r1i1p1.nc")
+#     #
+#     # iris.save(hurs_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_hurs_Amon_"+model_name+"_amip_r1i1p1.nc")
 #
 #     # hurs_cube = hurs_cube.collapsed('time', iris.analysis.MEAN)
 #
@@ -434,7 +566,7 @@ for m in list_of_models:
 #
 #     print avp_cube
 #
-#     #iris.save(avp_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_avp_Amon_"+model_name+"_amip_r1i1p1.nc")
+#     # iris.save(avp_cube, "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles/atlas_avp_Amon_"+model_name+"_amip_r1i1p1.nc")
 #
 #     # avp_cube = avp_cube.collapsed('time', iris.analysis.MEAN)
 #     #
@@ -468,7 +600,7 @@ for m in list_of_models:
 
 #------------------------------------------------------------
 
-"NET RAD MODEL EXTRACTION"
+#"NET RAD MODEL EXTRACTION"
 
 # list_of_models = ["BNU-ESM/", "CanAM4/"]
 #
@@ -594,7 +726,7 @@ for m in list_of_models:
 
 #------------------------------------------------------------
 
-"GLEAM NET RAD EXTRACTION"
+#"GLEAM NET RAD EXTRACTION"
 
 # SAVE SW DOWNWELLING
 
@@ -906,3 +1038,26 @@ for m in list_of_models:
 #     cube = list(cube_generator)
 #     iris.save(cube, "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles/GLEAM_data/Rad_data/SW/srb_rel3.0_shortwave_monthly_utc_"+str(i)+".nc")
 #     print "done "+str(i)+""
+
+#------------------------------------------------------------
+
+# """MODIS EVAPORATION EXTRACTION"""
+#
+# root_directory = "/ouce-home/data_not_backed_up/satellite/modis/8kmx8km/monthly/et/nc"
+# file_paths = []
+#
+# for root, directories, files in os.walk(root_directory):
+#     for i in files:
+#         path = os.path.join(root, i)
+#         file_paths = np.append(file_paths, path)
+#
+# #print file_paths
+#
+# file_paths_sorted = sorted(file_paths, key=lambda i: os.path.splitext(os.path.basename(i))[0])
+#
+# for i in file_paths_sorted:
+#     cube = iris.load(i)
+#     evap_cube = cube[2]
+#     file_name = os.path.splitext(os.path.basename(i))[0]
+#     print file_name
+#     iris.save(evap_cube, "/ouce-home/projects/land_surface_climate/modis/"+file_name+".nc")
