@@ -2263,14 +2263,14 @@ if __name__ == "__main__":
     #list_of_models = []
 
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
-    list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
+    #list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
     #list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/"]
-    #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/"]
+    list_of_models = ["bcc-csm1-1-m/"]
     #list_of_models = ["MIROC5"]
     #list_of_models = []
     #list_of_reanalysis = ["era5", "jra", "merra2", "mswep"]
     #list_of_reanalysis = ["era5", "gleam", "jra", "merra2"]
-    list_of_reanalysis = ['era5', 'gleam', 'landfluxeval', 'modis']
+    #list_of_reanalysis = ['era5', 'gleam', 'landfluxeval', 'modis']
     #list_of_reanalysis = ['chirps', 'era5', 'gpcc', 'mswep']
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/"]
     #list_of_reanalysis = ['cfsr', 'era5', 'erai', 'gleam', 'jra', 'merra2', 'ncep-doe']
@@ -2280,7 +2280,8 @@ if __name__ == "__main__":
     #list_of_reanalysis = ['cfsr', 'erai', 'gleam', 'jra', 'merra2', 'ncep-doe']
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/"]
     #list_of_reanalysis = ["cfsr", "era5", "erai", "jra", "merra2", "mswep", "ncep-doe"]
-    #list_of_reanalysis = ['gleam']
+    #list_of_reanalysis = ['era5', 'gewex']
+    list_of_reanalysis = []
 
     model_type = "amip"
 
@@ -2295,7 +2296,7 @@ if __name__ == "__main__":
     #list_of_variables = ['evspsblsoi']
     #list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
     #list_of_variables = ['pr', 'evaporation', 'mrro']
-    list_of_variables = ['evaporation']
+    list_of_variables = ['sa']
 
 
     #list_of_variables = ["evaporation", "evspsblveg", "tran", "evspsblsoi"]
@@ -2332,16 +2333,16 @@ if __name__ == "__main__":
     #variables_to_add = []
 
     #CONGO BASIN
-    lower_lat = -14
+    # lower_lat = -14
+    # upper_lat = 4
+    # lower_lon = 18
+    # upper_lon = 29
+
+    # CONGO RAINFOREST
+    lower_lat = -5
     upper_lat = 4
     lower_lon = 18
     upper_lon = 29
-
-    # CONGO RAINFOREST
-    # lower_lat = -5
-    # upper_lat = 4
-    # lower_lon = 18
-    # upper_lon = 30
 
     # CONGO BASIN SOUTH
     # lower_lat = -14
@@ -2351,15 +2352,15 @@ if __name__ == "__main__":
 
     lower_year = 1979
     upper_year = 2008
-    lower_y_lim = 0.0
-    upper_y_lim = 5.5
-    y_tick_interval = 0.5
+    lower_y_lim = -3.2
+    upper_y_lim = 3.2
+    y_tick_interval = 0.4
 
     cmap = 'rainbow'
     models = 'yes'
-    ensemble = 'yes'
-    reanalysis = 'yes'
-    plot = 'no'
+    ensemble = 'no'
+    reanalysis = 'no'
+    plot = 'yes'
     unit_plot = "mm day-1"
     bar_plot = 'no'
     bar_times = ['Mar']
@@ -2373,7 +2374,7 @@ if __name__ == "__main__":
     bar_width = 0.5
     legend_in_plot = 'yes'
     include_legend = 'yes'
-    rmse = 'yes'
+    rmse = 'no'
 
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
@@ -3146,6 +3147,7 @@ if __name__ == "__main__":
         son_values = []
         mar_values = []
         jul_values = []
+        nov_values = []
         list_all_datasets = []
 
         if len(list_of_models) > 0:
@@ -3191,6 +3193,7 @@ if __name__ == "__main__":
                     son_value = (model_seasonal_cycle[8] + model_seasonal_cycle[9] + model_seasonal_cycle[10])/float(3.0)
                     mar_value = model_seasonal_cycle[2]
                     jul_value = model_seasonal_cycle[6]
+                    nov_value = model_seasonal_cycle[10]
 
                     print "%.3f, %.3f, %.3f, %.3f" % (djf_value, mam_value, jja_value, son_value)
 
@@ -3202,6 +3205,7 @@ if __name__ == "__main__":
                     son_values = np.append(son_values, son_value)
                     mar_values = np.append(mar_values, mar_value)
                     jul_values = np.append(jul_values, jul_value)
+                    nov_values = np.append(nov_values, nov_value)
 
                     barchart_array_djf[variable_number, model_number] = djf_value
                     barchart_array_mam[variable_number, model_number] = mam_value
@@ -3287,6 +3291,7 @@ if __name__ == "__main__":
             son_value = (ensemble_seasonal_cycle[8] + ensemble_seasonal_cycle[9] + ensemble_seasonal_cycle[10])/float(3.0)
             mar_value = ensemble_seasonal_cycle[2]
             jul_value = ensemble_seasonal_cycle[6]
+            nov_value = ensemble_seasonal_cycle[10]
 
             print "%.3f, %.3f, %.3f, %.3f" % (djf_value, mam_value, jja_value, son_value)
 
@@ -3298,8 +3303,7 @@ if __name__ == "__main__":
             son_values = np.append(son_values, son_value)
             mar_values = np.append(mar_values, mar_value)
             jul_values = np.append(jul_values, jul_value)
-
-            print mar_values
+            nov_values = np.append(nov_values, nov_value)
 
             if models == 'yes':
                 model_number = model_number+1
@@ -3339,6 +3343,7 @@ if __name__ == "__main__":
                 son_value = (reanalysis_seasonal_cycle[8] + reanalysis_seasonal_cycle[9] + reanalysis_seasonal_cycle[10])/float(3.0)
                 mar_value = reanalysis_seasonal_cycle[2]
                 jul_value = reanalysis_seasonal_cycle[6]
+                nov_value = reanalysis_seasonal_cycle[10]
 
                 print "%.3f, %.3f, %.3f, %.3f" % (djf_value, mam_value, jja_value, son_value)
 
@@ -3350,6 +3355,7 @@ if __name__ == "__main__":
                 son_values = np.append(son_values, son_value)
                 mar_values = np.append(mar_values, mar_value)
                 jul_values = np.append(jul_values, jul_value)
+                nov_values = np.append(nov_values, nov_value)
 
                 print mar_values
 
@@ -3367,6 +3373,8 @@ if __name__ == "__main__":
                 seasonal_cycle_reanalysis_multiple_variables_array[variable_number] = reanalysis_seasonal_cycle
 
         list_all_datasets_input = [str(i) for i in list_all_datasets]
+
+        print list_all_datasets_input
 
         print "DJF VALUES"
 
@@ -3418,11 +3426,12 @@ if __name__ == "__main__":
         print "Mar VALUES"
 
         print mar_values
-        mar_values, list_all_datasets = (list(i) for i in zip(*sorted(zip(mar_values, list_all_datasets_input))))
-        mar_values = [float('%.3f' % i) for i in mar_values]
-        print mar_values[::-1]
-        print list_all_datasets[::-1]
-        print list_all_datasets
+        # print list_all_datasets_input
+        # mar_values, list_all_datasets = (list(i) for i in zip(*sorted(zip(mar_values, list_all_datasets_input))))
+        # mar_values = [float('%.3f' % i) for i in mar_values]
+        # print mar_values[::-1]
+        # print list_all_datasets[::-1]
+        # print list_all_datasets
 
         print('')
 
@@ -3434,6 +3443,22 @@ if __name__ == "__main__":
         print jul_values[::-1]
         print list_all_datasets[::-1]
         print list_all_datasets
+
+        print "Nov VALUES"
+
+        print nov_values
+        # nov_values, list_all_datasets = (list(i) for i in zip(*sorted(zip(nov_values, list_all_datasets_input))))
+        # nov_values = [float('%.3f' % i) for i in nov_values]
+        # print nov_values[::-1]
+        # print list_all_datasets[::-1]
+        # print list_all_datasets
+
+        print "Nov - Mar VALUES"
+
+        nov_mar_values = np.array(nov_values) - np.array(mar_values)
+        print nov_mar_values
+        print list_all_datasets_input
+
 
         print('')
 
