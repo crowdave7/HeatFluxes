@@ -38,9 +38,9 @@ def model_file_paths_func(list_of_models, model_type, variable):
 
     if variable == 'nrad':
         root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1NetRadiationModelFiles"
-    if variable == 'vpd' or variable == 'hurs' or variable == 'tas' or variable == 'ws' or variable == 'sa':
+    if variable == 'vpd' or variable == 'hurs' or variable == 'tas' or variable == 'ws' or variable == 'sa' or variable == 'swc_anom':
         root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles"
-    if variable not in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa']:
+    if variable not in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'swc_anom']:
         root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
     ensemble = "r1i1p1"
 
@@ -92,7 +92,7 @@ def model_file_paths_func(list_of_models, model_type, variable):
 
 def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_directory):
 
-    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'cancap']:
+    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'cancap', 'swc_anom']:
         print "hi9"
         """Find the paths to the files containing the model data"""
         model_file_paths = []
@@ -143,7 +143,7 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                     print j
                     model_file_paths_sorted = np.append(model_file_paths_sorted, j)
 
-    if variable not in ['nrad', 'evap_fraction', 'vpd', 'hurs', 'tas', 'ws', 'sa']:
+    if variable not in ['nrad', 'evap_fraction', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'swc_anom']:
 
         print list_of_models
         """Find the paths to the directories containing the model data"""
@@ -213,10 +213,13 @@ def slicing(i, array):
 
     with iris.FUTURE.context(cell_datetime_objects=True):
         if variable != "treeFrac":
-            cubelist[i] = cubelist[i].extract(time_range)
+            if variable == 'swc_anom':
+                pass
+            else:
+                cubelist[i] = cubelist[i].extract(time_range)
             time_points = cubelist[i].coord('time').points
             times = cubelist[i].coord('time').units.num2date(time_points)
-        if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'cancap']:
+        if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'cancap', 'swc_anom']:
             model_id = cubelist[i].long_name
         else:
             model_id = cubelist[i].attributes['model_id']
@@ -233,7 +236,7 @@ def slicing(i, array):
     cubelist[i] = cubelist[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
 
     """Select model ID."""
-    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'cancap']:
+    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'cancap', 'swc_anom']:
         model_id = cubelist[i].long_name
     else:
         model_id = cubelist[i].attributes['model_id']
@@ -279,7 +282,10 @@ def seasonal_cycle_calculations(i, array):
     """Constrain the data for each month only."""
     time_range = iris.Constraint(time=lambda cell: cell.point.month == i)
     data_unmasked = first_cube.extract(time_range)
-    data_unmasked = data_unmasked.collapsed('time', iris.analysis.MEAN)
+    if variable == 'swc_anom':
+        pass
+    else:
+        data_unmasked = data_unmasked.collapsed('time', iris.analysis.MEAN)
 
     """If the first coordinate is longitude,"""
     if coord_names[1] == 'longitude':
@@ -476,10 +482,13 @@ def slicing_ensemble(i, array):
 
     with iris.FUTURE.context(cell_datetime_objects=True):
         if variable != "treeFrac":
-            cubelist_ensemble[i] = cubelist_ensemble[i].extract(time_range)
+            if variable == 'swc_anom':
+                pass
+            else:
+                cubelist[i] = cubelist[i].extract(time_range)
             time_points = cubelist_ensemble[i].coord('time').points
             times = cubelist_ensemble[i].coord('time').units.num2date(time_points)
-        if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'cancap']:
+        if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'cancap', 'swc_anom']:
             model_id = cubelist_ensemble[i].long_name
         else:
             model_id = cubelist_ensemble[i].attributes['model_id']
@@ -493,7 +502,7 @@ def slicing_ensemble(i, array):
     cubelist_ensemble[i] = cubelist_ensemble[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
 
     """Select model ID."""
-    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'cancap']:
+    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'cancap', 'swc_anom']:
         model_id = cubelist_ensemble[i].long_name
     else:
         model_id = cubelist_ensemble[i].attributes['model_id']
@@ -617,7 +626,10 @@ def slicing_reanalysis(i, array):
         if variable != "treeFrac":
             print cubelist_reanalysis[i]
             if reanalysis_id != "era5":
-                cubelist_reanalysis[i] = cubelist_reanalysis[i].extract(time_range)
+                if variable == 'swc_anom':
+                    pass
+                else:
+                    cubelist_reanalysis[i] = cubelist_reanalysis[i].extract(time_range)
             if reanalysis_id == "era5":
                 cubelist_reanalysis[i] = cubelist_reanalysis[i].extract(iris.Constraint(time=lambda cell: 2010 <= cell.point.year <= 2017))
             time_points = cubelist_reanalysis[i].coord('time').points
@@ -1420,7 +1432,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
             if variable == 'lai':
                 plt.ylabel('Leaf Area Index')
             if variable == 'mrro':
-                plt.ylabel('Total Runoff Flux (mm $\mathregular{day^{-1}}$)')
+                plt.ylabel('Total Runoff (mm $\mathregular{day^{-1}}$)')
             if variable == 'vpd':
                 plt.ylabel('Vapour Pressure Deficit (kPa)')
             if variable == 'hurs':
@@ -1429,6 +1441,8 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 plt.ylabel('Surface Air Temperature ($^\circ$C)')
             if variable == 'sa':
                 plt.ylabel('Soil Moisture Accumulation (mm $\mathregular{day^{-1}}$)')
+            if variable == 'swc_anom':
+                plt.ylabel('Soil Water Content Anomaly (mm)')
             if variable == 'cancap':
                 plt.ylabel('Canopy Storage Capacity (mm)')
 
@@ -2255,7 +2269,7 @@ if __name__ == "__main__":
     #evap from canopy
     #list_of_models = ["ACCESS1-0/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     #transpiration
-    #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MPI-ESM-LR/", "MPI-ESM-MR/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MPI-ESM-LR/", "MPI-ESM-MR/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     #bare soil evaporation
     #list_of_models = ["ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     #list_of_models = ["CMCC-CM/"]
@@ -2263,10 +2277,10 @@ if __name__ == "__main__":
     #list_of_models = []
 
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
-    #list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
-    #list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/"]
-    list_of_models = ["bcc-csm1-1-m/"]
-    #list_of_models = ["MIROC5"]
+    list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
+    #list_of_models = ["bcc-csm1-1-m/", "CanAM4/"]
+    #list_of_models = ["bcc-csm1-1-m/"]
+    #list_of_models = ["CNRM-CM5/"]
     #list_of_models = []
     #list_of_reanalysis = ["era5", "jra", "merra2", "mswep"]
     #list_of_reanalysis = ["era5", "gleam", "jra", "merra2"]
@@ -2296,7 +2310,7 @@ if __name__ == "__main__":
     #list_of_variables = ['evspsblsoi']
     #list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
     #list_of_variables = ['pr', 'evaporation', 'mrro']
-    list_of_variables = ['sa']
+    list_of_variables = ['swc_anom']
 
 
     #list_of_variables = ["evaporation", "evspsblveg", "tran", "evspsblsoi"]
@@ -2339,26 +2353,29 @@ if __name__ == "__main__":
     # upper_lon = 29
 
     # CONGO RAINFOREST
-    lower_lat = -5
-    upper_lat = 4
-    lower_lon = 18
-    upper_lon = 29
-
-    # CONGO BASIN SOUTH
-    # lower_lat = -14
-    # upper_lat = -5
+    # lower_lat = -5
+    # upper_lat = 4
     # lower_lon = 18
     # upper_lon = 29
 
+    # CONGO BASIN SOUTH
+    lower_lat = -14
+    upper_lat = -5
+    lower_lon = 18
+    upper_lon = 29
+
     lower_year = 1979
     upper_year = 2008
-    lower_y_lim = -3.2
-    upper_y_lim = 3.2
-    y_tick_interval = 0.4
+    lower_y_lim = -180
+    upper_y_lim = 140
+    y_tick_interval = 20
+    # lower_y_lim = -1
+    # upper_y_lim = 5
+    # y_tick_interval = 1.0
 
     cmap = 'rainbow'
     models = 'yes'
-    ensemble = 'no'
+    ensemble = 'yes'
     reanalysis = 'no'
     plot = 'yes'
     unit_plot = "mm day-1"
@@ -2481,6 +2498,7 @@ if __name__ == "__main__":
 
                 unit = cubelist[0].units
 
+
                 """Slice each cube by the time range."""
                 manager = multiprocessing.Manager()
                 array = manager.dict()
@@ -2516,6 +2534,7 @@ if __name__ == "__main__":
                 for process in jobs:
                     process.join()
                 second_set_transposed_cubes = array.values()
+
 
                 """For each cube,"""
                 for i in np.arange(0, len(cubelist)):
@@ -2555,7 +2574,9 @@ if __name__ == "__main__":
 
                 if variable == 'lai':
 
-                    list_to_remove_lai = ['BNU-ESM/', 'CanAM4/', 'CNRM-CM5/', 'GISS-E2-R/', 'inmcm4/', 'MRI-AGCM3-2H/', 'MRI-AGCM3-2S/', 'MRI-CGCM3/']
+                    #list_to_remove_lai = ['BNU-ESM/', 'CanAM4/', 'CNRM-CM5/', 'GISS-E2-R/', 'inmcm4/', 'MRI-AGCM3-2H/', 'MRI-AGCM3-2S/', 'MRI-CGCM3/']
+
+                    list_to_remove_lai = []
 
                     list_to_remove_lai = set(list_to_remove_lai)
 
