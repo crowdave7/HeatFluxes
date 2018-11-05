@@ -203,6 +203,14 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                     print model_file_paths_sorted[count]
             count +=1
 
+        count = 0
+        for i in model_file_paths_sorted:
+            if "CNRM-CM5" in i:
+                if "mrsos" in i:
+                    model_file_paths_sorted[count] = '/ouce-home/students/kebl4396/Paper1/Paper1CorrectedModelFiles/atlas_mrsos_Lmon_CNRM-CM5_amip_r1i1p1_197901-200812_correct.nc'
+                    print model_file_paths_sorted[count]
+            count +=1
+
         model_file_paths = model_file_paths_sorted
 
     print "hi2"
@@ -485,7 +493,7 @@ def slicing_ensemble(i, array):
             if variable == 'swc_anom':
                 pass
             else:
-                cubelist[i] = cubelist[i].extract(time_range)
+                cubelist_ensemble[i] = cubelist_ensemble[i].extract(time_range)
             time_points = cubelist_ensemble[i].coord('time').points
             times = cubelist_ensemble[i].coord('time').units.num2date(time_points)
         if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'cancap', 'swc_anom']:
@@ -805,8 +813,8 @@ def plot_bar(barchart_array, number_of_models, number_of_reanalysis, number_of_v
             bar.set_linestyle("-")
 
         if include_dynamic_prescribed == 'yes':
-            model_strings_for_plot = np.append(model_strings_for_plot, "Dynamic Veg")
-            model_strings_for_plot = np.append(model_strings_for_plot, "Prescribed Veg")
+            model_strings_for_plot = np.append(model_strings_for_plot, "Strong GCMs")
+            model_strings_for_plot = np.append(model_strings_for_plot, "Weak GCMs")
 
         if ensemble == 'yes':
             model_strings_for_plot = np.append(model_strings_for_plot, "Ensemble")
@@ -1378,6 +1386,44 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                     handles[-1].set_linestyle("--")
                     if include_legend == 'yes':
                         legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+
+            if include_dynamic_prescribed == 'yes':
+
+                if duplicate_seasonal_cycle != 'yes':
+
+                    seasonal_cycle_dv = seasonal_cycle_dv_array
+
+                if duplicate_seasonal_cycle == 'yes':
+                    print "hi5"
+                    print seasonal_cycle_dv_array
+
+                    seasonal_cycle_dv = seasonal_cycle_dv_array
+                    seasonal_cycle_dv_2 = seasonal_cycle_dv_array
+                    seasonal_cycle_dv_2 = seasonal_cycle_dv_2[1:]
+                    seasonal_cycle_dv = np.append(seasonal_cycle_dv, seasonal_cycle_dv_2)
+
+                if duplicate_seasonal_cycle != 'yes':
+
+                    seasonal_cycle_pv = seasonal_cycle_pv_array
+
+                if duplicate_seasonal_cycle == 'yes':
+                    seasonal_cycle_pv = seasonal_cycle_pv_array
+                    seasonal_cycle_pv_2 = seasonal_cycle_pv_array
+                    seasonal_cycle_pv_2 = seasonal_cycle_pv_2[1:]
+                    seasonal_cycle_pv = np.append(seasonal_cycle_pv, seasonal_cycle_pv_2)
+
+                print "hi6"
+                line = ax1.plot(x_pos, seasonal_cycle_dv, linestyle='-', linewidth=4.0, color='forestgreen', label = "Best Models")
+                handles, labels = ax1.get_legend_handles_labels()
+                handles[-1].set_linestyle("-")
+                if include_legend == 'yes':
+                    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+
+                line = ax1.plot(x_pos, seasonal_cycle_pv, linestyle='-', linewidth=4.0, color='saddlebrown', label = "Worst Models")
+                handles, labels = ax1.get_legend_handles_labels()
+                handles[-1].set_linestyle("-")
+                if include_legend == 'yes':
+                    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
 
             print lower_y_lim
             print upper_y_lim+y_tick_interval
@@ -2219,12 +2265,12 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 line = ax.plot(x_pos, seasonal_cycle_reanalysis_variable_data, linestyle='--', linewidth=1.5, color=line_colour, zorder=3)
 
             if include_dynamic_prescribed == 'yes':
-
+                print "hi6"
                 seasonal_cycle_dv_variable_data = seasonal_cycle_dv_array[i]
-                line = ax.plot(x_pos, seasonal_cycle_dv_variable_data, linestyle='-', linewidth=1.0, color='forestgreen')
+                line = ax.plot(x_pos, seasonal_cycle_dv_variable_data, linestyle='-', linewidth=4.0, color='forestgreen')
 
                 seasonal_cycle_pv_variable_data = seasonal_cycle_pv_array[i]
-                line = ax.plot(x_pos, seasonal_cycle_pv_variable_data, linestyle='-', linewidth=1.0, color='saddlebrown')
+                line = ax.plot(x_pos, seasonal_cycle_pv_variable_data, linestyle='-', linewidth=4.0, color='saddlebrown')
 
             variable_number +=1
 
@@ -2274,14 +2320,14 @@ if __name__ == "__main__":
     #list_of_models = ["ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     #list_of_models = ["CMCC-CM/"]
     #all for barchart
-    #list_of_models = []
+    #list_of_models = ["bcc-csm1-1-m/", "GFDL-HIRAM-C360/", "IPSL-CM5A-MR/", "MIROC5/", "NorESM1-M/"]
 
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
     #list_of_models = ["bcc-csm1-1-m/", "CanAM4/"]
     #list_of_models = ["bcc-csm1-1-m/"]
     #list_of_models = ["CNRM-CM5/"]
-    #list_of_models = []
+    #list_of_models = [
     #list_of_reanalysis = ["era5", "jra", "merra2", "mswep"]
     #list_of_reanalysis = ["era5", "gleam", "jra", "merra2"]
     #list_of_reanalysis = ['era5', 'gleam', 'landfluxeval', 'modis']
@@ -2295,7 +2341,7 @@ if __name__ == "__main__":
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/"]
     #list_of_reanalysis = ["cfsr", "era5", "erai", "jra", "merra2", "mswep", "ncep-doe"]
     #list_of_reanalysis = ['era5', 'gewex']
-    list_of_reanalysis = []
+    list_of_reanalysis = ["gleam"]
 
     model_type = "amip"
 
@@ -2310,7 +2356,7 @@ if __name__ == "__main__":
     #list_of_variables = ['evspsblsoi']
     #list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
     #list_of_variables = ['pr', 'evaporation', 'mrro']
-    list_of_variables = ['swc_anom']
+    list_of_variables = ['mrsos']
 
 
     #list_of_variables = ["evaporation", "evspsblveg", "tran", "evspsblsoi"]
@@ -2319,11 +2365,13 @@ if __name__ == "__main__":
     #list_of_variables = ["evaporation", "evspsblveg", "tran", "evspsblsoi", "pr", "evaporation", "mrro", "sa", "nrad", "hfls", "hfss", 'tas', "hurs", "ws", 'tas', "vpd", "mrsos", "sa", "lai", "cancap"]
     #list_of_variables = ['tas', 'hurs', 'ws', 'vpd']
     subplot_multiple_variables = 'no'
-    include_dynamic_prescribed = 'no'
+    include_dynamic_prescribed = 'yes'
     # list_dynamic_veg_models = ['bcc-csm1-1/', 'bcc-csm1-1-m/', 'BNU-ESM/', 'GFDL-HIRAM-C180/', 'GFDL-HIRAM-C360/', 'IPSL-CM5A-LR/', 'IPSL-CM5A-MR/', 'IPSL-CM5B-LR/']
     # list_prescribed_veg_models = ['CanAM4/', 'CNRM-CM5/', 'GISS-E2-R/', 'inmcm4/', 'MIROC5/', "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
-    list_dynamic_veg_models = ['bcc-csm1-1-m/', 'BNU-ESM/', 'GFDL-HIRAM-C360/', 'IPSL-CM5A-MR/']
-    list_prescribed_veg_models = ['CanAM4/', 'CNRM-CM5/', 'GISS-E2-R/', 'inmcm4/', 'MIROC5/', "MRI-AGCM3-2S/", "NorESM1-M/"]
+    #list_dynamic_veg_models = ['bcc-csm1-1-m/', 'BNU-ESM/', 'GFDL-HIRAM-C360/', 'IPSL-CM5A-MR/']
+    #list_prescribed_veg_models = ['CanAM4/', 'CNRM-CM5/', 'GISS-E2-R/', 'inmcm4/', 'MIROC5/', "MRI-AGCM3-2S/", "NorESM1-M/"]
+    list_dynamic_veg_models = ['CNRM-CM5/', 'GISS-E2-R/']
+    list_prescribed_veg_models = ['BNU-ESM/', 'MIROC5/', "MRI-AGCM3-2S/"]
 
     subplot_columns = 1
     subplot_rows = 2
@@ -2353,22 +2401,22 @@ if __name__ == "__main__":
     # upper_lon = 29
 
     # CONGO RAINFOREST
-    # lower_lat = -5
-    # upper_lat = 4
-    # lower_lon = 18
-    # upper_lon = 29
-
-    # CONGO BASIN SOUTH
-    lower_lat = -14
-    upper_lat = -5
+    lower_lat = -5
+    upper_lat = 4
     lower_lon = 18
     upper_lon = 29
 
+    # CONGO BASIN SOUTH
+    # lower_lat = -14
+    # upper_lat = -5
+    # lower_lon = 18
+    # upper_lon = 29
+
     lower_year = 1979
     upper_year = 2008
-    lower_y_lim = -180
-    upper_y_lim = 140
-    y_tick_interval = 20
+    lower_y_lim = 0.0
+    upper_y_lim = 45.0
+    y_tick_interval = 5.0
     # lower_y_lim = -1
     # upper_y_lim = 5
     # y_tick_interval = 1.0
@@ -2376,8 +2424,8 @@ if __name__ == "__main__":
     cmap = 'rainbow'
     models = 'yes'
     ensemble = 'yes'
-    reanalysis = 'no'
-    plot = 'yes'
+    reanalysis = 'yes'
+    plot = 'no'
     unit_plot = "mm day-1"
     bar_plot = 'no'
     bar_times = ['Mar']
@@ -2413,6 +2461,7 @@ if __name__ == "__main__":
         barchart_array_son = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis))))
         barchart_array_mar = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis))))
         barchart_array_jul = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis))))
+        barchart_array_nov = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis))))
 
     if ensemble == 'yes':
 
@@ -2422,6 +2471,8 @@ if __name__ == "__main__":
         barchart_array_son = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+1)))
         barchart_array_mar = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+1)))
         barchart_array_jul = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+1)))
+        barchart_array_nov = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+1)))
+
 
     if ensemble == 'yes' and include_dynamic_prescribed == 'yes':
 
@@ -2431,6 +2482,8 @@ if __name__ == "__main__":
         barchart_array_son = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+3)))
         barchart_array_mar = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+3)))
         barchart_array_jul = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+3)))
+        barchart_array_nov = np.zeros((len(list_of_variables), (len(list_of_models)+len(list_of_reanalysis)+3)))
+
 
     """For each variable, calculate the model, ensemble and reanalysis seasonal cycle arrays. """
 
@@ -2628,7 +2681,7 @@ if __name__ == "__main__":
 
                 if variable == 'mrsos':
 
-                    list_to_remove_mrsos = ['CNRM-CM5/', 'IPSL-CM5A-LR/', 'IPSL-CM5A-MR/', 'IPSL-CM5B-LR/']
+                    list_to_remove_mrsos = ['IPSL-CM5A-LR/', 'IPSL-CM5A-MR/', 'IPSL-CM5B-LR/']
 
                     list_to_remove_mrsos = set(list_to_remove_mrsos)
 
@@ -2832,6 +2885,9 @@ if __name__ == "__main__":
 
                     model_file_paths_ensemble = model_file_paths_ensemble_dv
 
+                    print model_file_paths_ensemble
+                    print "hi7"
+
                     """Build a list of cubes from the regridded model file paths."""
                     manager = multiprocessing.Manager()
                     array = manager.dict()
@@ -2843,6 +2899,8 @@ if __name__ == "__main__":
                     for process in jobs:
                         process.join()
                     cubelist_ensemble = array.values()
+
+                    print cubelist_ensemble
 
                     """Slice each cube by the time range."""
                     manager = multiprocessing.Manager()
@@ -3252,12 +3310,14 @@ if __name__ == "__main__":
 
                 seasonal_cycle_pv_multiple_variables_array[variable_number] = pv_seasonal_cycle
 
+
                 djf_value_dv = (dv_seasonal_cycle[11] + dv_seasonal_cycle[0] + dv_seasonal_cycle[1])/float(3.0)
                 mam_value_dv = (dv_seasonal_cycle[2] + dv_seasonal_cycle[3] + dv_seasonal_cycle[4])/float(3.0)
                 jja_value_dv = (dv_seasonal_cycle[5] + dv_seasonal_cycle[6] + dv_seasonal_cycle[7])/float(3.0)
                 son_value_dv = (dv_seasonal_cycle[8] + dv_seasonal_cycle[9] + dv_seasonal_cycle[10])/float(3.0)
                 mar_value_dv = dv_seasonal_cycle[2]
                 jul_value_dv = dv_seasonal_cycle[6]
+                nov_value_dv = dv_seasonal_cycle[10]
 
                 djf_value_pv = (pv_seasonal_cycle[11] + pv_seasonal_cycle[0] + pv_seasonal_cycle[1])/float(3.0)
                 mam_value_pv = (pv_seasonal_cycle[2] + pv_seasonal_cycle[3] + pv_seasonal_cycle[4])/float(3.0)
@@ -3265,6 +3325,7 @@ if __name__ == "__main__":
                 son_value_pv = (pv_seasonal_cycle[8] + pv_seasonal_cycle[9] + pv_seasonal_cycle[10])/float(3.0)
                 mar_value_pv = pv_seasonal_cycle[2]
                 jul_value_pv = pv_seasonal_cycle[6]
+                nov_value_pv = pv_seasonal_cycle[10]
 
                 djf_values = np.append(djf_values, djf_value_dv)
                 mam_values = np.append(mam_values, mam_value_dv)
@@ -3272,6 +3333,7 @@ if __name__ == "__main__":
                 son_values = np.append(son_values, son_value_dv)
                 mar_values = np.append(mar_values, mar_value_dv)
                 jul_values = np.append(jul_values, jul_value_dv)
+                nov_values = np.append(nov_values, nov_value_dv)
 
                 djf_values = np.append(djf_values, djf_value_pv)
                 mam_values = np.append(mam_values, mam_value_pv)
@@ -3279,6 +3341,7 @@ if __name__ == "__main__":
                 son_values = np.append(son_values, son_value_pv)
                 mar_values = np.append(mar_values, mar_value_pv)
                 jul_values = np.append(jul_values, jul_value_pv)
+                nov_values = np.append(nov_values, nov_value_pv)
 
                 model_number = model_number+1
 
@@ -3288,6 +3351,7 @@ if __name__ == "__main__":
                 barchart_array_son[variable_number, model_number] = son_value_dv
                 barchart_array_mar[variable_number, model_number] = mar_value_dv
                 barchart_array_jul[variable_number, model_number] = jul_value_dv
+                barchart_array_nov[variable_number, model_number] = nov_value_dv
 
                 model_number = model_number+1
 
@@ -3297,6 +3361,12 @@ if __name__ == "__main__":
                 barchart_array_son[variable_number, model_number] = son_value_pv
                 barchart_array_mar[variable_number, model_number] = mar_value_pv
                 barchart_array_jul[variable_number, model_number] = jul_value_pv
+                barchart_array_nov[variable_number, model_number] = nov_value_pv
+
+                print "Best Models"
+                print dv_seasonal_cycle
+                print "Worst Models"
+                print pv_seasonal_cycle
 
             print "Ensemble"
             ensemble_seasonal_cycle = [float('%.3f' % i) for i in seasonal_cycle_ensemble_array]
