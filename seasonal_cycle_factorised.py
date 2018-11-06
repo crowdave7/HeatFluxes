@@ -290,8 +290,14 @@ def seasonal_cycle_calculations(i, array):
     """Constrain the data for each month only."""
     time_range = iris.Constraint(time=lambda cell: cell.point.month == i)
     data_unmasked = first_cube.extract(time_range)
+    print data_unmasked
+    print variable
+    print reanalysis_id
     if variable == 'swc_anom':
         pass
+    # if variable == 'lai' and reanalysis_id == 'MODIS':
+    #     print "hi"
+    #     pass
     else:
         data_unmasked = data_unmasked.collapsed('time', iris.analysis.MEAN)
 
@@ -2323,11 +2329,11 @@ if __name__ == "__main__":
     #list_of_models = ["bcc-csm1-1-m/", "GFDL-HIRAM-C360/", "IPSL-CM5A-MR/", "MIROC5/", "NorESM1-M/"]
 
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
-    list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
+    #list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
     #list_of_models = ["bcc-csm1-1-m/", "CanAM4/"]
     #list_of_models = ["bcc-csm1-1-m/"]
     #list_of_models = ["CNRM-CM5/"]
-    #list_of_models = [
+    list_of_models = []
     #list_of_reanalysis = ["era5", "jra", "merra2", "mswep"]
     #list_of_reanalysis = ["era5", "gleam", "jra", "merra2"]
     #list_of_reanalysis = ['era5', 'gleam', 'landfluxeval', 'modis']
@@ -2341,7 +2347,7 @@ if __name__ == "__main__":
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/"]
     #list_of_reanalysis = ["cfsr", "era5", "erai", "jra", "merra2", "mswep", "ncep-doe"]
     #list_of_reanalysis = ['era5', 'gewex']
-    list_of_reanalysis = ["gleam"]
+    list_of_reanalysis = ["modis"]
 
     model_type = "amip"
 
@@ -2356,7 +2362,7 @@ if __name__ == "__main__":
     #list_of_variables = ['evspsblsoi']
     #list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
     #list_of_variables = ['pr', 'evaporation', 'mrro']
-    list_of_variables = ['mrsos']
+    list_of_variables = ['lai']
 
 
     #list_of_variables = ["evaporation", "evspsblveg", "tran", "evspsblsoi"]
@@ -2365,7 +2371,7 @@ if __name__ == "__main__":
     #list_of_variables = ["evaporation", "evspsblveg", "tran", "evspsblsoi", "pr", "evaporation", "mrro", "sa", "nrad", "hfls", "hfss", 'tas', "hurs", "ws", 'tas', "vpd", "mrsos", "sa", "lai", "cancap"]
     #list_of_variables = ['tas', 'hurs', 'ws', 'vpd']
     subplot_multiple_variables = 'no'
-    include_dynamic_prescribed = 'yes'
+    include_dynamic_prescribed = 'no'
     # list_dynamic_veg_models = ['bcc-csm1-1/', 'bcc-csm1-1-m/', 'BNU-ESM/', 'GFDL-HIRAM-C180/', 'GFDL-HIRAM-C360/', 'IPSL-CM5A-LR/', 'IPSL-CM5A-MR/', 'IPSL-CM5B-LR/']
     # list_prescribed_veg_models = ['CanAM4/', 'CNRM-CM5/', 'GISS-E2-R/', 'inmcm4/', 'MIROC5/', "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     #list_dynamic_veg_models = ['bcc-csm1-1-m/', 'BNU-ESM/', 'GFDL-HIRAM-C360/', 'IPSL-CM5A-MR/']
@@ -2401,31 +2407,31 @@ if __name__ == "__main__":
     # upper_lon = 29
 
     # CONGO RAINFOREST
-    lower_lat = -5
-    upper_lat = 4
-    lower_lon = 18
-    upper_lon = 29
-
-    # CONGO BASIN SOUTH
-    # lower_lat = -14
-    # upper_lat = -5
+    # lower_lat = -5
+    # upper_lat = 4
     # lower_lon = 18
     # upper_lon = 29
+
+    # CONGO BASIN SOUTH
+    lower_lat = -14
+    upper_lat = -5
+    lower_lon = 18
+    upper_lon = 29
 
     lower_year = 1979
     upper_year = 2008
     lower_y_lim = 0.0
-    upper_y_lim = 45.0
-    y_tick_interval = 5.0
+    upper_y_lim = 10.0
+    y_tick_interval = 1.0
     # lower_y_lim = -1
     # upper_y_lim = 5
     # y_tick_interval = 1.0
 
     cmap = 'rainbow'
-    models = 'yes'
-    ensemble = 'yes'
+    models = 'no'
+    ensemble = 'no'
     reanalysis = 'yes'
-    plot = 'no'
+    plot = 'yes'
     unit_plot = "mm day-1"
     bar_plot = 'no'
     bar_times = ['Mar']
