@@ -753,11 +753,11 @@ if __name__ == "__main__":
 
     list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
     #list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/"]
-    list_of_reanalysis = ['gleam']
+    list_of_reanalysis = []
 
     model_type = "amip"
 
-    list_of_variables = ['mrsos', 'tran']
+    list_of_variables = ['nrad', 'tran']
 
     subplot_multiple_variables = 'no'
     include_dynamic_prescribed = 'yes'
@@ -788,11 +788,11 @@ if __name__ == "__main__":
 
     models = 'yes'
     ensemble = 'yes'
-    reanalysis = 'yes'
+    reanalysis = 'no'
     unit_plot = "mm day-1"
 
-    first_month = 3
-    second_month = 7
+    first_month = 7
+    second_month = 11
 
     time_range = iris.Constraint(time=lambda cell: lower_year <= cell.point.year <= upper_year)
 
@@ -910,7 +910,7 @@ if __name__ == "__main__":
                         manager = multiprocessing.Manager()
                         array = manager.dict()
                         jobs = []
-                        for i in np.arange(1979, 2009, 1):
+                        for i in np.arange(lower_year, upper_year+1, 1):
                             p = multiprocessing.Process(target=timeseries_calculations, args=(i, array))
                             jobs.append(p)
                             p.start()
@@ -1036,7 +1036,7 @@ if __name__ == "__main__":
                     manager = multiprocessing.Manager()
                     array = manager.dict()
                     jobs = []
-                    for i in np.arange(1979, 2009, 1):
+                    for i in np.arange(lower_year, upper_year+1, 1):
                         p = multiprocessing.Process(target=timeseries_calculations, args=(i, array))
                         jobs.append(p)
                         p.start()
@@ -1133,7 +1133,7 @@ if __name__ == "__main__":
                     manager = multiprocessing.Manager()
                     array = manager.dict()
                     jobs = []
-                    for i in np.arange(1979, 2009, 1):
+                    for i in np.arange(lower_year, upper_year+1, 1):
                         p = multiprocessing.Process(target=timeseries_calculations, args=(i, array))
                         jobs.append(p)
                         p.start()
@@ -1227,7 +1227,7 @@ if __name__ == "__main__":
                     manager = multiprocessing.Manager()
                     array = manager.dict()
                     jobs = []
-                    for i in np.arange(1979, 2009, 1):
+                    for i in np.arange(lower_year, upper_year+1, 1):
                         p = multiprocessing.Process(target=timeseries_calculations, args=(i, array))
                         jobs.append(p)
                         p.start()
@@ -1323,7 +1323,9 @@ if __name__ == "__main__":
                     manager = multiprocessing.Manager()
                     array = manager.dict()
                     jobs = []
-                    for i in np.arange(1979, 2009, 1):
+                    if reanalysis_id == "gleam" and variable == 'tran':
+                        lower_year = 1984
+                    for i in np.arange(lower_year, upper_year+1, 1):
                         p = multiprocessing.Process(target=timeseries_calculations, args=(i, array))
                         jobs.append(p)
                         p.start()
@@ -1366,7 +1368,7 @@ if __name__ == "__main__":
                                 print "hi16"
                                 timeseries_reanalysis_variable2_array = timeseries_reanalysis_array
 
-            count +=1
+        count +=1
 
     list_all_datasets = []
 
@@ -1470,11 +1472,15 @@ if __name__ == "__main__":
                 mean_1 = np.mean(timeseries_1)
                 timeseries_2 = timeseries_reanalysis_variable2_array[i]
                 mean_2 = np.mean(timeseries_2)
+                print timeseries_1
                 print mean_1
+                print timeseries_2
                 print mean_2
 
-                print len(timeseries_1)
-                print len(timeseries_2)
+                if len(timeseries_1) == 24 and len(timeseries_2) == 29:
+                    timeseries_2 = timeseries_2[5:]
+                    print len(timeseries_2)
+                    print timeseries_2
 
                 pearson = pearsonr(timeseries_1, timeseries_2)
                 pearsoncoeff = pearson[0]
