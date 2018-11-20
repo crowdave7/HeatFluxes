@@ -400,8 +400,6 @@ def slicing_ensemble(i, array):
                 constraint = iris.Constraint(month=input_time)
                 cube_monthly = monthly_means.extract(constraint)
 
-                print cube_monthly.coord('time')
-
                 cubelist_ensemble[i] = cube_monthly.collapsed('time', iris.analysis.MEAN)
 
     array[i] = cubelist_ensemble[i]
@@ -416,7 +414,7 @@ def build_cubelist_reanalysis(i, array):
         if len(coord_names) == 3:
             array[i] = cube
 
-def reanalysis_file_paths(list_of_reanalysis, variable):
+def reanalysis_file_paths_func(list_of_reanalysis, variable):
     """Import the data."""
     root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1ReanalysisFiles"
 
@@ -523,8 +521,6 @@ def slicing_reanalysis(i, array):
                 constraint = iris.Constraint(month=input_time)
                 cube_monthly = monthly_means.extract(constraint)
 
-                print cube_monthly.coord('time')
-
                 cubelist_reanalysis[i] = cube_monthly.collapsed('time', iris.analysis.MEAN)
 
         """Select the reanalysis ID."""
@@ -537,8 +533,8 @@ def slicing_reanalysis(i, array):
             cubelist_reanalysis[i].long_name = "ERA-Interim"
             cubelist_reanalysis[i].rename("ERA-Interim")
         if reanalysis_id == "gleam":
-            cubelist_reanalysis[i].long_name = "GLEAM-LE"
-            cubelist_reanalysis[i].rename("GLEAM-LE")
+            cubelist_reanalysis[i].long_name = "GLEAM"
+            cubelist_reanalysis[i].rename("GLEAM")
         if reanalysis_id == "jra":
             cubelist_reanalysis[i].long_name = "JRA-55"
             cubelist_reanalysis[i].rename("JRA-55")
@@ -546,8 +542,8 @@ def slicing_reanalysis(i, array):
             cubelist_reanalysis[i].long_name = "MERRA-2"
             cubelist_reanalysis[i].rename("MERRA-2")
         if reanalysis_id == "mswep":
-            cubelist_reanalysis[i].long_name = "GLEAM (MSWEP)"
-            cubelist_reanalysis[i].rename("GLEAM (MSWEP)")
+            cubelist_reanalysis[i].long_name = "MSWEP"
+            cubelist_reanalysis[i].rename("MSWEP")
         if reanalysis_id == "ncep-ncar":
             cubelist_reanalysis[i].long_name = "NCEP/NCAR"
             cubelist_reanalysis[i].rename("NCEP/NCAR")
@@ -569,7 +565,7 @@ def colour_bar_adjust_ticks(fig, contour_plot, colour_bar, lower_tick, upper_tic
 
     colour_bar.set_ticks(np.arange(lower_tick, upper_tick+interval, interval))
     colour_bar.set_ticklabels(np.arange(lower_tick, upper_tick+interval, interval))
-    colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0, labelsize=8)
+    colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0, labelsize=6)
 
     return colour_bar
 
@@ -584,7 +580,7 @@ def plot_map(cube, variable, input_time, contour_levels, cmap, lower_tick, upper
     fig = plt.figure(figsize=(4,4))
 
     ax = plt.subplot(111, projection=crs_latlon)
-    #ax.set_extent([-22, 62, -24, 17], crs=crs_latlon)
+    ax.set_extent([-22, 62, -24, 17], crs=crs_latlon)
 
     contour_plot = iplt.contourf(cube, contour_levels, cmap=cmap, extend='both')
 
@@ -628,7 +624,7 @@ def plot_map(cube, variable, input_time, contour_levels, cmap, lower_tick, upper
     #"""Add a title."""
     #plt.title(cube.long_name, fontsize=14)
 
-    colourbar_axis = fig.add_axes([0.13, 0.1, 0.77, 0.02])
+    colourbar_axis = fig.add_axes([0.13, 0.2, 0.77, 0.02])
 
     """Add a colour bar, with ticks and labels."""
     colour_bar = plt.colorbar(contour_plot, colourbar_axis, orientation='horizontal')
@@ -669,8 +665,13 @@ def plot_map(cube, variable, input_time, contour_levels, cmap, lower_tick, upper
     if variable == 'mrro':
         label = 'Runoff Flux (mm $\mathregular{day^{-1}}$)'
 
-    print input_time
-    colour_bar.set_label(input_time+" "+label, fontsize=8)
+    if variable == 'treeFrac':
+        label = 'Tree Cover Fraction (%)'
+        colour_bar.set_label(label, fontsize=6)
+
+    else:
+        print input_time
+        colour_bar.set_label(input_time+" "+label, fontsize=8)
 
     cube_name = cube.long_name
     print cube_name
@@ -687,7 +688,7 @@ def plot_map(cube, variable, input_time, contour_levels, cmap, lower_tick, upper
         if input_time in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']:
             print month_index
             print "saving final figure"
-            fig.savefig(variable+"_"+str(month_index)+"_Composite.png", dpi=600)
+            fig.savefig(variable+"_"+str(month_index)+"_Composite.png", dpi=600, bbox_inches='tight')
             plt.close()
             print "composite plot done"
 
@@ -721,6 +722,84 @@ def plot_map(cube, variable, input_time, contour_levels, cmap, lower_tick, upper
             print month_index
             print "saving final figure"
             fig.savefig(variable+"_"+cube.long_name+"_"+str(month_index)+".png")
+
+def plot_subplot(cubelist, variable, input_time, contour_levels, cmap, lower_tick, upper_tick, tick_interval, subplot_columns, subplot_rows):
+
+    crs_latlon = ccrs.PlateCarree()
+
+    if subplot_columns == 4 and subplot_rows == 4:
+        fig = plt.figure(figsize=(8, 8))
+
+    cube_number = 0
+
+    for i in cubelist:
+        long_name = i.long_name
+        ax = plt.subplot(subplot_rows, subplot_columns, cube_number+1, projection=crs_latlon)
+        ax.set_extent([-22, 62, -24, 17], crs=crs_latlon)
+
+        contour_plot = iplt.contourf(i, contour_levels, cmap=cmap, extend='both')
+
+        """Import coastlines and lake borders. Set the scale to 10m, 50m or 110m resolution for more detail."""
+        coastline = cart.feature.NaturalEarthFeature(category='physical', name='coastline', scale='110m', facecolor='none')
+        lake_borders = cart.feature.NaturalEarthFeature(category='physical', name='lakes', scale='110m', facecolor='none')
+
+        """Import country borders."""
+        shapefile = shapereader.natural_earth(resolution='110m', category='cultural', name='admin_0_countries')
+        reader = shapereader.Reader(shapefile)
+        country_borders = reader.records()
+
+        """Remove iris warning message."""
+        iris.FUTURE.netcdf_promote = True
+
+        """Plot the map using cartopy, and add map features."""
+        ax.add_feature(coastline, zorder=5, edgecolor='k', linewidth=2)
+        ax.add_feature(lake_borders, zorder=5, edgecolor='k', linewidth=1)
+        for i in country_borders:
+            ax.add_geometries(i.geometry, ccrs.PlateCarree(), edgecolor="black", facecolor="None")
+        ax.add_feature(cart.feature.OCEAN, zorder=1, facecolor="w")
+
+        """Define gridlines."""
+        gridlines = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, color='black', linewidth=0.4, linestyle='--')
+        gridlines.xlabels_top = False
+        gridlines.xlabels_bottom = True
+        gridlines.ylabels_left = True
+        gridlines.ylabels_right = False
+        gridlines.xlabel_style = {'size': 6, 'color': 'black'}
+        gridlines.ylabel_style = {'size': 6, 'color': 'black'}
+        gridlines.xlines = False
+        gridlines.ylines = False
+        gridlines.xformatter = LONGITUDE_FORMATTER
+        gridlines.yformatter = LATITUDE_FORMATTER
+        gridlines.xlocator = mticker.FixedLocator(np.arange(-40, 100, 20))
+        gridlines.ylocator = mticker.FixedLocator(np.arange(-50, 70, 10))
+
+        if long_name == 'ACCESS1.3':
+            long_name = 'ACCESS1-3'
+
+        """Add a title."""
+        plt.title(long_name, fontsize=7)
+
+        """Add 1 to the model number to loop through the next model."""
+        cube_number +=1
+        print cube_number
+
+    if subplot_columns == 4 and subplot_rows == 4:
+        #colourbar_axis = fig.add_axes([0.20, 0.07, 0.60, 0.02])
+        colourbar_axis = fig.add_axes([0.21, 0.31, 0.60, 0.015])
+
+    colour_bar = plt.colorbar(contour_plot, colourbar_axis, orientation='horizontal')
+
+    """Adjust ticks."""
+    colour_bar = colour_bar_adjust_ticks(fig, contour_plot, colour_bar, lower_tick, upper_tick, tick_interval)
+
+    if variable == 'tran':
+        label = 'Transpiration (mm $\mathregular{day^{-1}}$)'
+
+    if subplot_columns == 4 and subplot_rows == 4:
+        fig.subplots_adjust(left=0.05, right=0.98, bottom=0.36, top=0.96, wspace=0.4, hspace=0.55)
+
+    print "saving final figure"
+    fig.savefig("Gridded_"+variable+"_Composite.png", bbox_inches='tight')
 
 # ------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -768,30 +847,35 @@ if __name__ == "__main__":
 
     composite_difference = "yes"
     composite_mean = "yes"
-    time_difference = ['Nov', 'Mar']
+    #time_diff = (2 - 1)
+    time_difference = ['Mar', 'Nov']
     #time_difference = []
     label_for_time_difference = str('Nov - Mar')
-    ensemble_maps = "no"
+    ensemble_maps = "yes"
+    multiple_models = 'yes'
 
     # CANNOT PRINT COMPOSITE MAPS OF BOTH MODEL AND REANALYSIS AT ONCE.
     # CANNOT HAVE MORE THAN 1 REANALYSIS.
     #list_of_models = ["MRI-AGCM3-2H/"]
-    list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/",  "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/",  "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     #list_of_models = ["GISS-E2-R/", "inmcm4/"]
+    list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/"]
     #list_of_models = ['bcc-csm1-1/', 'IPSL-CM5B-LR/', 'FGOALS-g2/', 'CMCC-CM/', 'MRI-CGCM3/']
     #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     model_type = "amip"
-    list_of_reanalysis = []
+    list_of_reanalysis = ['gleam']
     #list_of_reanalysis = ["cfsr"]
     #list_of_reanalysis = ["cfsr", "erai", "gleam", "jra", "merra2", "ncep-doe"]
 
-    list_of_models_higher_composite = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
-    list_of_models_lower_composite = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #list_of_models_higher_composite = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #list_of_models_lower_composite = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+
 
     #list_of_times = ['SON']
+    # ONLY IF TIME DIFFERENCE = []
     list_of_times = ['Nov']
     variable = "tran"
 
@@ -823,11 +907,11 @@ if __name__ == "__main__":
     lower_year = 1979
     upper_year = 2008
     lower_value = 0
-    higher_value = 3.0
-    value_interval = 0.3
+    higher_value = 100
+    value_interval = 10
     lower_tick = 0
-    upper_tick = 3.0
-    tick_interval = 0.3
+    upper_tick = 100
+    tick_interval = 10
 
     # lower_value_diff = -2.0
     # higher_value_diff = 2.25
@@ -836,12 +920,15 @@ if __name__ == "__main__":
     # upper_tick_diff = 2.25
     # tick_interval_diff = 0.5
 
-    lower_value_diff = -1.4
-    higher_value_diff = 1.4
-    value_interval_diff = 0.2
-    lower_tick_diff = -1.4
-    upper_tick_diff = 1.4
-    tick_interval_diff = 0.4
+    lower_value_diff = -1.0
+    higher_value_diff = 1.0
+    value_interval_diff = 0.1
+    lower_tick_diff = -1.0
+    upper_tick_diff = 1.0
+    tick_interval_diff = 0.1
+
+    subplot_columns = 4
+    subplot_rows = 4
 
     time_range_year = iris.Constraint(time=lambda cell: lower_year <= cell.point.year <= upper_year)
 
@@ -1149,21 +1236,32 @@ if __name__ == "__main__":
                         process.join()
                     cubelist_ensemble = array.values()
 
-                    print len(cubelist_ensemble)
+                    cube_1 = cubelist_ensemble[0]
 
-                    ensemble_mean_cube = sum(cubelist_ensemble) / float(len(cubelist_ensemble))
-                    ensemble_mean_cube.long_name = "Composite"
+                    for i in range(len(cubelist_ensemble)):
+                        array = np.ma.filled(cubelist_ensemble[i].data)
+                        array[array==1e20] = np.nan
+                        cubelist_ensemble[i].data = array
+                        cubelist_ensemble[i] = cubelist_ensemble[i].data
 
-                    print ensemble_mean_cube
+                    ensemble_cube = np.nansum(cubelist_ensemble, axis = 0) / float(len(cubelist_ensemble))
 
-                    qplt.contourf(ensemble_mean_cube, 25, cmap="YlGnBu")
-                    plt.gca().coastlines()
-                    plt.show()
 
-                    contour_levels = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[0]
-                    cmap = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[1]
 
-                    plot_map(ensemble_mean_cube, variable, input_time, contour_levels, cmap, lower_tick, upper_tick, tick_interval)
+                    # # cube_1.data = cube_data
+                    # # cube_1.long_name = "Composite"
+                    # # ensemble_mean_cube = cube_1
+                    # #
+                    # # print ensemble_mean_cube
+                    #
+                    # # qplt.contourf(ensemble_mean_cube, 25, cmap="YlGnBu")
+                    # # plt.gca().coastlines()
+                    # # plt.show()
+                    #
+                    # contour_levels = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[0]
+                    # cmap = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[1]
+                    #
+                    # plot_map(ensemble_mean_cube, variable, input_time, contour_levels, cmap, lower_tick, upper_tick, tick_interval)
 
         # ------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1354,7 +1452,7 @@ if __name__ == "__main__":
 
         """FIRST CUBE (e.g. Nov transpiration, averaged across all models"""
 
-        if len(list_of_models) >= 1 and composite_mean == "yes":
+        if len(list_of_models) >= 1 and composite_mean == "yes" and multiple_models == 'no':
 
             input_time = time_difference[0]
 
@@ -1477,3 +1575,308 @@ if __name__ == "__main__":
             input_time = label_for_time_difference
 
             plot_map(composite_difference_cube, variable, input_time, contour_levels, cmap, lower_tick_diff, upper_tick_diff, tick_interval_diff)
+
+
+    #---------------------------------------------------------------------------------------------------
+
+    """COMPOSITE DIFFERENCE, NOV-MAR TRAN, MULTIPLE MODELS, SUBPLOTTED, WITH ENSEMBLE MEAN"""
+
+    if len(time_difference) != 0:
+
+        if len(list_of_models) >= 1 and composite_mean == "yes" and multiple_models == 'yes':
+
+            #--------------------------------------------------------------------------------------------
+
+            """FIRST MONTH."""
+
+            input_time = time_difference[0]
+            if len(list_of_models) == 0:
+                pass
+            else:
+
+                """Extract the model file paths."""
+                start_time = time.time()
+                model_file_paths = model_file_paths_func(list_of_models, model_type, variable)
+                print time.time() - start_time, "seconds"
+
+                """Build a list of cubes from the model file paths."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(model_file_paths)):
+                    p = multiprocessing.Process(target=build_cubelist, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist = array.values()
+
+                """Slice each cube by the time range."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(cubelist)):
+                    p = multiprocessing.Process(target=slicing, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist = array.values()
+
+            """ENSEMBLE MEAN."""
+
+            if ensemble_maps == "yes":
+
+                """Extract the regridded model file paths for the ensemble mean."""
+                model_file_paths_ensemble = model_file_paths_ensemble_func(list_of_models, model_type, variable)
+
+                """Build a list of cubes from the regridded model file paths."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(model_file_paths_ensemble)):
+                    p = multiprocessing.Process(target=build_cubelist_ensemble, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist_ensemble = array.values()
+
+                """Slice each cube by year, month and spatial dimension."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(cubelist_ensemble)):
+                    p = multiprocessing.Process(target=slicing_ensemble, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist_ensemble = array.values()
+
+                """Compute the ensemble mean cube, ignoring fill values."""
+
+                cube_1 = cubelist_ensemble[0]
+
+                for i in range(len(cubelist_ensemble)):
+                    array = np.ma.filled(cubelist_ensemble[i].data)
+                    array[array==1e20] = np.nan
+                    cubelist_ensemble[i].data = array
+                    cubelist_ensemble[i] = cubelist_ensemble[i].data
+
+                cube_data = np.nansum(cubelist_ensemble, axis = 0) / float(len(cubelist_ensemble))
+
+                cube_1.data = cube_data
+                cube_1.long_name = "Ensemble"
+                ensemble_mean_cube = cube_1
+
+                """Append ensemble mean to the cubelist."""
+                cubelist = np.append(cubelist, ensemble_mean_cube)
+
+            if len(list_of_reanalysis) == 0:
+                pass
+
+            else:
+
+                list_of_reanalysis.sort()
+                """Build a list of cubes from the reanalysis file paths."""
+                reanalysis_file_paths = reanalysis_file_paths_func(list_of_reanalysis, variable)
+
+                """Load the cubes."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(reanalysis_file_paths)):
+                    p = multiprocessing.Process(target=build_cubelist_reanalysis, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist_reanalysis = array.values()
+
+                """Slice each cube by year, month and spatial dimension."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                print len(cubelist_reanalysis)
+                print np.arange(0, len(cubelist_reanalysis))
+                for i in np.arange(0, len(cubelist_reanalysis)):
+                    p = multiprocessing.Process(target=slicing_reanalysis, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist_reanalysis = array.values()
+
+                """Append reanalysis cubes to the cubelist."""
+                cubelist = np.append(cubelist, cubelist_reanalysis)
+
+            cubelist_1 = cubelist
+
+            #--------------------------------------------------------------------------------------------
+
+            """SECOND MONTH"""
+
+            input_time = time_difference[1]
+
+            if len(list_of_models) == 0:
+                pass
+            else:
+
+                """Extract the model file paths."""
+                start_time = time.time()
+                model_file_paths = model_file_paths_func(list_of_models, model_type, variable)
+                print time.time() - start_time, "seconds"
+
+                """Build a list of cubes from the model file paths."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(model_file_paths)):
+                    p = multiprocessing.Process(target=build_cubelist, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist = array.values()
+
+                """Slice each cube by the time range."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(cubelist)):
+                    p = multiprocessing.Process(target=slicing, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist = array.values()
+
+            """ENSEMBLE MEAN."""
+
+            if ensemble_maps == "yes":
+
+                """Extract the regridded model file paths for the ensemble mean."""
+                model_file_paths_ensemble = model_file_paths_ensemble_func(list_of_models, model_type, variable)
+
+                """Build a list of cubes from the regridded model file paths."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(model_file_paths_ensemble)):
+                    p = multiprocessing.Process(target=build_cubelist_ensemble, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist_ensemble = array.values()
+
+                """Slice each cube by year, month and spatial dimension."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(cubelist_ensemble)):
+                    p = multiprocessing.Process(target=slicing_ensemble, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist_ensemble = array.values()
+
+                """Compute the ensemble mean cube, ignoring fill values."""
+
+                cube_1 = cubelist_ensemble[0]
+
+                for i in range(len(cubelist_ensemble)):
+                    array = np.ma.filled(cubelist_ensemble[i].data)
+                    array[array==1e20] = np.nan
+                    cubelist_ensemble[i].data = array
+                    cubelist_ensemble[i] = cubelist_ensemble[i].data
+
+                cube_data = np.nansum(cubelist_ensemble, axis = 0) / float(len(cubelist_ensemble))
+
+                cube_1.data = cube_data
+                cube_1.long_name = "Ensemble"
+                ensemble_mean_cube = cube_1
+
+                """Append ensemble mean to the cubelist."""
+                cubelist = np.append(cubelist, ensemble_mean_cube)
+
+            if len(list_of_reanalysis) == 0:
+                pass
+
+            else:
+
+                list_of_reanalysis.sort()
+                """Build a list of cubes from the reanalysis file paths."""
+                reanalysis_file_paths = reanalysis_file_paths_func(list_of_reanalysis, variable)
+
+                """Load the cubes."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                for i in np.arange(0, len(reanalysis_file_paths)):
+                    p = multiprocessing.Process(target=build_cubelist_reanalysis, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist_reanalysis = array.values()
+
+                """Slice each cube by year, month and spatial dimension."""
+                manager = multiprocessing.Manager()
+                array = manager.dict()
+                jobs = []
+                print cubelist_reanalysis
+                print len(cubelist_reanalysis)
+                print np.arange(0, len(cubelist_reanalysis))
+                for i in np.arange(0, len(cubelist_reanalysis)):
+                    p = multiprocessing.Process(target=slicing_reanalysis, args=(i, array))
+                    jobs.append(p)
+                    p.start()
+                for process in jobs:
+                    process.join()
+                cubelist_reanalysis = array.values()
+
+                """Append reanalysis cubes to the cubelist."""
+                cubelist = np.append(cubelist, cubelist_reanalysis)
+
+            cubelist_2 = cubelist
+
+            print cubelist_1
+            print cubelist_2
+
+            """Collect list of model names."""
+
+            list_of_cube_names = []
+
+            for i in np.arange(0, len(cubelist_2)):
+
+                cube_name = cubelist_2[i].long_name
+
+                print cube_name
+
+                list_of_cube_names = np.append(list_of_cube_names, cube_name)
+
+            print list_of_cube_names
+
+            """Subtract cubelists."""
+
+            composite_cubelist = cubelist_2 - cubelist_1
+
+            """Reassign model names."""
+
+            for i in np.arange(0, len(composite_cubelist)):
+
+                long_name = list_of_cube_names[i]
+
+                composite_cubelist[i].long_name = long_name
+
+            print composite_cubelist
+
+            contour_levels = contour_lev_colour_map(lower_value_diff, higher_value_diff, value_interval_diff, cmap)[0]
+            cmap = contour_lev_colour_map(lower_value_diff, higher_value_diff, value_interval_diff, cmap)[1]
+
+            input_time = label_for_time_difference
+
+            plot_subplot(composite_cubelist, variable, input_time, contour_levels, cmap, lower_tick_diff, upper_tick_diff, tick_interval_diff, subplot_columns, subplot_rows)

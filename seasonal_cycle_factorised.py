@@ -28,6 +28,8 @@ def build_cubelist(i, array):
             array[i] = cube
         if len(coord_names) == 4 and 'depth' in coord_names:
             array[i] = cube
+        if len(coord_names) == 4 and 'atmosphere_hybrid_sigma_pressure_coordinate' in coord_names:
+            array[i] = cube
         if len(coord_names) == 4 and 'air_pressure' in coord_names:
             array[i] = cube
         if len(coord_names) == 4 and 'height' in coord_names:
@@ -105,7 +107,6 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                 for j in list_of_models:
                     if j in path and model_type in path and variable in path:
                         model_file_paths = np.append(model_file_paths, path)
-
         model_file_paths_nrad_sorted = []
 
         for i in list_of_models:
@@ -225,6 +226,8 @@ def slicing(i, array):
                 pass
             else:
                 cubelist[i] = cubelist[i].extract(time_range)
+            if variable == 'cl':
+                cubelist[i] = cubelist[i].extract(depth)
             time_points = cubelist[i].coord('time').points
             times = cubelist[i].coord('time').units.num2date(time_points)
         if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'cancap', 'swc_anom']:
@@ -288,11 +291,13 @@ def return_cube_transpose_two(i, array):
 
 def seasonal_cycle_calculations(i, array):
     """Constrain the data for each month only."""
+    print "hi14"
+    #print first_cube
     time_range = iris.Constraint(time=lambda cell: cell.point.month == i)
     data_unmasked = first_cube.extract(time_range)
-    print data_unmasked
-    print variable
-    print reanalysis_id
+    #print data_unmasked
+    #print variable
+    #print reanalysis_id
     if variable == 'swc_anom':
         pass
     # if variable == 'lai' and reanalysis_id == 'MODIS':
@@ -718,7 +723,6 @@ def slicing_reanalysis(i, array):
     if reanalysis_id == 'gpcc':
         cubelist_reanalysis[i].long_name = "GPCC"
         cubelist_reanalysis[i].rename("GPCC")
-
 
 
     array[i] = cubelist_reanalysis[i]
@@ -1359,7 +1363,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 ensemble_string = ensemble_string_for_plot[0]
                 print ensemble_string
 
-                ax1.plot(x_pos, ensemble_mean_seasonal_cycle_models, zorder=2, linestyle='-', linewidth=4.0, color='black', label = str(ensemble_string))
+                ax1.plot(x_pos, ensemble_mean_seasonal_cycle_models, zorder=2, linestyle='-', linewidth=3.0, color='black', label = str(ensemble_string))
                 handles, labels = ax1.get_legend_handles_labels()
                 handles[-1].set_linestyle("-")
                 if include_legend == 'yes':
@@ -1387,7 +1391,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                     reanalysis_id = reanalysis_strings_for_plot[i]
                     print reanalysis_id
 
-                    ax1.plot(x_pos, seasonal_cycle_reanalysis, zorder=1, linestyle='--', color = line_colour, label = str(reanalysis_id))
+                    ax1.plot(x_pos, seasonal_cycle_reanalysis, zorder=3, linestyle='--', color = line_colour, label = str(reanalysis_id))
                     handles, labels = ax1.get_legend_handles_labels()
                     handles[-1].set_linestyle("--")
                     if include_legend == 'yes':
@@ -1442,7 +1446,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
             plt.yticks(np.arange(lower_y_lim, upper_y_lim+y_tick_interval, y_tick_interval))
 
             if variable == 'pr':
-                plt.ylabel('Precipitation (mm $\mathregular{day^{-1}}$)')
+                plt.ylabel('Rainfall (mm $\mathregular{day^{-1}}$)')
             if variable == 'hfls':
                 plt.ylabel('Surface Upward Latent Heat Flux (W $\mathregular{m^{-2}}$)')
             if variable == 'evaporation':
@@ -1497,6 +1501,8 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 plt.ylabel('Soil Water Content Anomaly (mm)')
             if variable == 'cancap':
                 plt.ylabel('Canopy Storage Capacity (mm)')
+            if variable == 'cl':
+                plt.ylabel('Cloud Fraction (%)')
 
             """Save the figure."""
             print "Saving figure"
@@ -2139,7 +2145,7 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 lower_y_lim = 0.0
                 upper_y_lim = 13.0
                 y_tick_interval = 1.0
-                plt.ylabel('Precipitation (mm $\mathregular{day^{-1}}$)', fontsize=7)
+                plt.ylabel('Rainfall (mm $\mathregular{day^{-1}}$)', fontsize=7)
                 line_colour = 'blue'
 
             if list_of_variables[i] == 'lai':
@@ -2329,11 +2335,11 @@ if __name__ == "__main__":
     #list_of_models = ["bcc-csm1-1-m/", "GFDL-HIRAM-C360/", "IPSL-CM5A-MR/", "MIROC5/", "NorESM1-M/"]
 
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
-    #list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
-    #list_of_models = ["bcc-csm1-1-m/", "CanAM4/"]
+    list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
+    #list_of_models = ["CNRM-CM5/", "GISS-E2-R/"]
     #list_of_models = ["bcc-csm1-1-m/"]
-    #list_of_models = ["CNRM-CM5/"]
-    list_of_models = []
+    #list_of_models = ["BNU-ESM/", "CNRM-CM5/"]
+    #list_of_models = []
     #list_of_reanalysis = ["era5", "jra", "merra2", "mswep"]
     #list_of_reanalysis = ["era5", "gleam", "jra", "merra2"]
     #list_of_reanalysis = ['era5', 'gleam', 'landfluxeval', 'modis']
@@ -2347,7 +2353,8 @@ if __name__ == "__main__":
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/"]
     #list_of_reanalysis = ["cfsr", "era5", "erai", "jra", "merra2", "mswep", "ncep-doe"]
     #list_of_reanalysis = ['era5', 'gewex']
-    list_of_reanalysis = ["modis"]
+    #list_of_reanalysis = ['gleam', 'landfluxeval']
+    list_of_reanalysis = ['chirps', 'gpcc', 'mswep']
 
     model_type = "amip"
 
@@ -2362,7 +2369,7 @@ if __name__ == "__main__":
     #list_of_variables = ['evspsblsoi']
     #list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
     #list_of_variables = ['pr', 'evaporation', 'mrro']
-    list_of_variables = ['lai']
+    list_of_variables = ['pr']
 
 
     #list_of_variables = ["evaporation", "evspsblveg", "tran", "evspsblsoi"]
@@ -2401,10 +2408,10 @@ if __name__ == "__main__":
     #variables_to_add = []
 
     #CONGO BASIN
-    # lower_lat = -14
-    # upper_lat = 4
-    # lower_lon = 18
-    # upper_lon = 29
+    lower_lat = -14
+    upper_lat = 4
+    lower_lon = 18
+    upper_lon = 29
 
     # CONGO RAINFOREST
     # lower_lat = -5
@@ -2413,23 +2420,25 @@ if __name__ == "__main__":
     # upper_lon = 29
 
     # CONGO BASIN SOUTH
-    lower_lat = -14
-    upper_lat = -5
-    lower_lon = 18
-    upper_lon = 29
+    # lower_lat = -14
+    # upper_lat = -5
+    # lower_lon = 18
+    # upper_lon = 29
 
     lower_year = 1979
     upper_year = 2008
     lower_y_lim = 0.0
-    upper_y_lim = 10.0
+    upper_y_lim = 13.0
     y_tick_interval = 1.0
     # lower_y_lim = -1
     # upper_y_lim = 5
     # y_tick_interval = 1.0
+    depth = 0.85011389
 
-    cmap = 'rainbow'
-    models = 'no'
-    ensemble = 'no'
+    cmap_models = 'rainbow'
+    cmap_reanalysis = 'brg'
+    models = 'yes'
+    ensemble = 'yes'
     reanalysis = 'yes'
     plot = 'yes'
     unit_plot = "mm day-1"
@@ -2451,6 +2460,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------------------------------------------------------------------
 
     time_range = iris.Constraint(time=lambda cell: lower_year <= cell.point.year <= upper_year)
+    depth = iris.Constraint(atmosphere_hybrid_sigma_pressure_coordinate = depth)
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -2606,6 +2616,8 @@ if __name__ == "__main__":
                         first_cube = first_set_transposed_cubes[i]
                         second_cube = second_set_transposed_cubes[i]
                         coord_names = [coord.name() for coord in first_cube.coords()]
+                        print "hi8"
+                        print first_cube
 
                         """Multiprocess calculations for each month."""
                         manager = multiprocessing.Manager()
@@ -2624,6 +2636,7 @@ if __name__ == "__main__":
                         jan_value = model_seasonal_cycle[0]
                         model_seasonal_cycle.append(jan_value)
                         seasonal_cycle_models_array.append(model_seasonal_cycle)
+
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -2879,7 +2892,7 @@ if __name__ == "__main__":
                 print "ensemble"
                 print seasonal_cycle_ensemble_array
 
-                ensemble_string_for_plot = np.append(ensemble_string_for_plot, "Ensemble")
+                ensemble_string_for_plot = np.append(ensemble_string_for_plot, "GCM Ensemble")
 
                 #---------------------------------------------------------------------------------------------------
 
@@ -3216,8 +3229,8 @@ if __name__ == "__main__":
 
             if number_of_variables == 1:
 
-                model_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap)[0]
-                reanalysis_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap)[1]
+                model_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap_models)[0]
+                reanalysis_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap_reanalysis)[1]
                 plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_array, seasonal_cycle_ensemble_std_array, seasonal_cycle_ensemble_top_array, seasonal_cycle_ensemble_bottom_array, seasonal_cycle_dv_array, seasonal_cycle_pv_array, seasonal_cycle_reanalysis_array, model_strings_for_plot, ensemble_string_for_plot, reanalysis_strings_for_plot, model_line_colours, reanalysis_line_colours, lower_y_lim, upper_y_lim, y_tick_interval, number_of_variables, list_of_variables, variables_to_add, fill_between_lines, variables_to_subtract, legend_in_plot, number_of_models, list_of_models)
                 print('')
 
@@ -3838,8 +3851,8 @@ if __name__ == "__main__":
         if number_of_variables > 1:
 
             print "hi5"
-            model_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap)[0]
-            reanalysis_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap)[1]
+            model_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap_models)[0]
+            reanalysis_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap_reanalysis)[1]
             print seasonal_cycle_models_multiple_variables_array
             print seasonal_cycle_ensemble_multiple_variables_array
             #print seasonal_cycle_ensemble_multiple_variables_std_array
@@ -3851,8 +3864,8 @@ if __name__ == "__main__":
         if number_of_variables == 1 and subplot_multiple_variables == "yes":
 
             print "hi5"
-            model_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap)[0]
-            reanalysis_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap)[1]
+            model_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap_models)[0]
+            reanalysis_line_colours = line_colours(number_of_models, number_of_reanalysis, cmap_reanalysis)[1]
             print seasonal_cycle_ensemble_multiple_variables_array
             print seasonal_cycle_ensemble_multiple_variables_top_array
             print seasonal_cycle_ensemble_multiple_variables_bottom_array

@@ -10,6 +10,7 @@ import iris
 import iris.analysis
 import iris.coord_categorisation
 import iris.plot as iplt
+import iris.unit
 import matplotlib
 import matplotlib.ticker as mticker
 import matplotlib.pyplot as plt
@@ -332,8 +333,8 @@ def map(list_of_models, model_type, variable, season_name):
         contour_levels = np.arange(100, 185, 5)
     if variable == 'treeFrac':
         contour_levels = np.arange(0, 110, 10)
-    # if variable == 'lai':
-    #     contour_levels = np.arange(0, 20, 1)
+    if variable == 'lai':
+        contour_levels = np.arange(1, 11, 1)
 
     """Define the colour map and the projection."""
     if variable == 'hfls' and variable_original != 'evapotranspiration':
@@ -477,11 +478,6 @@ def map(list_of_models, model_type, variable, season_name):
             gleam_cube_data = reanalysis_cube.reanalysis(["gleam"], variable, season_name)
             cubes = np.append(cubes, gleam_cube_data)
 
-        if variable == 'pr':
-            """Add MSWEP data to the cubelist."""
-            mswep_cube_data = reanalysis_cube.reanalysis(["mswep"], variable, season_name)
-            cubes = np.append(cubes, mswep_cube_data)
-
         if variable != "mrsos":
         #if variable != "mrsos" or variable != 'tran' or variable != 'evspsblsoi' or variable != 'evspsbl':
             """Add JRA-55 data to the cubelist."""
@@ -492,6 +488,11 @@ def map(list_of_models, model_type, variable, season_name):
             """Add MERRA-2 data to the cubelist."""
             merra_cube_data = reanalysis_cube.reanalysis(["merra2"], variable, season_name)
             cubes = np.append(cubes, merra_cube_data)
+
+        if variable == 'pr':
+            """Add MSWEP data to the cubelist."""
+            mswep_cube_data = reanalysis_cube.reanalysis(["mswep"], variable, season_name)
+            cubes = np.append(cubes, mswep_cube_data)
 
         if variable != 'tran' or variable != 'evspsblsoi' or variable != 'evspsbl':
             """Add NCEP DOE-2 data to the cubelist."""
@@ -508,7 +509,7 @@ def map(list_of_models, model_type, variable, season_name):
 
         ax = plt.subplot(6, 4, model_number+1, projection=crs_latlon)
         ax.set_extent([-22, 62, -24, 17], crs=crs_latlon)
-        contour_plot = iplt.contourf(model_data, cmap=cmap, extend='both')
+        contour_plot = iplt.contourf(model_data, contour_levels, cmap=cmap, extend='both')
 
         """Import coastlines and lake borders. Set the scale to 10m, 50m or 110m resolution for more detail."""
         coastline = cart.feature.NaturalEarthFeature(category='physical', name='coastline', scale='110m', facecolor='none')
@@ -625,7 +626,7 @@ def map(list_of_models, model_type, variable, season_name):
 
 #map(["ACCESS1-0/", "ACCESS1-3/", "BNU-ESM/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "IPSL-CM5A-LR", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-LR", "MPI-ESM-MR"], "amip", "treeFrac", "SON")
 
-map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1_", "bcc-csm1-1-m", "BNU-ESM/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4", "IPSL-CM5A-LR", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M"], "amip", "lai", "SON")
+#map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1_", "bcc-csm1-1-m", "BNU-ESM/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4", "IPSL-CM5A-LR", "IPSL-CM5A-MR", "IPSL-CM5B-LR", "MIROC5", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H", "MRI-AGCM3-2S", "MRI-CGCM3", "NorESM1-M"], "amip", "lai", "SON")
 
 
 
@@ -638,6 +639,6 @@ map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1_", "bcc-csm1-1-m", "BNU-ESM/", "GFD
 
 #map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "nrad", "SON")
 
-#map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "mrsos", "SON")
+map(["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "evapotranspiration", "SON")
 
 #map(["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"], "amip", "tran", "SON")
