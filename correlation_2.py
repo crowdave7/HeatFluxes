@@ -69,11 +69,11 @@ for i in np.arange(0, len(variable_x), 1):
     """Add a legend for each dot."""
     legend = plt.legend(loc="center left", bbox_to_anchor=(1.02, 0.525), fontsize=7)
 
-plt.ylabel(u'Δ Evaporation between March and November (mm $\mathregular{day^{-1}}$)', fontsize=7)
+plt.ylabel(u'Δ Evaporation between March/November (mm $\mathregular{day^{-1}}$)', fontsize=7)
 plt.ylim((-0.7, 0.1))
 plt.yticks([-0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1])
 
-plt.xlabel(u'Δ Precipitation between March and November (mm $\mathregular{day^{-1}}$)', fontsize=7)
+plt.xlabel(u'Δ Rainfall between March/November (mm $\mathregular{day^{-1}}$)', fontsize=7)
 plt.xlim((-1.0, 2.0))
 plt.xticks([-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0])
 
