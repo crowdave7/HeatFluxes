@@ -27,12 +27,12 @@ ax1.tick_params(axis='y', direction='in', which='both', labelleft='on', labelrig
 #variable_x = [1.05976145, 3.41556894, 1.45201831, 0.63344791, 0.82590173, 0.99572356, 0.87939634, 3.01854602, 2.81287744, 1.42418161, 2.92457451, 1.49827281, 0.31040471, 0.1935775]
 
 #Change in Precipitation Nov - Mar
-variable_x = [0.442, 0.497, 1.317, -0.366, 1.416, 0.609, -0.187, -0.618, 1.049, 0.811, 0.321, 0.433, 0.132, 0.697, 0.292]
+variable_x = [0.442, 0.497, 1.317, -0.366, 1.416, 0.609, -0.187, -0.618, 1.049, 0.811, 0.321, 0.433, 0.697, 0.132, 0.292]
 
 # Change in Evaporation Nov-Mar
-variable_y = [0.024, -0.012, -0.395, -0.575, -0.031, -0.488, -0.6, -0.314, -0.009, -0.381, -0.152, -0.287, -0.545, -0.025, -0.430]
+variable_y = [0.024, -0.012, -0.395, -0.575, -0.031, -0.488, -0.6, -0.314, -0.009, -0.381, -0.152, -0.287, -0.025, -0.545, -0.430]
 
-list_of_models = ['bcc-csm1-1-m', 'BNU-ESM', 'CanAM4', 'CNRM-CM5', 'GFDL-HIRAM-C360', 'GISS-E2-R', 'inmcm4', 'IPSL-CM5A-MR', 'MIROC5', 'MRI-AGCM3-2S', 'NorESM1-M', 'GCM Ensemble', 'Best GCMs', 'Worst GCMs', 'MSWEP/GLEAM']
+list_of_models = ['bcc-csm1-1-m', 'BNU-ESM', 'CanAM4', 'CNRM-CM5', 'GFDL-HIRAM-C360', 'GISS-E2-R', 'inmcm4', 'IPSL-CM5A-MR', 'MIROC5', 'MRI-AGCM3-2S', 'NorESM1-M', 'AGCM Ensemble', 'Weaker AGCMs', 'Better AGCMs', 'MSWEP/GLEAM']
 
 print len(variable_x)
 print len(variable_y)
@@ -49,13 +49,13 @@ for i in np.arange(0, len(variable_x), 1):
 
     """Select the line colour and add one to the line count variable."""
 
-    if list_of_models[i] == "GCM Ensemble":
+    if list_of_models[i] == "AGCM Ensemble":
         ax1.scatter(variable_x[i], variable_y[i], color='black', marker='o', s=16, label=list_of_models[i])
 
-    elif list_of_models[i] == "Best GCMs":
+    elif list_of_models[i] == "Better AGCMs":
         ax1.scatter(variable_x[i], variable_y[i], color='forestgreen', marker='o', s=16, label=list_of_models[i])
 
-    elif list_of_models[i] == "Worst GCMs":
+    elif list_of_models[i] == "Weaker AGCMs":
         ax1.scatter(variable_x[i], variable_y[i], color='saddlebrown', marker='o', s=16, label=list_of_models[i])
 
     elif list_of_models[i] == "MSWEP/GLEAM":
