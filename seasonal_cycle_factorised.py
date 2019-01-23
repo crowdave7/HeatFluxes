@@ -743,12 +743,13 @@ def return_cube_transpose_two_reanalysis(i, array):
 def line_colours(number_of_models, number_of_reanalysis, cmap):
 
     cmap = plt.get_cmap(cmap)
-    model_line_colours = [cmap(i) for i in np.linspace(0, 1, number_of_models)]
+    #model_line_colours = [cmap(i) for i in np.linspace(0, 1, number_of_models)]
+
     #model_line_colours = [(0.5, 0.0, 1.0, 1.0), (0.096078431372549011, 0.80538091938883261, 0.8924005832479478, 1.0), (0.30000000000000004, 0.95105651629515353, 0.80901699437494745, 1.0), (0.50392156862745097, 0.99998102734872685, 0.70492554690614717, 1.0), (0.69999999999999996, 0.95105651629515364, 0.58778525229247314, 1.0), (0.90392156862745088, 0.80538091938883272, 0.45124405704532283, 1.0)]
     #model_line_colours = [(0.30392156862745101, 0.30315267411304353, 0.98816547208125938, 1.0), (0.099999999999999978, 0.58778525229247314, 0.95105651629515353, 1.0), (1.0, 0.58778525229247325, 0.30901699437494745, 1.0), (1.0, 0.30315267411304364, 0.15339165487868545, 1.0), (1.0, 1.2246467991473532e-16, 6.123233995736766e-17, 1.0)]
 
     #spikey bse
-    #model_line_colours = [(0.5, 0.0, 1.0, 1.0), (0.30000000000000004, 0.95105651629515353, 0.80901699437494745, 1.0), (0.50392156862745097, 0.99998102734872685, 0.70492554690614717, 1.0), (0.90392156862745088, 0.80538091938883272, 0.45124405704532283, 1.0), (1.0, 0.30315267411304364, 0.15339165487868545, 1.0), (1.0, 1.2246467991473532e-16, 6.123233995736766e-17, 1.0)]
+    model_line_colours = [(0.5, 0.0, 1.0, 1.0), (0.30000000000000004, 0.95105651629515353, 0.80901699437494745, 1.0), (0.50392156862745097, 0.99998102734872685, 0.70492554690614717, 1.0), (0.90392156862745088, 0.80538091938883272, 0.45124405704532283, 1.0), (1.0, 0.30315267411304364, 0.15339165487868545, 1.0), (1.0, 1.2246467991473532e-16, 6.123233995736766e-17, 1.0)]
     #flat bse
     #model_line_colours = [(0.30392156862745101, 0.30315267411304353, 0.98816547208125938, 1.0), (0.099999999999999978, 0.58778525229247314, 0.95105651629515353, 1.0), (0.096078431372549011, 0.80538091938883261, 0.8924005832479478, 1.0), (0.69999999999999996, 0.95105651629515364, 0.58778525229247314, 1.0), (1.0, 0.58778525229247325, 0.30901699437494745, 1.0)]
     reanalysis_line_colours = [cmap(i) for i in np.linspace(0, 1, number_of_reanalysis)]
@@ -1407,21 +1408,19 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                         seasonal_cycle_pv_2 = seasonal_cycle_pv_2[1:]
                         seasonal_cycle_pv = np.append(seasonal_cycle_pv, seasonal_cycle_pv_2)
 
-
-
-                if seasonal_cycle_dv_array != []:
-                    line = ax1.plot(x_pos, seasonal_cycle_dv, zorder=4, linestyle='-', linewidth=3.0, color='saddlebrown', label = "Weaker AGCMs")
-                    handles, labels = ax1.get_legend_handles_labels()
-                    handles[-1].set_linestyle("-")
+                    if seasonal_cycle_dv_array != []:
+                        line = ax1.plot(x_pos, seasonal_cycle_dv, zorder=4, linestyle='-', linewidth=3.0, color='forestgreen', label = "Better AGCMs")
+                        handles, labels = ax1.get_legend_handles_labels()
+                        handles[-1].set_linestyle("-")
                     if include_legend == 'yes':
                         legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
 
-                if seasonal_cycle_pv_array != []:
-                    line = ax1.plot(x_pos, seasonal_cycle_pv, zorder=4, linestyle='-', linewidth=3.0, color='forestgreen', label = "Better AGCMs")
-                    handles, labels = ax1.get_legend_handles_labels()
-                    handles[-1].set_linestyle("-")
-                    if include_legend == 'yes':
-                        legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+                    if seasonal_cycle_pv_array != []:
+                        line = ax1.plot(x_pos, seasonal_cycle_pv, zorder=4, linestyle='-', linewidth=3.0, color='saddlebrown', label = "Weaker AGCMs")
+                        handles, labels = ax1.get_legend_handles_labels()
+                        handles[-1].set_linestyle("-")
+                        if include_legend == 'yes':
+                            legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
 
             if len(reanalysis_strings_for_plot) == 0:
                 pass
@@ -1461,16 +1460,16 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
 
             #MANUAL ADJUSTMENT OF LABELS
 
-            # handles, labels = ax1.get_legend_handles_labels()
-            # # handles = [handles[1], handles[0], handles[2], handles[3], handles[4]]
-            # # labels = [labels[1], labels[0], labels[2], labels[3], labels[4]]
+            handles, labels = ax1.get_legend_handles_labels()
+            # handles = [handles[0], handles[1], handles[2]]
+            # labels = [labels[0], labels[1], labels[2]]
             # print "hi50"
             # print handles
             # print labels
-
-            # handles = [handles[0], handles[1], handles[2], handles[3], handles[4], handles[5], handles[6], handles[7], handles[8], handles[9], handles[10], handles[12], handles[11], handles[13], handles[14]]
             #
-            # labels = [labels[0], labels[1], labels[2], labels[3], labels[4], labels[5], labels[6], labels[7], labels[8], labels[9], labels[10], labels[12], labels[11], labels[13], labels[14]]
+            # handles = [handles[0], handles[1], handles[2], handles[3], handles[4], handles[5], handles[6], handles[7], handles[8], handles[9], handles[10], handles[13], handles[11], handles[12], handles[14]]
+            #
+            # labels = [labels[0], labels[1], labels[2], labels[3], labels[4], labels[5], labels[6], labels[7], labels[8], labels[9], labels[10], labels[13], labels[11], labels[12], labels[14]]
 
             if include_legend == 'yes':
                 legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
@@ -2320,10 +2319,10 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
             if include_dynamic_prescribed == 'yes':
                 print "hi6"
                 seasonal_cycle_dv_variable_data = seasonal_cycle_dv_array[i]
-                line = ax.plot(x_pos, seasonal_cycle_dv_variable_data, linestyle='-', linewidth=4.0, color='forestgreen')
+                line = ax.plot(x_pos, seasonal_cycle_dv_variable_data, linestyle='-', linewidth=4.0, color='saddlebrown')
 
                 seasonal_cycle_pv_variable_data = seasonal_cycle_pv_array[i]
-                line = ax.plot(x_pos, seasonal_cycle_pv_variable_data, linestyle='-', linewidth=4.0, color='saddlebrown')
+                line = ax.plot(x_pos, seasonal_cycle_pv_variable_data, linestyle='-', linewidth=4.0, color='forestgreen')
 
             variable_number +=1
 
@@ -2385,8 +2384,10 @@ if __name__ == "__main__":
     #list_of_models = ["CNRM-CM5/", "GISS-E2-R/"]
     #list_of_models = ["bcc-csm1-1-m/"]
     #list_of_models = ["BNU-ESM/", "CNRM-CM5/"]
-    list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
-    #list_of_models = ["bcc-csm1-1-m/",  "GFDL-HIRAM-C360/", "GISS-E2-R/", "IPSL-CM5A-MR/", "MRI-AGCM3-2S/", "NorESM1-M/"]
+    #list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
+    #list_of_models = ["bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/"]
+    #list_of_models = ["BNU-ESM/", "CanAM4/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
+    list_of_models = ["bcc-csm1-1-m/",  "GFDL-HIRAM-C360/", "GISS-E2-R/", "IPSL-CM5A-MR/", "MRI-AGCM3-2S/", "NorESM1-M/"]
     #list_of_models = ["BNU-ESM/", "CanAM4/", "CNRM-CM5/","inmcm4/", "MIROC5/"]
     #list_of_models = []
     #list_of_models = []
@@ -2404,8 +2405,8 @@ if __name__ == "__main__":
     #list_of_reanalysis = ["cfsr", "era5", "erai", "jra", "merra2", "mswep", "ncep-doe"]
     #list_of_reanalysis = ['era5', 'gewex']
     #list_of_reanalysis = ['gleam', 'landfluxeval']
-    list_of_reanalysis = ['chirps', 'gpcc', 'mswep']
-    #list_of_reanalysis = ['gleam']
+    #list_of_reanalysis = ['chirps', 'gpcc', 'mswep']
+    list_of_reanalysis = []
     #list_of_reanalysis = ['chirps', 'mswep']
 
     model_type = "amip"
@@ -2421,7 +2422,7 @@ if __name__ == "__main__":
     #list_of_variables = ['evspsblsoi']
     #list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
     #list_of_variables = ['pr', 'evaporation', 'mrro']
-    list_of_variables = ['pr']
+    list_of_variables = ['evspsblsoi']
 
 
     #list_of_variables = ["evaporation", "evspsblveg", "tran", "evspsblsoi"]
@@ -2432,9 +2433,10 @@ if __name__ == "__main__":
     subplot_multiple_variables = 'no'
     include_dynamic_prescribed = 'no'
 
-    list_dynamic_veg_models = ['CNRM-CM5/', 'GISS-E2-R/']
+    #list_dynamic_veg_models = ['CNRM-CM5/', 'GISS-E2-R/']
     list_prescribed_veg_models = ["BNU-ESM/", "MIROC5/"]
-    #list_prescribed_veg_models =
+    list_dynamic_veg_models = []
+    #list_prescribed_veg_models = []
 
 
     #list_dynamic_veg_models = ['bcc-csm1-1-m/', 'BNU-ESM/', 'GFDL-HIRAM-C360/', 'IPSL-CM5A-MR/', 'inmcm4/']
@@ -2492,8 +2494,8 @@ if __name__ == "__main__":
     lower_year = 1979
     upper_year = 2008
     lower_y_lim = 0.0
-    upper_y_lim = 13.0
-    y_tick_interval = 1.0
+    upper_y_lim = 1.5
+    y_tick_interval = 0.25
     # lower_y_lim = -1
     # upper_y_lim = 5
     # y_tick_interval = 1.0

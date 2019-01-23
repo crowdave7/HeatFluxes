@@ -384,7 +384,7 @@ if __name__ == "__main__":
     list_of_models_composite_2 = ["BNU-ESM/", "MIROC5/"]
 
 
-
+#FIGURE 4
 
 
 
@@ -753,12 +753,12 @@ ax1.tick_params(axis='y', direction='in', which='both', labelleft='on', labelrig
 #variable_x = [1.05976145, 3.41556894, 1.45201831, 0.63344791, 0.82590173, 0.99572356, 0.87939634, 3.01854602, 2.81287744, 1.42418161, 2.92457451, 1.49827281, 0.31040471, 0.1935775]
 
 #Change in Precipitation Nov - Mar
-variable_x = [0.442, 0.497, 1.317, -0.366, 1.416, 0.609, -0.187, -0.618, 1.049, 0.811, 0.321, 0.433, 0.697, 0.132, 0.292]
+variable_x = [0.442, 0.497, 1.317, -0.366, 1.416, 0.609, -0.187, -0.618, 1.049, 0.811, 0.321, 0.433, 0.132, 0.697, 0.292]
 
 # Change in Evaporation Nov-Mar
-variable_y = [0.024, -0.012, -0.395, -0.575, -0.031, -0.488, -0.6, -0.314, -0.009, -0.381, -0.152, -0.287, -0.025, -0.545, -0.430]
+variable_y = [0.024, -0.012, -0.395, -0.575, -0.031, -0.488, -0.6, -0.314, -0.009, -0.381, -0.152, -0.287, -0.545, -0.025, -0.430]
 
-list_of_models = ['bcc-csm1-1-m', 'BNU-ESM', 'CanAM4', 'CNRM-CM5', 'GFDL-HIRAM-C360', 'GISS-E2-R', 'inmcm4', 'IPSL-CM5A-MR', 'MIROC5', 'MRI-AGCM3-2S', 'NorESM1-M', 'AGCM Ensemble', 'Weaker AGCMs', 'Better AGCMs', 'MSWEP/GLEAM']
+list_of_models = ['bcc-csm1-1-m', 'BNU-ESM', 'CanAM4', 'CNRM-CM5', 'GFDL-HIRAM-C360', 'GISS-E2-R', 'inmcm4', 'IPSL-CM5A-MR', 'MIROC5', 'MRI-AGCM3-2S', 'NorESM1-M', 'AGCM Ensemble', 'Better AGCMs', 'Weaker AGCMs', 'MSWEP/GLEAM']
 
 print len(variable_x)
 print len(variable_y)
@@ -1009,6 +1009,23 @@ if __name__ == "__main__":
 
 FIGURE 8
 
+REMOVE AND REPLACE with
+
+if seasonal_cycle_dv_array != []:
+    line = ax1.plot(x_pos, seasonal_cycle_dv, zorder=4, linestyle='-', linewidth=3.0, color='forestgreen', label = "Better AGCMs")
+    handles, labels = ax1.get_legend_handles_labels()
+    handles[-1].set_linestyle("-")
+if include_legend == 'yes':
+    legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+
+if seasonal_cycle_pv_array != []:
+    line = ax1.plot(x_pos, seasonal_cycle_pv, zorder=4, linestyle='-', linewidth=3.0, color='saddlebrown', label = "Weaker AGCMs")
+    handles, labels = ax1.get_legend_handles_labels()
+    handles[-1].set_linestyle("-")
+    if include_legend == 'yes':
+        legend = plt.legend(handles, labels, bbox_to_anchor=(1.03, 0.5), loc="center left", fontsize=9, handlelength=2.5)
+
+
 
 if seasonal_cycle_dv_array != []:
     line = ax1.plot(x_pos, seasonal_cycle_dv, zorder=4, linestyle='-', linewidth=3.0, color='firebrick', label = "Dynamic Vegetation")
@@ -1026,6 +1043,170 @@ if seasonal_cycle_pv_array != []:
 
 
 plus
+
+if __name__ == "__main__":
+
+    # ------------------------------------------------------------------------------------------------------------------------------------------
+    # LIST OF INPUTS
+
+    #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CCSM4/", "CESM1-CAM5/", "CMCC-CM/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "EC-EARTH/", "FGOALS-g2/", "FGOALS-s2/", "GFDL-CM3/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/",  "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #list_of_models = ["ACCESS1-0/"]
+    #list_of_models = []
+    #evap from canopy
+    #list_of_models = ["ACCESS1-0/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #transpiration
+    #list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MPI-ESM-LR/", "MPI-ESM-MR/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #bare soil evaporation
+    #list_of_models = ["ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #list_of_models = ["CMCC-CM/"]
+    #all for barchart
+    #list_of_models = ["bcc-csm1-1-m/", "GFDL-HIRAM-C360/", "IPSL-CM5A-MR/", "MIROC5/", "NorESM1-M/"]
+
+    #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
+
+
+    #list_of_models = ["bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/"]
+    #list_of_models = ["BNU-ESM/", "CanAM4/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
+    #list_of_models = ["CNRM-CM5/", "GISS-E2-R/"]
+    #list_of_models = ["bcc-csm1-1-m/"]
+    #list_of_models = ["BNU-ESM/", "CNRM-CM5/"]
+    list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
+    #list_of_models = ["bcc-csm1-1-m/",  "GFDL-HIRAM-C360/", "GISS-E2-R/", "IPSL-CM5A-MR/", "MRI-AGCM3-2S/", "NorESM1-M/"]
+    #list_of_models = ["BNU-ESM/", "CanAM4/", "CNRM-CM5/","inmcm4/", "MIROC5/"]
+    #list_of_models = []
+    #list_of_models = []
+    #list_of_reanalysis = ["era5", "jra", "merra2", "mswep"]
+    #list_of_reanalysis = ["era5", "gleam", "jra", "merra2"]
+    #list_of_reanalysis = ['era5', 'gleam', 'landfluxeval', 'modis']
+    #list_of_reanalysis = ['chirps', 'era5', 'gpcc', 'mswep']
+    #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/"]
+    #list_of_reanalysis = ['cfsr', 'era5', 'erai', 'gleam', 'jra', 'merra2', 'ncep-doe']
+    #list_of_reanalysis = ["cfsr", "era5", "erai", "gleam", "jra", "merra2", "ncep-doe"]
+    #list_of_reanalysis = ['gleam', 'merra2']
+    #list_of_reanalysis = ['gewex', 'merra2']
+    #list_of_reanalysis = ['cfsr', 'erai', 'gleam', 'jra', 'merra2', 'ncep-doe']
+    #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/"]
+    #list_of_reanalysis = ["cfsr", "era5", "erai", "jra", "merra2", "mswep", "ncep-doe"]
+    #list_of_reanalysis = ['era5', 'gewex']
+    #list_of_reanalysis = ['gleam', 'landfluxeval']
+    #list_of_reanalysis = ['chirps', 'gpcc', 'mswep']
+    list_of_reanalysis = []
+    #list_of_reanalysis = []
+    #list_of_reanalysis = ['chirps', 'mswep']
+
+    model_type = "amip"
+
+    #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evaporation"]
+    #partitioning one
+    #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evaporation"]
+    #normalisation one
+    #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "evaporation", "pr"]
+    #list_of_variables = ["hfls", "hfss", "nrad"]
+    #list_of_variables = ["evspsblsoi", "tran", "evspsblveg", "hfls"]
+    #list_of_variables = ['tran']
+    #list_of_variables = ['evspsblsoi']
+    #list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
+    #list_of_variables = ['pr', 'evaporation', 'mrro']
+    list_of_variables = ['evspsblveg']
+
+
+    #list_of_variables = ["evaporation", "evspsblveg", "tran", "evspsblsoi"]
+    #list_of_variables = ['evaporation']
+    #list_of_variables = ['evaporation']
+    #list_of_variables = ["evaporation", "evspsblveg", "tran", "evspsblsoi", "pr", "evaporation", "mrro", "sa", "nrad", "hfls", "hfss", 'tas', "hurs", "ws", 'tas', "vpd", "mrsos", "sa", "lai", "cancap"]
+    #list_of_variables = ['tas', 'hurs', 'ws', 'vpd']
+    subplot_multiple_variables = 'no'
+    include_dynamic_prescribed = 'yes'
+
+    # list_dynamic_veg_models = ["BNU-ESM/", "MIROC5/"]
+    # list_prescribed_veg_models = ['CNRM-CM5/', 'GISS-E2-R/']
+    #list_prescribed_veg_models =
+
+
+    list_dynamic_veg_models = ['bcc-csm1-1-m/', 'BNU-ESM/', 'GFDL-HIRAM-C360/', 'IPSL-CM5A-MR/', 'inmcm4/']
+    list_prescribed_veg_models = ['GISS-E2-R/', 'MIROC5/', "MRI-AGCM3-2S/", "NorESM1-M/", 'CanAM4/', 'CNRM-CM5/']
+
+    ##list_dynamic_veg_models = ['bcc-csm1-1-m/', 'GFDL-HIRAM-C360/', 'IPSL-CM5A-MR/', 'inmcm4/']
+    #list_prescribed_veg_models = ['GISS-E2-R/', 'CNRM-CM5/']
+
+    #list_dynamic_veg_models = ['BNU-ESM/']
+    #list_prescribed_veg_models = ['MIROC5/', "MRI-AGCM3-2S/", "NorESM1-M/", 'CanAM4/', 'CNRM-CM5/']
+
+    #list_prescribed_veg_models = []
+
+
+
+    subplot_columns = 1
+    subplot_rows = 2
+
+    variables_to_add = []
+    #variables_to_add = [['evaporation', 'mrro']]
+    variables_to_subtract = []
+    #variables_to_subtract = [['pr', 'evspsblsoi', 'evspsblveg', 'mrro']]
+    #variables_to_subtract = [['pr', 'mrro']]
+    #partitioning one
+    #variables_to_subtract = [['evaporation', 'tran', 'evspsblveg', 'evspsblsoi']]
+    #variables_to_subtract = [['pr', 'mrro']]
+    divide_four_variables_by_fifth = 'no'
+
+    # EXACT NUMBERS NOT PYTHON INDICES
+    #fill_between_lines = [0, 3]
+    #fill_between_lines = [3, 6]
+
+    #fill_between_lines = [1, 4]
+    fill_between_lines = []
+    #variables_to_add = []
+
+    #CONGO BASIN
+    lower_lat = -14
+    upper_lat = 4
+    lower_lon = 18
+    upper_lon = 29
+
+    # CONGO RAINFOREST
+    # lower_lat = -5
+    # upper_lat = 4
+    # lower_lon = 18
+    # upper_lon = 29
+
+    # CONGO BASIN SOUTH
+    # lower_lat = -14
+    # upper_lat = -5
+    # lower_lon = 18
+    # upper_lon = 29
+
+    lower_year = 1979
+    upper_year = 2008
+    lower_y_lim = 0.0
+    upper_y_lim = 3.5
+    y_tick_interval = 0.5
+    # lower_y_lim = -1
+    # upper_y_lim = 5
+    # y_tick_interval = 1.0
+    depth = 0.85011389
+
+    cmap_models = 'rainbow'
+    cmap_reanalysis = 'brg'
+    models = 'no'
+    ensemble = 'yes'
+    reanalysis = 'no'
+    plot = 'yes'
+    unit_plot = "mm day-1"
+    bar_plot = 'no'
+    bar_times = ['Mar']
+    duplicate_seasonal_cycle = 'yes'
+    bar_y_axis_title = "Evaporation (mm $\mathregular{day^{-1}}$)"
+    #bar_y_axis_title = 'Normalised Evaporation (E/P)'
+    #bar_y_axis_title = 'Heat Flux (W $\mathregular{m^{-2}}$)'
+    #bar_y_axis_title = "Transpiration (mm $\mathregular{day^{-1}}$)"
+    bar_colours = ['saddlebrown', 'dodgerblue', 'forestgreen']
+    #bar_colours = ['lightseagreen', 'darkorange']
+    bar_width = 0.5
+    legend_in_plot = 'yes'
+    include_legend = 'yes'
+    rmse = 'no'
 
 
 
@@ -1368,8 +1549,7 @@ if __name__ == "__main__":
     rmse = 'no'
 
 
-FIGURE 11
-
+FIGURE 12
 
 model_line_colours = [(0.30392156862745101, 0.30315267411304353, 0.98816547208125938, 1.0), (0.099999999999999978, 0.58778525229247314, 0.95105651629515353, 1.0), (1.0, 0.58778525229247325, 0.30901699437494745, 1.0), (1.0, 0.30315267411304364, 0.15339165487868545, 1.0), (1.0, 1.2246467991473532e-16, 6.123233995736766e-17, 1.0)]
 
@@ -1547,7 +1727,7 @@ if __name__ == "__main__":
 
 
 
-FIGURE 12
+FIGURE 11
 
 Kahiu et al. plot
 
