@@ -563,8 +563,30 @@ def contour_lev_colour_map(lower_value, higher_value, interval, cmap):
 
 def colour_bar_adjust_ticks(fig, contour_plot, colour_bar, lower_tick, upper_tick, interval):
 
-    colour_bar.set_ticks(np.arange(lower_tick, upper_tick+interval, interval))
-    colour_bar.set_ticklabels(np.arange(lower_tick, upper_tick+interval, interval))
+    print lower_tick
+    print upper_tick+interval
+    print interval
+
+    if interval >= 1 or interval <= -1:
+        colour_bar.set_ticks(np.arange(lower_tick, upper_tick+interval, interval).astype(np.float))
+        colour_bar.set_ticklabels(np.arange(lower_tick, upper_tick+interval, interval).astype(np.float))
+
+    if -1 < interval < 1:
+
+        x = np.arange(lower_tick, upper_tick+interval, interval)
+
+        count = 0
+        for i in x:
+            if -0.0000001 < i < 0.00000001:
+                x[count] = 0
+            count +=1
+
+        print x
+
+        colour_bar.set_ticks(x)
+        colour_bar.set_ticklabels(x)
+
+
     colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0, labelsize=6)
 
     return colour_bar
@@ -578,9 +600,11 @@ def plot_map(cube, variable, input_time, contour_levels, cmap, lower_tick, upper
 
     """Plot the figure."""
     fig = plt.figure(figsize=(4,4))
+    #fig = plt.figure(figsize=(8,8))
 
     ax = plt.subplot(111, projection=crs_latlon)
-    ax.set_extent([-22, 62, -24, 17], crs=crs_latlon)
+    #ax.set_extent([-22, 62, -24, 17], crs=crs_latlon)
+    ax.set_extent([-30, 70, -40, 40], crs=crs_latlon)
 
     contour_plot = iplt.contourf(cube, contour_levels, cmap=cmap, extend='both')
 
@@ -624,7 +648,9 @@ def plot_map(cube, variable, input_time, contour_levels, cmap, lower_tick, upper
     #"""Add a title."""
     #plt.title(cube.long_name, fontsize=14)
 
-    colourbar_axis = fig.add_axes([0.13, 0.2, 0.77, 0.02])
+    #colourbar_axis = fig.add_axes([0.13, 0.2, 0.77, 0.02])
+
+    colourbar_axis = fig.add_axes([0.13, 0.1, 0.77, 0.02])
 
     """Add a colour bar, with ticks and labels."""
     colour_bar = plt.colorbar(contour_plot, colourbar_axis, orientation='horizontal')
@@ -730,6 +756,9 @@ def plot_subplot(cubelist, variable, input_time, contour_levels, cmap, lower_tic
     if subplot_columns == 4 and subplot_rows == 4:
         fig = plt.figure(figsize=(8, 8))
 
+    if subplot_columns == 4 and subplot_rows == 2:
+        fig = plt.figure(figsize=(8, 8))
+
     cube_number = 0
 
     for i in cubelist:
@@ -785,6 +814,9 @@ def plot_subplot(cubelist, variable, input_time, contour_levels, cmap, lower_tic
 
     if subplot_columns == 4 and subplot_rows == 4:
         #colourbar_axis = fig.add_axes([0.20, 0.07, 0.60, 0.02])
+        colourbar_axis = fig.add_axes([0.21, 0.31, 0.60, 0.015])
+
+    if subplot_columns == 4 and subplot_rows == 2:
         colourbar_axis = fig.add_axes([0.21, 0.31, 0.60, 0.015])
 
     colour_bar = plt.colorbar(contour_plot, colourbar_axis, orientation='horizontal')
@@ -845,21 +877,28 @@ if __name__ == "__main__":
     # composite_mean = "yes"
     #time_difference = ["Nov", "Mar"]
 
+    # COMPOSITE DIFFERENCE MEAN ACROSS MODELS E.G. NOV - SEP MEAN ACROSS ALL MODELS
+    # composite_difference = "yes"
+    # composite_mean = "yes"
+    #time_difference = ["Nov", "Mar"]
+    #multiple_models == 'no'
+
+
     composite_difference = "yes"
     composite_mean = "yes"
     #time_diff = (2 - 1)
-    time_difference = ['Mar', 'Nov']
+    time_difference = ['Nov', 'Mar']
     #time_difference = []
     label_for_time_difference = str('Nov - Mar')
     ensemble_maps = "yes"
-    multiple_models = 'yes'
+    multiple_models = 'no'
 
     # CANNOT PRINT COMPOSITE MAPS OF BOTH MODEL AND REANALYSIS AT ONCE.
     # CANNOT HAVE MORE THAN 1 REANALYSIS.
     #list_of_models = ["MRI-AGCM3-2H/"]
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/",  "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     #list_of_models = ["GISS-E2-R/", "inmcm4/"]
-    list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
+    list_of_models = ["bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/"]
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/"]
     #list_of_models = ['bcc-csm1-1/', 'IPSL-CM5B-LR/', 'FGOALS-g2/', 'CMCC-CM/', 'MRI-CGCM3/']
     #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
@@ -920,12 +959,12 @@ if __name__ == "__main__":
     # upper_tick_diff = 2.25
     # tick_interval_diff = 0.5
 
-    lower_value_diff = -1.0
-    higher_value_diff = 1.0
-    value_interval_diff = 0.1
-    lower_tick_diff = -1.0
-    upper_tick_diff = 1.0
-    tick_interval_diff = 0.1
+    lower_value_diff = -1.2
+    higher_value_diff = 1.2
+    value_interval_diff = 0.2
+    lower_tick_diff = -1.2
+    upper_tick_diff = 1.2
+    tick_interval_diff = 0.2
 
     subplot_columns = 4
     subplot_rows = 4
