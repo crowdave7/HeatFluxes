@@ -614,7 +614,7 @@ def slicing_reanalysis(i, array):
         if reanalysis_id == "mswep":
             cubelist_reanalysis[i].long_name = "MSWEP"
             cubelist_reanalysis[i].rename("MSWEP")
-        if reanalysis_id == "ncep-ncar":
+        if reanalysis_id == "ncep-ncar": 
             cubelist_reanalysis[i].long_name = "NCEP/NCAR"
             cubelist_reanalysis[i].rename("NCEP/NCAR")
         if reanalysis_id == "ncep-doe":
