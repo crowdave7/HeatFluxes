@@ -38,11 +38,11 @@ def build_cubelist(i, array):
 
 def model_file_paths_func(list_of_models, model_type, variable):
 
-    if variable == 'nrad':
+    if variable == 'nrad' or variable == 'rlds' or variable == 'rlus' or variable == 'rsus' or variable == 'rsds':
         root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1NetRadiationModelFiles"
     if variable == 'vpd' or variable == 'hurs' or variable == 'tas' or variable == 'ws' or variable == 'sa' or variable == 'swc_anom':
         root_directory = "/ouce-home/students/kebl4396/Paper1/Paper1VPDModelFiles"
-    if variable not in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'swc_anom']:
+    if variable not in ['nrad', 'rlds', 'rlus', 'rsus', 'rsds', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'swc_anom']:
         root_directory = "/ouce-home/data_not_backed_up/model/cmip5"
     ensemble = "r1i1p1"
 
@@ -94,7 +94,7 @@ def model_file_paths_func(list_of_models, model_type, variable):
 
 def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_directory):
 
-    if variable in ['nrad', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'cancap', 'swc_anom']:
+    if variable in ['nrad', 'rlds', 'rlus', 'rsus', 'rsds', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'cancap', 'swc_anom']:
         print "hi9"
         """Find the paths to the files containing the model data"""
         model_file_paths = []
@@ -144,7 +144,7 @@ def find_model_file_paths(list_of_models, model_type, ensemble, variable, root_d
                     print j
                     model_file_paths_sorted = np.append(model_file_paths_sorted, j)
 
-    if variable not in ['nrad', 'evap_fraction', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'swc_anom']:
+    if variable not in ['nrad', 'rlds', 'rlus', 'rsus', 'rsds', 'evap_fraction', 'vpd', 'hurs', 'tas', 'ws', 'sa', 'swc_anom']:
 
         print list_of_models
         """Find the paths to the directories containing the model data"""
@@ -295,7 +295,6 @@ def seasonal_cycle_calculations(i, array):
     #print first_cube
     time_range = iris.Constraint(time=lambda cell: cell.point.month == i)
     data_unmasked = first_cube.extract(time_range)
-    #print data_unmasked
     #print variable
     #print reanalysis_id
     if variable == 'swc_anom':
@@ -306,7 +305,15 @@ def seasonal_cycle_calculations(i, array):
     else:
         data_unmasked = data_unmasked.collapsed('time', iris.analysis.MEAN)
 
+    print coord_names
+
+    # if reanalysis_id == 'merra2':
+    #     data_unmasked = data_unmasked.collapsed('air_pressure', iris.analysis.MEAN)
+
+
+
     """If the first coordinate is longitude,"""
+
     if coord_names[1] == 'longitude':
 
         """Set up grid of longitudes and latitudes for basemap."""
@@ -565,7 +572,6 @@ def build_cubelist_reanalysis(i, array):
     cubes_in_file = iris.load(reanalysis_file_paths[i])
     for j in np.arange(0, len(cubes_in_file)):
         cube = cubes_in_file[j]
-        print cube
         coord_names = [coord.name() for coord in cube.coords()]
         print coord_names
         if len(coord_names) == 3:
@@ -573,6 +579,8 @@ def build_cubelist_reanalysis(i, array):
         if len(coord_names) == 4 and 'depth' in coord_names:
             array[i] = cube
         if len(coord_names) == 4 and 'Level' in coord_names:
+            array[i] = cube
+        if len(coord_names) == 4 and 'air_pressure' in coord_names:
             array[i] = cube
 
 def reanalysis_file_paths_func(list_of_reanalysis, variable):
@@ -743,13 +751,13 @@ def return_cube_transpose_two_reanalysis(i, array):
 def line_colours(number_of_models, number_of_reanalysis, cmap):
 
     cmap = plt.get_cmap(cmap)
-    #model_line_colours = [cmap(i) for i in np.linspace(0, 1, number_of_models)]
+    model_line_colours = [cmap(i) for i in np.linspace(0, 1, number_of_models)]
 
     #model_line_colours = [(0.5, 0.0, 1.0, 1.0), (0.096078431372549011, 0.80538091938883261, 0.8924005832479478, 1.0), (0.30000000000000004, 0.95105651629515353, 0.80901699437494745, 1.0), (0.50392156862745097, 0.99998102734872685, 0.70492554690614717, 1.0), (0.69999999999999996, 0.95105651629515364, 0.58778525229247314, 1.0), (0.90392156862745088, 0.80538091938883272, 0.45124405704532283, 1.0)]
     #model_line_colours = [(0.30392156862745101, 0.30315267411304353, 0.98816547208125938, 1.0), (0.099999999999999978, 0.58778525229247314, 0.95105651629515353, 1.0), (1.0, 0.58778525229247325, 0.30901699437494745, 1.0), (1.0, 0.30315267411304364, 0.15339165487868545, 1.0), (1.0, 1.2246467991473532e-16, 6.123233995736766e-17, 1.0)]
 
     #spikey bse
-    model_line_colours = [(0.5, 0.0, 1.0, 1.0), (0.30000000000000004, 0.95105651629515353, 0.80901699437494745, 1.0), (0.50392156862745097, 0.99998102734872685, 0.70492554690614717, 1.0), (0.90392156862745088, 0.80538091938883272, 0.45124405704532283, 1.0), (1.0, 0.30315267411304364, 0.15339165487868545, 1.0), (1.0, 1.2246467991473532e-16, 6.123233995736766e-17, 1.0)]
+    #model_line_colours = [(0.5, 0.0, 1.0, 1.0), (0.30000000000000004, 0.95105651629515353, 0.80901699437494745, 1.0), (0.50392156862745097, 0.99998102734872685, 0.70492554690614717, 1.0), (0.90392156862745088, 0.80538091938883272, 0.45124405704532283, 1.0), (1.0, 0.30315267411304364, 0.15339165487868545, 1.0), (1.0, 1.2246467991473532e-16, 6.123233995736766e-17, 1.0)]
     #flat bse
     #model_line_colours = [(0.30392156862745101, 0.30315267411304353, 0.98816547208125938, 1.0), (0.099999999999999978, 0.58778525229247314, 0.95105651629515353, 1.0), (0.096078431372549011, 0.80538091938883261, 0.8924005832479478, 1.0), (0.69999999999999996, 0.95105651629515364, 0.58778525229247314, 1.0), (1.0, 0.58778525229247325, 0.30901699437494745, 1.0)]
     reanalysis_line_colours = [cmap(i) for i in np.linspace(0, 1, number_of_reanalysis)]
@@ -1496,6 +1504,14 @@ def plot_seasonal_cycle(seasonal_cycle_models_array, seasonal_cycle_ensemble_arr
                 plt.ylabel('Evaporative Fraction')
             if variable == 'nrad':
                 plt.ylabel('Surface Net Downward Radiation (W $\mathregular{m^{-2}}$)')
+            if variable == 'rsds':
+                plt.ylabel('Surface Downward Shortwave Radiation (W $\mathregular{m^{-2}}$)')
+            if variable == 'rlds':
+                plt.ylabel('Surface Downward Longwave Radiation (W $\mathregular{m^{-2}}$)')
+            if variable == 'rsus':
+                plt.ylabel('Surface Upward Shortwave Radiation (W $\mathregular{m^{-2}}$)')
+            if variable == 'rlus':
+                plt.ylabel('Surface Upward Longwave Radiation (W $\mathregular{m^{-2}}$)')
             if variable == 'mrsos':
                 plt.ylabel('Soil Moisture Content of Upper Layer (mm)')
             if variable == 'mrso':
@@ -2361,9 +2377,9 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------------------------------------------------------------------
     # LIST OF INPUTS
 
-    #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CCSM4/", "CESM1-CAM5/", "CMCC-CM/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "EC-EARTH/", "FGOALS-g2/", "FGOALS-s2/", "GFDL-CM3/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
-    #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/",  "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
-    #list_of_models = ["ACCESS1-0/"]
+    #list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CCSM4/", "CESM1-CAM5/", "CMCC-CM/", "CNRM-CM5/", "CSIRO-Mk3-6-0/", "FGOALS-g2/", "FGOALS-s2/", "GFDL-CM3/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MPI-ESM-LR", "MPI-ESM-MR", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    ##list_of_models = ["ACCESS1-0/", "ACCESS1-3/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/",  "CSIRO-Mk3-6-0/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
+    #list_of_models = ["ACCESS1-0/", "ACCESS1-3/"]
     #list_of_models = []
     #evap from canopy
     #list_of_models = ["ACCESS1-0/", "bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "HadGEM2-A/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
@@ -2377,7 +2393,7 @@ if __name__ == "__main__":
 
     #list_of_models = ["bcc-csm1-1/", "bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C180/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-LR/", "IPSL-CM5A-MR/", "IPSL-CM5B-LR/", "MIROC5/", "MRI-AGCM3-2H/", "MRI-AGCM3-2S/", "MRI-CGCM3/", "NorESM1-M/"]
     #list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
-
+    list_of_models = ["bcc-csm1-1-m/"]
 
     #list_of_models = ["bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/"]
     #list_of_models = ["BNU-ESM/", "CanAM4/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
@@ -2387,7 +2403,7 @@ if __name__ == "__main__":
     #list_of_models = ["bcc-csm1-1-m/", "BNU-ESM/", "CanAM4/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
     #list_of_models = ["bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/"]
     #list_of_models = ["BNU-ESM/", "CanAM4/", "MIROC5/", "MRI-AGCM3-2S/", "NorESM1-M/"]
-    list_of_models = ["bcc-csm1-1-m/",  "GFDL-HIRAM-C360/", "GISS-E2-R/", "IPSL-CM5A-MR/", "MRI-AGCM3-2S/", "NorESM1-M/"]
+    #list_of_models = ["bcc-csm1-1-m/",  "GFDL-HIRAM-C360/", "GISS-E2-R/", "IPSL-CM5A-MR/", "MRI-AGCM3-2S/", "NorESM1-M/"]
     #list_of_models = ["BNU-ESM/", "CanAM4/", "CNRM-CM5/","inmcm4/", "MIROC5/"]
     #list_of_models = []
     #list_of_models = []
@@ -2422,7 +2438,7 @@ if __name__ == "__main__":
     #list_of_variables = ['evspsblsoi']
     #list_of_variables = ['pr', 'evspsblsoi', 'evspsblveg', 'tran', 'mrro']
     #list_of_variables = ['pr', 'evaporation', 'mrro']
-    list_of_variables = ['evspsblsoi']
+    list_of_variables = ['tran']
 
 
     #list_of_variables = ["evaporation", "evspsblveg", "tran", "evspsblsoi"]
@@ -2434,7 +2450,7 @@ if __name__ == "__main__":
     include_dynamic_prescribed = 'no'
 
     #list_dynamic_veg_models = ['CNRM-CM5/', 'GISS-E2-R/']
-    list_prescribed_veg_models = ["BNU-ESM/", "MIROC5/"]
+    list_prescribed_veg_models = []
     list_dynamic_veg_models = []
     #list_prescribed_veg_models = []
 
@@ -2473,17 +2489,17 @@ if __name__ == "__main__":
     fill_between_lines = []
     #variables_to_add = []
 
-    #CONGO BASIN
-    lower_lat = -14
-    upper_lat = 4
-    lower_lon = 18
-    upper_lon = 29
-
-    # CONGO RAINFOREST
-    # lower_lat = -5
+    # #CONGO BASIN
+    # lower_lat = -14
     # upper_lat = 4
     # lower_lon = 18
     # upper_lon = 29
+
+    # CONGO RAINFOREST
+    lower_lat = -5
+    upper_lat = 4
+    lower_lon = 18
+    upper_lon = 29
 
     # CONGO BASIN SOUTH
     # lower_lat = -14
@@ -2494,8 +2510,8 @@ if __name__ == "__main__":
     lower_year = 1979
     upper_year = 2008
     lower_y_lim = 0.0
-    upper_y_lim = 1.5
-    y_tick_interval = 0.25
+    upper_y_lim = 500.0
+    y_tick_interval = 50.0
     # lower_y_lim = -1
     # upper_y_lim = 5
     # y_tick_interval = 1.0
@@ -2505,7 +2521,7 @@ if __name__ == "__main__":
     cmap_reanalysis = 'brg'
     models = 'yes'
     ensemble = 'yes'
-    reanalysis = 'yes'
+    reanalysis = 'no'
     plot = 'yes'
     unit_plot = "mm day-1"
     bar_plot = 'no'
@@ -3182,6 +3198,7 @@ if __name__ == "__main__":
 
             """Build a list of cubes from the reanalysis file paths."""
             reanalysis_file_paths = reanalysis_file_paths_func(list_of_reanalysis, variable)
+            print "hi80"
             print reanalysis_file_paths
             """Load the cubes."""
             manager = multiprocessing.Manager()
