@@ -440,11 +440,49 @@ def plot_hovmoller(cube, lower_lat, upper_lat, contour_levels, cmap):
 
     colour_bar = colour_bar_adjust_ticks(fig, contour_plot, colour_bar, lower_tick, upper_tick, tick_interval)
 
+    if variable == 'pr':
+        label = 'Precipitation (mm $\mathregular{day^{-1}}$)'
+    if variable == 'hfls':
+        label = 'Surface Upward Latent Heat Flux (W $\mathregular{m^{-2}}$)'
+    if variable == 'evapotranspiration':
+        label = 'Evapotranspiration (mm $\mathregular{day^{-1}}$)'
+    if variable == 'hfss':
+        label = 'Surface Upward Sensible Heat Flux (W $\mathregular{m^{-2}}$)'
+    if variable == 'evap_fraction':
+        label = 'Evaporative Fraction'
+    if variable == 'nrad':
+        label = 'Surface Net Radiation (W $\mathregular{m^{-2}}$)'
+    if variable == 'mrsos':
+        label = 'Soil Moisture Content of Upper Layer (mm)'
+    if variable == 'mrso':
+        label = 'Soil Moisture Content (mm)'
+    if variable == 'mrsor':
+        label = 'Root-Zone Soil Moisture (m3/m3)'
     if variable == 'tran':
         label = 'Transpiration (mm $\mathregular{day^{-1}}$)'
+    if variable == 'evspsbl':
+        label = 'Evaporation (mm $\mathregular{day^{-1}}$)'
+    if variable == 'evspsblsoi':
+        label = 'Bare Soil Evaporation (mm $\mathregular{day^{-1}}$)'
+    if variable == 'evspsblveg':
+        label = 'Evaporation from Canopy (mm $\mathregular{day^{-1}}$)'
+    if variable == 'prveg':
+        label = 'Precipitation Intercepted by Canopy (mm $\mathregular{day^{-1}}$)'
+    if variable == 'mrros':
+        label = 'Surface Runoff Flux (mm $\mathregular{day^{-1}}$)'
+    if variable == 'lai':
+        label = 'Leaf Area Index'
+    if variable == 'mrro':
+        label = 'Runoff Flux (mm $\mathregular{day^{-1}}$)'
+    if variable == 'rsds':
+        label = 'Surface Downward Shortwave Radiation (W $\mathregular{m^{-2}}$)'
+    if variable == 'rlds':
+        label = 'Surface Downward Longwave Radiation (W $\mathregular{m^{-2}}$)'
+    if variable == 'rsus':
+        label = 'Surface Upward Shortwave Radiation (W $\mathregular{m^{-2}}$)'
+    if variable == 'rlus':
+        label = 'Surface Upward Longwave Radiation (W $\mathregular{m^{-2}}$)'
 
-    if variable == 'nrad':
-        label = 'Surface Net Downward Radiation (W $\mathregular{m^{-2}}$)'
 
     colour_bar.set_label(label, fontsize=9)
 
@@ -454,13 +492,14 @@ def plot_hovmoller(cube, lower_lat, upper_lat, contour_levels, cmap):
 
 if __name__ == "__main__":
 
-    list_of_models = ["bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/"]
-    list_of_models = []
-    list_of_reanalysis = ['gewex']
+    #list_of_models = ["bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/"]
+    #list_of_models = []
+    list_of_reanalysis = ['gleam']
+    #list_of_reanalysis = []
 
     model_type = "amip"
 
-    list_of_variables = ['nrad']
+    list_of_variables = ['mrsor']
 
     # #CONGO BASIN
     lower_lat = -14
@@ -483,12 +522,12 @@ if __name__ == "__main__":
     lower_year = 1979
     upper_year = 2008
 
-    lower_value = 80.0
-    higher_value = 180.0
-    value_interval = 10.0
-    lower_tick = 80.0
-    upper_tick = 180.0
-    tick_interval = 10.0
+    lower_value = 0.0
+    higher_value = 1.0
+    value_interval = 0.1
+    lower_tick = 0.0
+    upper_tick = 1.0
+    tick_interval = 0.1
 
     cmap = "YlGnBu"
 
