@@ -71,7 +71,7 @@ def model_file_paths_ensemble_func(list_of_models, model_type, variable):
 
         """If variable is pr_, convert variable back to pr"""
         if variable == 'pr_':
-            variable = 'pr'
+            variable = 'pr' 
 
         """If variable is evspsbl_, convert variable back to evspsbl"""
         if variable == 'evspsbl_':
