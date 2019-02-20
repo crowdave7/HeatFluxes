@@ -71,7 +71,7 @@ def model_file_paths_ensemble_func(list_of_models, model_type, variable):
 
         """If variable is pr_, convert variable back to pr"""
         if variable == 'pr_':
-            variable = 'pr' 
+            variable = 'pr'
 
         """If variable is evspsbl_, convert variable back to evspsbl"""
         if variable == 'evspsbl_':
@@ -260,25 +260,32 @@ def slicing_reanalysis(i, array):
     with iris.FUTURE.context(cell_datetime_objects=True):
         reanalysis_id = list_of_reanalysis[i]
         print reanalysis_id
-        if variable != "treeFrac":
-            print cubelist_reanalysis[i]
-            if reanalysis_id != "era5":
-                if variable == 'swc_anom':
-                    pass
-                else:
-                    cubelist_reanalysis[i] = cubelist_reanalysis[i].extract(time_range)
-            if reanalysis_id == "era5":
-                cubelist_reanalysis[i] = cubelist_reanalysis[i].extract(iris.Constraint(time=lambda cell: 2010 <= cell.point.year <= 2017))
-            time_points = cubelist_reanalysis[i].coord('time').points
-            times = cubelist_reanalysis[i].coord('time').units.num2date(time_points)
-        if variable != "treeFrac":
-            print reanalysis_id
-            print len(times)
-            print times[0]
-            print times[-1]
+        if reanalysis_id == 'modis' and variable == 'lai':
+            pass
+        else:
+            if variable != "treeFrac":
+                print cubelist_reanalysis[i]
+                if reanalysis_id != "era5":
+                    if variable == 'swc_anom':
+                        pass
+                    else:
+                        cubelist_reanalysis[i] = cubelist_reanalysis[i].extract(time_range)
+                if reanalysis_id == "era5":
+                    cubelist_reanalysis[i] = cubelist_reanalysis[i].extract(iris.Constraint(time=lambda cell: 2010 <= cell.point.year <= 2017))
+                time_points = cubelist_reanalysis[i].coord('time').points
+                times = cubelist_reanalysis[i].coord('time').units.num2date(time_points)
+            if variable != "treeFrac":
+                print reanalysis_id
+                print len(times)
+                print times[0]
+                print times[-1]
 
-    """Slice the regridded cube down to the African domain."""
-    cubelist_reanalysis[i] = cubelist_reanalysis[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
+    if reanalysis_id == 'modis' and variable == 'lai':
+        pass
+    else:
+
+        """Slice the regridded cube down to the African domain."""
+        cubelist_reanalysis[i] = cubelist_reanalysis[i].intersection(latitude=(-40, 40), longitude=(-30, 70))
 
     """if variable is evaporation, divide by 28"""
     if variable == 'evaporation':
@@ -356,18 +363,22 @@ def slicing_reanalysis(i, array):
     #
     #     print i
 
-    iris.coord_categorisation.add_month_number(cubelist_reanalysis[i], 'time', name='month')
-    cubelist_reanalysis[i] = cubelist_reanalysis[i].aggregated_by(['month'], iris.analysis.MEAN)
+    if reanalysis_id == 'modis' and variable == 'lai':
+        pass
+    else:
 
-    """Format cube to Hovmoller coordinates."""
+        iris.coord_categorisation.add_month_number(cubelist_reanalysis[i], 'time', name='month')
+        cubelist_reanalysis[i] = cubelist_reanalysis[i].aggregated_by(['month'], iris.analysis.MEAN)
 
-    with iris.FUTURE.context(cell_datetime_objects=True):
-        cubelist_reanalysis[i] = cubelist_reanalysis[i] .intersection(longitude=(lower_lon-1, upper_lon+1))
+        """Format cube to Hovmoller coordinates."""
 
-    cubelist_reanalysis[i] = cubelist_reanalysis[i].collapsed('longitude', iris.analysis.MEAN)
+        with iris.FUTURE.context(cell_datetime_objects=True):
+            cubelist_reanalysis[i] = cubelist_reanalysis[i] .intersection(longitude=(lower_lon-1, upper_lon+1))
 
-    with iris.FUTURE.context(cell_datetime_objects=True):
-        cubelist_reanalysis[i] = cubelist_reanalysis[i].intersection(latitude=(lower_lat-2, upper_lat+1))
+        cubelist_reanalysis[i] = cubelist_reanalysis[i].collapsed('longitude', iris.analysis.MEAN)
+
+        with iris.FUTURE.context(cell_datetime_objects=True):
+            cubelist_reanalysis[i] = cubelist_reanalysis[i].intersection(latitude=(lower_lat-2, upper_lat+1))
 
 
     array[i] = cubelist_reanalysis[i]
@@ -409,30 +420,42 @@ def colour_bar_adjust_ticks(fig, contour_plot, colour_bar, lower_tick, upper_tic
 
     return colour_bar
 
-def plot_hovmoller(cube, lower_lat, upper_lat, contour_levels, cmap):
+def plot_hovmoller(cube, lower_lat, upper_lat, contour_levels, cmap, list_of_reanalysis):
 
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
-
-    contour_plot = iplt.contourf(cube, contour_levels, coords=['month', 'latitude'], cmap=cmap, extend='both')
-
-    #qplt.contourf(ensemble_mean, coords=['month', 'latitude'])
-
-    ax1.set_xlim([1, 12])
 
     ax1.tick_params(axis='x', direction='in', which='both', labelbottom='on', labeltop='off', bottom='on', top='on')
     ax1.tick_params(axis='y', direction='in', which='both', labelleft='on', labelright='off', left='on', right='on')
     ax1.patch.set_visible(False)
 
-    #contour_plot = iplt.contourf(cube, coords=['month', 'latitude'])
+    if list_of_reanalysis[0] == 'modis' and variable == 'lai':
+        contour_plot = iplt.contourf(cube, contour_levels, coords=['time', 'latitude'], cmap=cmap, extend='both')
 
-    objects = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec')
+        # x1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        # squad = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm']
+        #
+        #ax1.set_yticklabels(np.linspace(-14, 4, 20))
+        # ax1.set_yticklabels(squad, minor=False, rotation=45)
+        objects = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec')
 
-    x_pos = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-    # print x_pos
-    plt.xticks(x_pos, objects, fontsize= 10)
+        ax1.set_xticks(np.linspace(1, 42, 12))
+        ax1.set_xticklabels(objects)
+        ax1.set_xlim([1, 42])
 
-    ax1.set_ylim([lower_lat, upper_lat])
+        y_ticks = np.arange(-14.0, 5.0, 2.0)
+        ax1.set_yticks(np.linspace(-8.98750019, 42.98749924, 10))
+        ax1.set_yticklabels(y_ticks)
+
+    else:
+        contour_plot = iplt.contourf(cube, contour_levels, coords=['month', 'latitude'], cmap=cmap, extend='both')
+        ax1.set_xlim([1, 12])
+        objects = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec')
+        x_pos = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        # print x_pos
+        plt.xticks(x_pos, objects, fontsize= 10)
+
+        ax1.set_ylim([lower_lat, upper_lat])
 
     plt.ylabel('Latitude ($^\circ$)', fontsize = 10)
 
@@ -483,23 +506,21 @@ def plot_hovmoller(cube, lower_lat, upper_lat, contour_levels, cmap):
     if variable == 'rlus':
         label = 'Surface Upward Longwave Radiation (W $\mathregular{m^{-2}}$)'
 
-
     colour_bar.set_label(label, fontsize=9)
 
     fig.savefig("Hovmoller.png", bbox_inches='tight')
-
 
 
 if __name__ == "__main__":
 
     #list_of_models = ["bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/"]
     #list_of_models = []
-    list_of_reanalysis = ['gleam']
+    list_of_reanalysis = ['gpcc']
     #list_of_reanalysis = []
 
     model_type = "amip"
 
-    list_of_variables = ['mrsor']
+    list_of_variables = ['pr']
 
     # #CONGO BASIN
     lower_lat = -14
@@ -523,11 +544,11 @@ if __name__ == "__main__":
     upper_year = 2008
 
     lower_value = 0.0
-    higher_value = 1.0
-    value_interval = 0.1
+    higher_value = 7.0
+    value_interval = 0.7
     lower_tick = 0.0
-    upper_tick = 1.0
-    tick_interval = 0.1
+    upper_tick = 7.0
+    tick_interval = 0.7
 
     cmap = "YlGnBu"
 
@@ -540,8 +561,10 @@ if __name__ == "__main__":
     legend_in_plot = 'yes'
     include_legend = 'yes'
 
-
-    time_range = iris.Constraint(time=lambda cell: lower_year <= cell.point.year <= upper_year)
+    if list_of_reanalysis[0] == 'modis' and list_of_variables[0] == 'lai':
+        pass
+    else:
+        time_range = iris.Constraint(time=lambda cell: lower_year <= cell.point.year <= upper_year)
 
     for i in list_of_variables:
 
@@ -670,7 +693,7 @@ if __name__ == "__main__":
             contour_levels = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[0]
             cmap = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[1]
 
-            plot_hovmoller(cube_reanalysis, lower_lat, upper_lat, contour_levels, cmap)
+            plot_hovmoller(cube_reanalysis, lower_lat, upper_lat, contour_levels, cmap, list_of_reanalysis)
 
 
         # print ensemble_mean
