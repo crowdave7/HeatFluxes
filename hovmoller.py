@@ -380,15 +380,29 @@ def slicing_reanalysis(i, array):
         with iris.FUTURE.context(cell_datetime_objects=True):
             cubelist_reanalysis[i] = cubelist_reanalysis[i].intersection(latitude=(lower_lat-2, upper_lat+1))
 
-
     array[i] = cubelist_reanalysis[i]
 
 
 def contour_lev_colour_map(lower_value, higher_value, interval, cmap):
 
-    contour_levels = np.arange(lower_value, higher_value+interval, interval)
-    cmap = matplotlib.cm.get_cmap(cmap)
-    return contour_levels, cmap
+    if interval >= 1 or interval <= -1:
+
+        contour_levels = np.arange(lower_value, higher_value+interval, interval)
+        cmap = matplotlib.cm.get_cmap(cmap)
+        return contour_levels, cmap
+
+    if -1 < interval < 1:
+
+        start = lower_tick*10
+        end = (upper_tick+interval)*10
+        new_interval = interval*10
+
+        list = [float(i)/10 for i in np.arange(start, end, new_interval)]
+
+        contour_levels = list
+        cmap = matplotlib.cm.get_cmap(cmap)
+        return contour_levels, cmap
+
 
 def colour_bar_adjust_ticks(fig, contour_plot, colour_bar, lower_tick, upper_tick, interval):
 
@@ -402,25 +416,33 @@ def colour_bar_adjust_ticks(fig, contour_plot, colour_bar, lower_tick, upper_tic
 
     if -1 < interval < 1:
 
-        x = np.arange(lower_tick, upper_tick+interval, interval)
+        start = lower_tick*10
+        end = (upper_tick+interval)*10
+        new_interval = interval*10
 
-        count = 0
-        for i in x:
-            if -0.0000001 < i < 0.00000001:
-                x[count] = 0
-            count +=1
+        list = [float(i)/10 for i in np.arange(start, end, new_interval)]
 
-        print x
+        print list
 
-        colour_bar.set_ticks(x)
-        colour_bar.set_ticklabels(x)
+        # x = np.arange(lower_tick, upper_tick+interval, interval)
+
+        # count = 0
+        # for i in x:
+        #     if -0.0000001 < i < 0.00000001:
+        #         x[count] = 0
+        #     count +=1
+        #
+        # print x
+
+        colour_bar.set_ticks(list)
+        colour_bar.set_ticklabels(list)
 
 
     colour_bar.ax.tick_params(axis=u'both', which=u'both', length=0, labelsize=6)
 
     return colour_bar
 
-def plot_hovmoller(cube, lower_lat, upper_lat, contour_levels, cmap, list_of_reanalysis):
+def plot_hovmoller(cube, lower_lat, upper_lat, contour_levels, cmap, list_of_reanalysis, latitude_points):
 
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
@@ -430,36 +452,57 @@ def plot_hovmoller(cube, lower_lat, upper_lat, contour_levels, cmap, list_of_rea
     ax1.patch.set_visible(False)
 
     if list_of_reanalysis[0] == 'modis' and variable == 'lai':
-        contour_plot = iplt.contourf(cube, contour_levels, coords=['time', 'latitude'], cmap=cmap, extend='both')
+
+        print cube.shape
+        print latitude_points
+
+        x_pos = np.arange(0, 47, 1)
+        objects = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec', 'Jan')
+
+        x,y = np.meshgrid(x_pos, latitude_points)
+        #
+        contour_plot = plt.contourf(x, y, cube, contour_levels, cmap=cmap, extend='both')
 
         # x1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
         # squad = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm']
         #
         #ax1.set_yticklabels(np.linspace(-14, 4, 20))
         # ax1.set_yticklabels(squad, minor=False, rotation=45)
-        objects = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec')
 
-        ax1.set_xticks(np.linspace(1, 42, 12))
+        #
+        ax1.set_xticks(np.linspace(1, 46, 13))
         ax1.set_xticklabels(objects)
-        ax1.set_xlim([1, 42])
-
+        ax1.set_xlim([1, 46])
+        #
         y_ticks = np.arange(-14.0, 5.0, 2.0)
         ax1.set_yticks(np.linspace(-8.98750019, 42.98749924, 10))
         ax1.set_yticklabels(y_ticks)
 
     else:
-        contour_plot = iplt.contourf(cube, contour_levels, coords=['month', 'latitude'], cmap=cmap, extend='both')
-        ax1.set_xlim([1, 12])
-        objects = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec')
-        x_pos = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-        # print x_pos
+
+        objects = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec', 'Jan')
+        x_pos = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+        x,y = np.meshgrid(x_pos, latitude_points)
+
+        contour_plot = plt.contourf(x, y, cube, contour_levels, cmap=cmap, extend='both')
+
+        print x_pos
         plt.xticks(x_pos, objects, fontsize= 10)
 
+        # ax1.set_yticks(np.linspace(0, 20, 1))
+        # print "hi5"
+        # print latitude_points
+        #ax1.set_yticklabels(latitude_points[::-1])
         ax1.set_ylim([lower_lat, upper_lat])
 
     plt.ylabel('Latitude ($^\circ$)', fontsize = 10)
 
     colour_bar = plt.colorbar(contour_plot, orientation='horizontal')
+
+    print lower_tick
+    print upper_tick
+    print tick_interval
 
     colour_bar = colour_bar_adjust_ticks(fig, contour_plot, colour_bar, lower_tick, upper_tick, tick_interval)
 
@@ -514,13 +557,14 @@ def plot_hovmoller(cube, lower_lat, upper_lat, contour_levels, cmap, list_of_rea
 if __name__ == "__main__":
 
     #list_of_models = ["bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/"]
-    #list_of_models = []
-    list_of_reanalysis = ['gpcc']
-    #list_of_reanalysis = []
+    #list_of_models = ["CNRM-CM5/", "GISS-E2-R/"]
+    list_of_models = []
+    list_of_reanalysis = ['modis']
+    #list_of_reanalysis = ['none']
 
     model_type = "amip"
 
-    list_of_variables = ['pr']
+    list_of_variables = ['lai']
 
     # #CONGO BASIN
     lower_lat = -14
@@ -621,6 +665,7 @@ if __name__ == "__main__":
 
             for j in cubelist_ensemble:
 
+                print j.coord('time').units
                 j.coord('time').units = cf_units.Unit(j.coord('time').units.origin, calendar='standard')
                 time_points = j.coord('time').points
                 times = num2date(time_points, units=str(j.coord('time').units))
@@ -628,7 +673,7 @@ if __name__ == "__main__":
                 times = date2num(times, units=str(j.coord('time').units))
                 j.coord('time').points = times
                 j.coord('time').bounds = None
-                print j.coord('time')
+                #print j.coord('time').units
 
             """Calculate ensemble mean, and format cube to Hovmoller coordinates."""
             ensemble_mean = sum(cubelist_ensemble) / float(len(cubelist_ensemble))
@@ -641,14 +686,23 @@ if __name__ == "__main__":
             with iris.FUTURE.context(cell_datetime_objects=True):
                 ensemble_mean = ensemble_mean.intersection(latitude=(lower_lat-2, upper_lat+1))
 
-            single_month = ensemble_mean.extract(iris.Constraint(month=1))
+            """Code to add extra month to hovmoller."""
+            latitude_points = ensemble_mean.coord('latitude').points[::-1]
 
-            cube_list = iris.cube.CubeList([ensemble_mean, single_month])
+            cube_data_all = ensemble_mean.data
+            first_month = cube_data_all[0,:]
+            len_latitude = len(ensemble_mean.coord('latitude').points)
+
+            ensemble_mean = np.zeros((13,len_latitude))
+            ensemble_mean[0:12] = cube_data_all
+            ensemble_mean[12] = first_month
+
+            ensemble_mean = ensemble_mean.T[::-1]
 
             contour_levels = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[0]
             cmap = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[1]
 
-            plot_hovmoller(ensemble_mean, lower_lat, upper_lat, contour_levels, cmap)
+            plot_hovmoller(ensemble_mean, lower_lat, upper_lat, contour_levels, cmap, list_of_reanalysis, latitude_points)
 
         if reanalysis == 'yes':
 
@@ -684,83 +738,30 @@ if __name__ == "__main__":
                 process.join()
             cubelist_reanalysis = array.values()
             print "hi2"
-            print cubelist_reanalysis[0]
+            #print cubelist_reanalysis[0]
 
             cube_reanalysis = cubelist_reanalysis[0]
 
-            print cube_reanalysis
+            """Code to add extra month to hovmoller."""
+            latitude_points = cube_reanalysis.coord('latitude').points[::-1]
 
+            cube_data_all = cube_reanalysis.data
+            first_month = cube_data_all[0,:]
+            len_latitude = len(cube_reanalysis.coord('latitude').points)
+
+            if list_of_reanalysis[0] == 'modis' and variable == 'lai':
+                cube_reanalysis_data = np.zeros((47,len_latitude))
+                cube_reanalysis_data[0:46] = cube_data_all
+                cube_reanalysis_data[46] = first_month
+            else:
+                cube_reanalysis_data = np.zeros((13,len_latitude))
+                cube_reanalysis_data[0:12] = cube_data_all
+                cube_reanalysis_data[12] = first_month
+
+            cube_reanalysis_data = cube_reanalysis_data.T[::-1]
+
+            """Send to plotting function."""
             contour_levels = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[0]
             cmap = contour_lev_colour_map(lower_value, higher_value, value_interval, cmap)[1]
 
-            plot_hovmoller(cube_reanalysis, lower_lat, upper_lat, contour_levels, cmap, list_of_reanalysis)
-
-
-        # print ensemble_mean
-        # print single_month
-
-        #print cube_list[0]
-
-        #print cube_list[1]
-
-        # cube_list.concatenate_cube()
-        #
-        # print cube_list
-
-
-
-
-
-
-        #
-        # plot_hovmoller(ensemble_mean)
-
-        #print single_month
-
-        #if duplicate_seasonal_cycle == 'yes':
-
-        # cubelist = []
-
-        #ensemble_mean_2 = ensemble_mean
-
-        #single_month = ensemble_mean.extract(iris.Constraint(month=1))
-        #
-        # cubelist = np.append(cubelist, ensemble_mean)
-        # cubelist = np.append(cubelist, ensemble_mean_2)
-        # #cubelist = np.append(cubelist, single_month)
-
-        #cube_list = iris.cube.CubeList([ensemble_mean, ensemble_mean])
-
-        #unify_time_units(cube_list)
-
-        #new_cube = cube_list.concatenate_cube()
-
-        # print new_cube
-        #
-        # print new_cube.coord('time').points
-
-
-        # new_cube = cube_list.concatenate()[0]
-        #
-        # #print cubelist
-        #
-        # print(cubelist.concatenate())
-
-        #print ensemble_mean_last_month
-
-
-
-        # ensemble_mean_last_month.remove_coord('time')
-        #
-        # print ensemble_mean_last_month
-        #
-        # ensemble_mean_last_month.add_dim_coord(time_coord, 1)
-        #
-        # #print ensemble_mean_last_month
-
-
-        # print cubelist
-        #
-        # ensemble_mean = cubelist.concatenate()
-        #
-        # print ensemble_mean
+            plot_hovmoller(cube_reanalysis_data, lower_lat, upper_lat, contour_levels, cmap, list_of_reanalysis, latitude_points)
