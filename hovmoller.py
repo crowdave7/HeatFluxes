@@ -548,6 +548,8 @@ def plot_hovmoller(cube, lower_lat, upper_lat, contour_levels, cmap, list_of_rea
         label = 'Surface Upward Shortwave Radiation (W $\mathregular{m^{-2}}$)'
     if variable == 'rlus':
         label = 'Surface Upward Longwave Radiation (W $\mathregular{m^{-2}}$)'
+    if variable == 'par':
+        label = 'Surface Downward Photosynthetically Active Radiation (W $\mathregular{m^{-2}}$)'
 
     colour_bar.set_label(label, fontsize=9)
 
@@ -559,12 +561,12 @@ if __name__ == "__main__":
     #list_of_models = ["bcc-csm1-1-m/", "CNRM-CM5/", "GFDL-HIRAM-C360/", "GISS-E2-R/", "inmcm4/", "IPSL-CM5A-MR/"]
     #list_of_models = ["CNRM-CM5/", "GISS-E2-R/"]
     list_of_models = []
-    list_of_reanalysis = ['modis']
+    list_of_reanalysis = ['gewex']
     #list_of_reanalysis = ['none']
 
     model_type = "amip"
 
-    list_of_variables = ['lai']
+    list_of_variables = ['par']
 
     # #CONGO BASIN
     lower_lat = -14
@@ -587,12 +589,12 @@ if __name__ == "__main__":
     lower_year = 1979
     upper_year = 2008
 
-    lower_value = 0.0
-    higher_value = 7.0
-    value_interval = 0.7
-    lower_tick = 0.0
-    upper_tick = 7.0
-    tick_interval = 0.7
+    lower_value = 80.0
+    higher_value = 180.0
+    value_interval = 10.0
+    lower_tick = 80.0
+    upper_tick = 180.0
+    tick_interval = 10.0
 
     cmap = "YlGnBu"
 
